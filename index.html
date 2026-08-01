@@ -1403,6 +1403,12 @@ async function submitUsuario(){
   if(!pass||pass.length<6){errEl.textContent='La contraseña debe tener mínimo 6 caracteres.';errEl.style.display='block';return;}
   var res=await _sbCreate.auth.signUp({email,password:pass,options:{data:{nombre}}});
   if(res.error){errEl.textContent=res.error.message;errEl.style.display='block';return;}
+  // Guardar nombre y email en el perfil (el trigger puede no incluirlos)
+  if(res.data&&res.data.user){
+    await _sb.from('profiles').upsert({
+      id:res.data.user.id, role:'user', activo:true, nombre:nombre, email:email
+    },{onConflict:'id'});
+  }
   sucEl.textContent='Usuario "'+nombre+'" creado exitosamente.';sucEl.style.display='block';
   document.getElementById('u-nombre').value='';document.getElementById('u-email').value='';document.getElementById('u-pass').value='';
   var pr=await _sb.from('profiles').select('*').order('created_at',{ascending:false});
