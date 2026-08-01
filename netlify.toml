@@ -1,0 +1,7 @@
+[build]
+  publish = "."
+
+[[redirects]]
+  from = "/*"
+  to = "/Mis Finanzas.dc.html"
+  status = 200
