@@ -205,6 +205,17 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
 .bnav-btn.active{color:var(--blue-mid);}
 .bnav-btn .bn-icon{font-size:21px;}
 .fab{width:52px;height:52px;background:linear-gradient(135deg,var(--blue-mid),var(--blue-light));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;color:#fff;border:none;cursor:pointer;box-shadow:0 4px 16px rgba(37,99,235,.4);}
+/* BOTTOM SHEET (Más) */
+#more-backdrop{display:none;position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:800;backdrop-filter:blur(2px);}
+#more-sheet{position:fixed;bottom:0;left:0;right:0;background:#fff;border-radius:24px 24px 0 0;z-index:801;padding:0 0 env(safe-area-inset-bottom);transform:translateY(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);}
+#more-sheet.open{transform:translateY(0);}
+.sheet-handle{width:40px;height:4px;background:#E2E8F0;border-radius:2px;margin:12px auto 4px;}
+.sheet-section{padding:8px 16px 4px;font-size:11px;font-weight:700;color:var(--gray-light);letter-spacing:.06em;text-transform:uppercase;}
+.sheet-item{display:flex;align-items:center;gap:14px;padding:14px 20px;border:none;background:transparent;width:100%;font-family:'Inter',sans-serif;font-size:15px;font-weight:600;color:var(--gray-dark);cursor:pointer;text-align:left;}
+.sheet-item:active{background:#F8FAFC;}
+.sheet-item .si-icon{font-size:22px;width:28px;text-align:center;}
+.sheet-item.danger{color:#DC2626;}
+.sheet-divider{height:1px;background:var(--border);margin:4px 20px;}
 
 /* CALENDAR GOOGLE-STYLE */
 .gcal-wrap{display:flex;gap:0;border-radius:20px;overflow:hidden;border:1px solid var(--border);background:#fff;}
@@ -300,6 +311,7 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
       </div>
     </div>
     <button class="btn-auth" onclick="doAuth()">Iniciar sesión</button>
+    <button id="btn-install-login" onclick="installApp()" style="display:none;width:100%;margin-top:10px;padding:12px;border:1.5px solid #16A34A;border-radius:14px;background:transparent;color:#16A34A;font-family:'Inter',sans-serif;font-size:14px;font-weight:700;cursor:pointer;">📲 Instalar aplicación</button>
   </div>
 </div>
 
@@ -512,8 +524,7 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
       </div>
     </div>
     <div class="sidebar-footer">
-      <button id="btn-install" class="btn btn-primary" style="justify-content:center;display:none;background:linear-gradient(135deg,#16A34A,#22C55E);" onclick="installApp()">📲 Instalar app</button>
-      <button class="btn btn-primary" style="justify-content:center;" onclick="openCambiarPass()">🔑 Cambiar contraseña</button>
+<button class="btn btn-primary" style="justify-content:center;" onclick="openCambiarPass()">🔑 Cambiar contraseña</button>
       <button class="btn btn-ghost" style="justify-content:center;" onclick="doSignOut()">Cerrar sesión</button>
     </div>
   </div>
@@ -677,23 +688,65 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
     <button class="bnav-btn active" data-screen="panel" onclick="navigate('panel')"><span class="bn-icon">🏠</span>Panel</button>
     <button class="bnav-btn" data-screen="movimientos" onclick="navigate('movimientos')"><span class="bn-icon">📋</span>Movs</button>
     <button class="fab" onclick="openModal()">+</button>
-    <button class="bnav-btn" data-screen="compras" onclick="navigate('compras')"><span class="bn-icon">🛒</span>Compras</button>
-    <button class="bnav-btn" data-screen="metas" onclick="navigate('metas')"><span class="bn-icon">🎯</span>Ahorro</button>
+    <button class="bnav-btn" data-screen="reportes" onclick="navigate('reportes')"><span class="bn-icon">📊</span>Indicadores</button>
+    <button class="bnav-btn" onclick="openMoreSheet()"><span class="bn-icon">☰</span>Más</button>
   </div>
 </div>
 
+<!-- BACKDROP -->
+<div id="more-backdrop" onclick="closeMoreSheet()"></div>
+
+<!-- BOTTOM SHEET MÁS -->
+<div id="more-sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-section">Navegación</div>
+  <button class="sheet-item" onclick="sheetNav('presupuesto')"><span class="si-icon">💳</span>Presupuesto</button>
+  <button class="sheet-item" onclick="sheetNav('compras')"><span class="si-icon">🛒</span>Compras</button>
+  <button class="sheet-item" onclick="sheetNav('metas')"><span class="si-icon">🎯</span>Ahorro Programado</button>
+  <div id="sheet-admin-item" style="display:none;">
+    <div class="sheet-divider"></div>
+    <div class="sheet-section">Administración</div>
+    <button class="sheet-item" onclick="sheetNav('usuarios')"><span class="si-icon">👥</span>Usuarios</button>
+  </div>
+  <div class="sheet-divider"></div>
+  <div class="sheet-section">Cuenta</div>
+  <button class="sheet-item" onclick="closeMoreSheet();openCambiarPass()"><span class="si-icon">🔑</span>Cambiar contraseña</button>
+<button class="sheet-item danger" onclick="closeMoreSheet();doSignOut()"><span class="si-icon">🚪</span>Cerrar sesión</button>
+  <div style="height:8px;"></div>
+</div>
+
 <script>
+// BOTTOM SHEET
+function openMoreSheet(){
+  document.getElementById('more-backdrop').style.display='block';
+  document.getElementById('more-sheet').classList.add('open');
+  // Mostrar admin si corresponde
+  var adminItem=document.getElementById('sheet-admin-item');
+  if(adminItem)adminItem.style.display=ST.isAdmin?'block':'none';
+  // Sincronizar botón instalar
+  var si=document.getElementById('sheet-install-btn');
+  if(si)si.style.display=_installPrompt?'flex':'none';
+}
+function closeMoreSheet(){
+  document.getElementById('more-backdrop').style.display='none';
+  document.getElementById('more-sheet').classList.remove('open');
+}
+function sheetNav(screen){
+  closeMoreSheet();
+  navigate(screen);
+}
+
 // PWA INSTALL
 var _installPrompt=null;
 window.addEventListener('beforeinstallprompt',function(e){
   e.preventDefault();
   _installPrompt=e;
-  var btn=document.getElementById('btn-install');
-  if(btn)btn.style.display='flex';
+  var btn=document.getElementById('btn-install-login');
+  if(btn)btn.style.display='block';
 });
 window.addEventListener('appinstalled',function(){
   _installPrompt=null;
-  var btn=document.getElementById('btn-install');
+  var btn=document.getElementById('btn-install-login');
   if(btn)btn.style.display='none';
 });
 function installApp(){
