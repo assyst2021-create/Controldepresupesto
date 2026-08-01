@@ -240,7 +240,10 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
     </div>
     <div class="form-group">
       <label>Contraseña</label>
-      <input id="auth-pass" type="password" placeholder="••••••••"/>
+      <div style="position:relative;">
+        <input id="auth-pass" type="password" placeholder="••••••••" style="padding-right:44px;"/>
+        <button type="button" onclick="togglePassVis()" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:18px;color:var(--gray-light);padding:4px;" id="pass-eye">👁️</button>
+      </div>
     </div>
     <button class="btn-auth" onclick="doAuth()">Iniciar sesión</button>
   </div>
@@ -810,6 +813,13 @@ var _sb = window.supabase.createClient(
   'sb_publishable_xM6DcE3uyrmRGa8amsjgSg_OMydEdpx'
 );
 window._sb = _sb;
+
+function togglePassVis() {
+  var inp=document.getElementById('auth-pass');
+  var eye=document.getElementById('pass-eye');
+  if(inp.type==='password'){inp.type='text';eye.textContent='🙈';}
+  else{inp.type='password';eye.textContent='👁️';}
+}
 
 async function doAuth() {
   var email=document.getElementById('auth-email').value.trim();
