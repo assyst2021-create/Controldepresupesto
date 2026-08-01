@@ -446,8 +446,8 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
       <button class="nav-btn" data-screen="presupuesto" onclick="navigate('presupuesto')"><span class="n-icon">💳</span> Presupuesto</button>
       <button class="nav-btn" data-screen="compras" onclick="navigate('compras')"><span class="n-icon">🛒</span> Compras</button>
       <div class="nav-section">Análisis</div>
-      <button class="nav-btn" data-screen="reportes" onclick="navigate('reportes')"><span class="n-icon">📊</span> Reportes</button>
-      <button class="nav-btn" data-screen="metas" onclick="navigate('metas')"><span class="n-icon">🎯</span> Metas</button>
+      <button class="nav-btn" data-screen="metas" onclick="navigate('metas')"><span class="n-icon">🎯</span> Ahorro Programado</button>
+      <button class="nav-btn" data-screen="reportes" onclick="navigate('reportes')"><span class="n-icon">📊</span> Indicadores</button>
       <div id="admin-nav-section" style="display:none;">
         <div class="nav-section">Administración</div>
         <button class="nav-btn" data-screen="usuarios" onclick="navigate('usuarios')"><span class="n-icon">👥</span> Usuarios</button>
@@ -537,26 +537,57 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
       </div>
     </div>
 
-    <!-- REPORTES -->
+    <!-- INDICADORES -->
     <div id="screen-reportes" class="screen" style="display:none;">
-      <div class="main-header"><h2>Reportes</h2></div>
+      <div class="main-header"><h2>Indicadores</h2></div>
       <div class="main-body">
-        <div class="month-tabs" id="month-tabs"></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;" id="rep-stats-grid">
-          <div class="card stat-card"><div class="sc-label">Ingresos</div><div class="sc-val" style="color:var(--income)" id="rep-income">$0</div><div class="sc-sub" id="rep-month-label">-</div></div>
-          <div class="card stat-card"><div class="sc-label">Gastos</div><div class="sc-val" style="color:var(--expense)" id="rep-expense">$0</div><div class="sc-sub" id="rep-month-label2">-</div></div>
-          <div class="card stat-card"><div class="sc-label">Ahorro</div><div class="sc-val" style="color:var(--savings)" id="rep-savings">$0</div><div class="sc-sub" id="rep-month-label3">-</div></div>
-          <div class="card stat-card"><div class="sc-label">Balance</div><div class="sc-val" id="rep-balance">$0</div><div class="sc-sub" id="rep-month-label4">-</div></div>
+        <!-- Nav mes/año -->
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
+          <button class="btn btn-ghost" style="padding:8px 14px;" onclick="repPrevMonth()">&#8592; Anterior</button>
+          <div style="text-align:center;">
+            <div id="rep-month-nav" style="font-size:18px;font-weight:800;color:var(--gray-dark);">-</div>
+            <div id="rep-year-nav" style="font-size:13px;color:var(--gray-light);margin-top:1px;">-</div>
+          </div>
+          <button class="btn btn-ghost" style="padding:8px 14px;" onclick="repNextMonth()">Siguiente &#8594;</button>
         </div>
+        <!-- Resumen mensual -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;">
+          <div class="card stat-card"><div class="sc-label">Ingresos</div><div class="sc-val" style="color:var(--income);font-size:22px;" id="rep-income">$0</div></div>
+          <div class="card stat-card"><div class="sc-label">Gastos</div><div class="sc-val" style="color:var(--expense);font-size:22px;" id="rep-expense">$0</div></div>
+          <div class="card stat-card"><div class="sc-label">Ahorro</div><div class="sc-val" style="color:var(--savings);font-size:22px;" id="rep-savings">$0</div></div>
+          <div class="card stat-card"><div class="sc-label">Balance</div><div class="sc-val" style="font-size:22px;" id="rep-balance">$0</div></div>
+        </div>
+        <!-- Gráfica de barras mensual (12 meses) -->
+        <div class="section-head">Resumen anual</div>
+        <div class="card" style="padding:20px 20px 14px;margin-bottom:20px;overflow-x:auto;">
+          <div id="annual-chart" style="display:flex;align-items:flex-end;gap:6px;height:90px;min-width:480px;"></div>
+          <div id="annual-chart-labels" style="display:flex;gap:6px;margin-top:6px;min-width:480px;"></div>
+          <div style="display:flex;gap:16px;margin-top:12px;font-size:11px;font-weight:600;">
+            <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:3px;background:#16A34A;display:inline-block;"></span>Ingresos</span>
+            <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:3px;background:#DC2626;display:inline-block;"></span>Gastos</span>
+            <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:3px;background:#D97706;display:inline-block;"></span>Ahorro</span>
+          </div>
+        </div>
+        <!-- Calendario -->
+        <div class="section-head">Calendario de movimientos</div>
+        <div class="card" style="padding:16px;margin-bottom:20px;">
+          <div id="cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;"></div>
+        </div>
+        <!-- Detalle día seleccionado -->
+        <div id="cal-day-detail" style="display:none;margin-bottom:20px;">
+          <div class="section-head" id="cal-day-title">Movimientos del día</div>
+          <div class="card" id="cal-day-card"></div>
+        </div>
+        <!-- Gastos por categoría -->
         <div class="section-head">Gastos por categoría</div>
         <div class="card" style="padding:20px;" id="cat-bars-card"></div>
       </div>
     </div>
 
-    <!-- METAS -->
+    <!-- AHORRO PROGRAMADO -->
     <div id="screen-metas" class="screen" style="display:none;">
       <div class="main-header">
-        <h2>Metas de ahorro</h2>
+        <h2>Ahorro Programado</h2>
         <button class="btn btn-primary" onclick="openMetaModal()">+ Nueva meta</button>
       </div>
       <div class="main-body">
@@ -584,7 +615,7 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
     <button class="bnav-btn" data-screen="movimientos" onclick="navigate('movimientos')"><span class="bn-icon">📋</span>Movs</button>
     <button class="fab" onclick="openModal()">+</button>
     <button class="bnav-btn" data-screen="compras" onclick="navigate('compras')"><span class="bn-icon">🛒</span>Compras</button>
-    <button class="bnav-btn" data-screen="metas" onclick="navigate('metas')"><span class="bn-icon">🎯</span>Metas</button>
+    <button class="bnav-btn" data-screen="metas" onclick="navigate('metas')"><span class="bn-icon">🎯</span>Ahorro</button>
   </div>
 </div>
 
@@ -735,33 +766,151 @@ function renderCompras(){
   }).join('');
 }
 
-// RENDER REPORTES
+// RENDER INDICADORES
+var _calSelectedDay=null;
+
+function repPrevMonth(){
+  ST.month--;
+  if(ST.month<0){ST.month=11;ST.year--;}
+  _calSelectedDay=null;
+  renderReportes();
+}
+function repNextMonth(){
+  ST.month++;
+  if(ST.month>11){ST.month=0;ST.year++;}
+  _calSelectedDay=null;
+  renderReportes();
+}
+
 function renderReportes(){
-  var tabs=document.getElementById('month-tabs');
-  tabs.innerHTML=MONTHS_SHORT.map(function(l,i){
-    return '<button class="month-tab'+(i===ST.month?' active':'')+'" onclick="setMonth('+i+')">'+l+'</button>';
+  // Header nav
+  document.getElementById('rep-month-nav').textContent=MONTHS_FULL[ST.month];
+  document.getElementById('rep-year-nav').textContent=ST.year;
+
+  // Stats del mes seleccionado (filtrar por año)
+  var movsMonth=ST.movements.filter(function(mv){
+    var d=new Date(mv.date+'T12:00:00');
+    return d.getMonth()===ST.month&&d.getFullYear()===ST.year;
+  });
+  var mi=movsMonth.filter(function(m){return m.type==='income';}).reduce(function(a,m){return a+m.amount;},0);
+  var me=movsMonth.filter(function(m){return m.type==='expense';}).reduce(function(a,m){return a+m.amount;},0);
+  var ms=movsMonth.filter(function(m){return m.type==='savings';}).reduce(function(a,m){return a+m.amount;},0);
+  document.getElementById('rep-income').textContent=fmt(mi);
+  document.getElementById('rep-expense').textContent=fmt(me);
+  document.getElementById('rep-savings').textContent=fmt(ms);
+  var bal=mi-me-ms;
+  var balEl=document.getElementById('rep-balance');
+  balEl.textContent=fmt(bal);
+  balEl.style.color=bal>=0?'var(--income)':'var(--expense)';
+
+  // Gráfica anual: agrupar todos los movimientos de ST.year por mes
+  var annData=Array(12).fill(null).map(function(){return{i:0,e:0,s:0};});
+  ST.movements.filter(function(mv){return new Date(mv.date+'T12:00:00').getFullYear()===ST.year;})
+    .forEach(function(mv){
+      var mo=new Date(mv.date+'T12:00:00').getMonth();
+      if(mv.type==='income')annData[mo].i+=mv.amount;
+      else if(mv.type==='expense')annData[mo].e+=mv.amount;
+      else if(mv.type==='savings')annData[mo].s+=mv.amount;
+    });
+  var maxVal=Math.max(1,annData.reduce(function(mx,d){return Math.max(mx,d.i,d.e,d.s);},0));
+  var chartEl=document.getElementById('annual-chart');
+  var labelsEl=document.getElementById('annual-chart-labels');
+  var colW='calc((100% - '+((12*3-3)*6)+'px) / 12)';
+  chartEl.innerHTML=annData.map(function(d,i){
+    var hi=Math.round(d.i/maxVal*86);
+    var he=Math.round(d.e/maxVal*86);
+    var hs=Math.round(d.s/maxVal*86);
+    var isCur=i===ST.month;
+    return '<div style="display:flex;flex-direction:column;align-items:center;gap:2px;flex:1;position:relative;">'
+      +(isCur?'<div style="position:absolute;top:-6px;left:50%;transform:translateX(-50%);width:100%;background:rgba(37,99,235,.07);border-radius:6px;height:calc(100% + 10px);z-index:0;"></div>':'')
+      +'<div style="width:100%;display:flex;gap:1px;align-items:flex-end;position:relative;z-index:1;">'
+      +'<div style="flex:1;height:'+hi+'px;background:#16A34A;border-radius:3px 3px 0 0;" title="Ing: '+fmt(d.i)+'"></div>'
+      +'<div style="flex:1;height:'+he+'px;background:#DC2626;border-radius:3px 3px 0 0;" title="Gas: '+fmt(d.e)+'"></div>'
+      +'<div style="flex:1;height:'+hs+'px;background:#D97706;border-radius:3px 3px 0 0;" title="Aho: '+fmt(d.s)+'"></div>'
+      +'</div></div>';
   }).join('');
-  var m=ST.MONTHLY_DATA[ST.month]||{i:0,e:0,s:0};
-  var label=MONTHS_FULL[ST.month]+' '+ST.year;
-  document.getElementById('rep-income').textContent=fmt(m.i);
-  document.getElementById('rep-expense').textContent=fmt(m.e);
-  document.getElementById('rep-savings').textContent=fmt(m.s);
-  document.getElementById('rep-balance').textContent=fmt(m.i-m.e-m.s);
-  ['rep-month-label','rep-month-label2','rep-month-label3','rep-month-label4'].forEach(function(id){document.getElementById(id).textContent=label;});
+  labelsEl.innerHTML=MONTHS_SHORT.map(function(l,i){
+    return '<div style="flex:1;text-align:center;font-size:10px;font-weight:'+(i===ST.month?'700':'500')+';color:'+(i===ST.month?'var(--blue-mid)':'var(--gray-light)')+';">'+l+'</div>';
+  }).join('');
+
+  // Calendario
+  renderCalendar(movsMonth);
+
+  // Categorías
   var catMap={};
-  ST.movements.filter(function(mv){var d=new Date(mv.date+'T12:00:00');return mv.type==='expense'&&d.getMonth()===ST.month&&d.getFullYear()===ST.year;})
+  movsMonth.filter(function(mv){return mv.type==='expense';})
     .forEach(function(mv){catMap[mv.category||'Otro']=(catMap[mv.category||'Otro']||0)+mv.amount;});
   var total=Object.values(catMap).reduce(function(a,v){return a+v;},0);
   var bars=Object.keys(catMap).sort(function(a,b){return catMap[b]-catMap[a];}).slice(0,8);
   var card=document.getElementById('cat-bars-card');
-  if(!bars.length){card.innerHTML='<div style="color:var(--gray-light);text-align:center;padding:16px;font-size:14px;">Sin gastos para este mes.</div>';return;}
+  if(!bars.length){card.innerHTML='<div style="color:var(--gray-light);text-align:center;padding:16px;font-size:14px;">Sin gastos este mes.</div>';return;}
   card.innerHTML=bars.map(function(k){
     var pct=total>0?Math.round(catMap[k]/total*100):0;
     return '<div class="cat-row"><div class="cat-label">'+k+'</div><div class="cat-track"><div class="cat-fill" style="width:'+pct+'%"></div></div><div class="cat-val">'+fmt(catMap[k])+'</div></div>';
   }).join('');
 }
 
-function setMonth(m){ST.month=m;renderReportes();}
+function renderCalendar(movsMonth){
+  var year=ST.year,month=ST.month;
+  var firstDay=new Date(year,month,1).getDay(); // 0=Dom
+  var daysInMonth=new Date(year,month+1,0).getDate();
+  // Build day→movs map
+  var dayMap={};
+  movsMonth.forEach(function(mv){
+    var d=parseInt(mv.date.slice(8,10));
+    if(!dayMap[d])dayMap[d]=[];
+    dayMap[d].push(mv);
+  });
+  var DAYS=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+  var html=DAYS.map(function(d){
+    return '<div style="text-align:center;font-size:10px;font-weight:700;color:var(--gray-light);padding:4px 0;">'+d+'</div>';
+  }).join('');
+  // Empty cells before first day
+  for(var i=0;i<firstDay;i++) html+='<div></div>';
+  var today=new Date(),isCurrentMonth=(today.getFullYear()===year&&today.getMonth()===month);
+  for(var d=1;d<=daysInMonth;d++){
+    var movs=dayMap[d]||[];
+    var hasInc=movs.some(function(m){return m.type==='income';});
+    var hasExp=movs.some(function(m){return m.type==='expense';});
+    var hasSav=movs.some(function(m){return m.type==='savings';});
+    var isToday=isCurrentMonth&&today.getDate()===d;
+    var isSel=_calSelectedDay===d;
+    var dots=movs.length?'<div style="display:flex;justify-content:center;gap:2px;margin-top:2px;">'
+      +(hasInc?'<span style="width:5px;height:5px;border-radius:50%;background:#16A34A;display:inline-block;"></span>':'')
+      +(hasExp?'<span style="width:5px;height:5px;border-radius:50%;background:#DC2626;display:inline-block;"></span>':'')
+      +(hasSav?'<span style="width:5px;height:5px;border-radius:50%;background:#D97706;display:inline-block;"></span>':'')
+      +'</div>':'';
+    var bg=isSel?'var(--blue-mid)':isToday?'var(--blue-pale)':'transparent';
+    var color=isSel?'#fff':isToday?'var(--blue-mid)':'var(--gray-dark)';
+    var cursor=movs.length?'pointer':'default';
+    html+='<div onclick="selectCalDay('+d+')" style="text-align:center;padding:5px 2px;border-radius:10px;background:'+bg+';cursor:'+cursor+';transition:background .1s;">'
+      +'<div style="font-size:13px;font-weight:'+(isToday||isSel?'700':'500')+';color:'+color+';">'+d+'</div>'
+      +dots
+      +'</div>';
+  }
+  document.getElementById('cal-grid').innerHTML=html;
+  // Day detail
+  if(_calSelectedDay&&dayMap[_calSelectedDay]){
+    var dl=document.getElementById('cal-day-detail');
+    var movsSel=dayMap[_calSelectedDay];
+    document.getElementById('cal-day-title').textContent=_calSelectedDay+' de '+MONTHS_FULL[month]+' de '+year;
+    document.getElementById('cal-day-card').innerHTML=movsSel.map(function(mv){
+      return '<div class="mov-row"><div class="mov-icon-wrap '+cls(mv.type)+'">'+mv.icon+'</div><div style="flex:1;min-width:0;"><div class="mov-desc">'+mv.description+'</div><div class="mov-cat">'+mv.category+'</div></div><div class="mov-amount '+cls(mv.type)+'">'+sign(mv.type)+fmt(mv.amount)+'</div></div>';
+    }).join('');
+    dl.style.display='block';
+  } else {
+    document.getElementById('cal-day-detail').style.display='none';
+  }
+}
+
+function selectCalDay(d){
+  _calSelectedDay=_calSelectedDay===d?null:d;
+  var movsMonth=ST.movements.filter(function(mv){
+    var dt=new Date(mv.date+'T12:00:00');
+    return dt.getMonth()===ST.month&&dt.getFullYear()===ST.year;
+  });
+  renderCalendar(movsMonth);
+}
 
 // RENDER METAS
 function renderMetas(){
