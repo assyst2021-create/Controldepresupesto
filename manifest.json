@@ -5,11 +5,11 @@
   "start_url": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#0F6E56",
-  "theme_color": "#0F6E56",
+  "background_color": "#1E40AF",
+  "theme_color": "#1E40AF",
   "icons": [
     {
-      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='40' fill='%230F6E56'/%3E%3Crect x='32' y='60' width='128' height='90' rx='12' fill='white' opacity='.9'/%3E%3Crect x='58' y='46' width='76' height='20' rx='8' fill='white' opacity='.7'/%3E%3Crect x='44' y='88' width='50' height='8' rx='4' fill='%230F6E56' opacity='.6'/%3E%3Crect x='44' y='106' width='35' height='8' rx='4' fill='%230F6E56' opacity='.4'/%3E%3Crect x='118' y='88' width='30' height='26' rx='6' fill='%2322C55E'/%3E%3C/svg%3E",
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='40' fill='%231E40AF'/%3E%3Crect x='32' y='60' width='128' height='90' rx='12' fill='white' opacity='.9'/%3E%3Crect x='58' y='46' width='76' height='20' rx='8' fill='white' opacity='.7'/%3E%3Crect x='44' y='88' width='50' height='8' rx='4' fill='%231E40AF' opacity='.6'/%3E%3Crect x='44' y='106' width='35' height='8' rx='4' fill='%231E40AF' opacity='.4'/%3E%3Crect x='118' y='88' width='30' height='26' rx='6' fill='%233B82F6'/%3E%3C/svg%3E",
       "sizes": "192x192",
       "type": "image/svg+xml",
       "purpose": "any maskable"
