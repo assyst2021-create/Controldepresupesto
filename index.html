@@ -512,6 +512,7 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
       </div>
     </div>
     <div class="sidebar-footer">
+      <button id="btn-install" class="btn btn-primary" style="justify-content:center;display:none;background:linear-gradient(135deg,#16A34A,#22C55E);" onclick="installApp()">📲 Instalar app</button>
       <button class="btn btn-primary" style="justify-content:center;" onclick="openCambiarPass()">🔑 Cambiar contraseña</button>
       <button class="btn btn-ghost" style="justify-content:center;" onclick="doSignOut()">Cerrar sesión</button>
     </div>
@@ -682,6 +683,28 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
 </div>
 
 <script>
+// PWA INSTALL
+var _installPrompt=null;
+window.addEventListener('beforeinstallprompt',function(e){
+  e.preventDefault();
+  _installPrompt=e;
+  var btn=document.getElementById('btn-install');
+  if(btn)btn.style.display='flex';
+});
+window.addEventListener('appinstalled',function(){
+  _installPrompt=null;
+  var btn=document.getElementById('btn-install');
+  if(btn)btn.style.display='none';
+});
+function installApp(){
+  if(!_installPrompt){
+    alert('Para instalar: en tu navegador toca el menú (⋮) y selecciona "Agregar a pantalla de inicio".');
+    return;
+  }
+  _installPrompt.prompt();
+  _installPrompt.userChoice.then(function(){_installPrompt=null;document.getElementById('btn-install').style.display='none';});
+}
+
 var _sb = window.supabase.createClient(
   'https://julwbtqrojghvbajsqil.supabase.co',
   'sb_publishable_xM6DcE3uyrmRGa8amsjgSg_OMydEdpx'
