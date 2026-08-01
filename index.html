@@ -830,28 +830,35 @@ function renderCompras(){
 
 // RENDER INDICADORES
 var _calSelectedDay=null;
-var _calView='mes'; // 'mes' | 'semana'
-var _calWeekOffset=0; // semanas desde hoy
+var _calView='mes';
+var _calWeekOffset=0;
+var _repRenderTimer=null;
+
+function scheduleRenderReportes(){
+  // Debounce: evita re-renders múltiples en rápida sucesión
+  if(_repRenderTimer)clearTimeout(_repRenderTimer);
+  _repRenderTimer=setTimeout(function(){_repRenderTimer=null;renderReportes();},60);
+}
 
 function calGoToday(){
   var now=new Date();
   ST.month=now.getMonth();ST.year=now.getFullYear();
   _calWeekOffset=0;_calSelectedDay=null;
-  renderReportes();
+  scheduleRenderReportes();
 }
 function setCalView(v){
   _calView=v;_calSelectedDay=null;
   document.getElementById('gcal-vbtn-mes').classList.toggle('active',v==='mes');
   document.getElementById('gcal-vbtn-sem').classList.toggle('active',v==='semana');
-  renderReportes();
+  scheduleRenderReportes();
 }
 function repPrevMonth(){
-  if(_calView==='semana'){_calWeekOffset--;_calSelectedDay=null;renderReportes();return;}
-  ST.month--;if(ST.month<0){ST.month=11;ST.year--;}_calSelectedDay=null;renderReportes();
+  if(_calView==='semana'){_calWeekOffset--;_calSelectedDay=null;scheduleRenderReportes();return;}
+  ST.month--;if(ST.month<0){ST.month=11;ST.year--;}_calSelectedDay=null;scheduleRenderReportes();
 }
 function repNextMonth(){
-  if(_calView==='semana'){_calWeekOffset++;_calSelectedDay=null;renderReportes();return;}
-  ST.month++;if(ST.month>11){ST.month=0;ST.year++;}_calSelectedDay=null;renderReportes();
+  if(_calView==='semana'){_calWeekOffset++;_calSelectedDay=null;scheduleRenderReportes();return;}
+  ST.month++;if(ST.month>11){ST.month=0;ST.year++;}_calSelectedDay=null;scheduleRenderReportes();
 }
 
 function buildDayMap(year,month){
@@ -971,83 +978,112 @@ function renderCalWeek(dayMap){
 }
 
 function selectGcalDay(day,year,month){
-  // Update ST.month/year to the clicked cell's month if different
-  var oldSel=_calSelectedDay;
-  if(year!==ST.year||month!==ST.month){ST.year=year;ST.month=month;}
-  var movs=ST.movements.filter(function(mv){
-    var d=new Date(mv.date+'T12:00:00');
-    return d.getFullYear()===year&&d.getMonth()===month&&d.getDate()===day;
-  });
-  if(movs.length||oldSel!==day){
-    openCalSide(day,year,month,movs);
-  } else {
-    _calSelectedDay=null;
-    document.getElementById('gcal-side').classList.remove('open');
-  }
-  // Re-render only cal body
-  var dayMap=buildDayMap(ST.year,ST.month);
-  document.getElementById('gcal-body').innerHTML=_calView==='mes'?renderCalMonth(dayMap):renderCalWeek(dayMap);
+  try {
+    var oldSel=_calSelectedDay;
+    if(year!==ST.year||month!==ST.month){ST.year=year;ST.month=month;}
+    var movs=ST.movements.filter(function(mv){
+      var d=new Date(mv.date+'T12:00:00');
+      return d.getFullYear()===year&&d.getMonth()===month&&d.getDate()===day;
+    });
+    if(movs.length>0||oldSel!==day){
+      openCalSide(day,year,month,movs);
+    } else {
+      _calSelectedDay=null;
+      document.getElementById('gcal-side').classList.remove('open');
+    }
+    // Diferir re-render del calendario al siguiente frame para no bloquear el clic
+    requestAnimationFrame(function(){
+      try {
+        var calBody=document.getElementById('gcal-body');
+        if(!calBody)return;
+        var dayMap=buildDayMap(ST.year,ST.month);
+        calBody.innerHTML=_calView==='mes'?renderCalMonth(dayMap):renderCalWeek();
+      } catch(e){console.error('cal re-render error:',e);}
+    });
+  } catch(e){console.error('selectGcalDay error:',e);}
 }
 
 function renderReportes(){
-  document.getElementById('gcal-label').textContent=MONTHS_FULL[ST.month]+' '+ST.year;
+  try {
+    var lbl=document.getElementById('gcal-label');
+    if(!lbl)return; // pantalla no visible aún
+    lbl.textContent=MONTHS_FULL[ST.month]+' '+ST.year;
 
-  var movsMonth=ST.movements.filter(function(mv){
-    var d=new Date(mv.date+'T12:00:00');
-    return d.getMonth()===ST.month&&d.getFullYear()===ST.year;
-  });
-  var mi=movsMonth.filter(function(m){return m.type==='income';}).reduce(function(a,m){return a+m.amount;},0);
-  var me=movsMonth.filter(function(m){return m.type==='expense';}).reduce(function(a,m){return a+m.amount;},0);
-  var ms=movsMonth.filter(function(m){return m.type==='savings';}).reduce(function(a,m){return a+m.amount;},0);
-  document.getElementById('rep-income').textContent=fmt(mi);
-  document.getElementById('rep-expense').textContent=fmt(me);
-  document.getElementById('rep-savings').textContent=fmt(ms);
-  var bal=mi-me-ms;
-  var balEl=document.getElementById('rep-balance');
-  balEl.textContent=fmt(bal);
-  balEl.style.color=bal>=0?'var(--income)':'var(--expense)';
+    var movsMonth=ST.movements.filter(function(mv){
+      var d=new Date(mv.date+'T12:00:00');
+      return d.getMonth()===ST.month&&d.getFullYear()===ST.year;
+    });
+    var mi=movsMonth.filter(function(m){return m.type==='income';}).reduce(function(a,m){return a+m.amount;},0);
+    var me=movsMonth.filter(function(m){return m.type==='expense';}).reduce(function(a,m){return a+m.amount;},0);
+    var ms=movsMonth.filter(function(m){return m.type==='savings';}).reduce(function(a,m){return a+m.amount;},0);
+    document.getElementById('rep-income').textContent=fmt(mi);
+    document.getElementById('rep-expense').textContent=fmt(me);
+    document.getElementById('rep-savings').textContent=fmt(ms);
+    var bal=mi-me-ms;
+    var balEl=document.getElementById('rep-balance');
+    balEl.textContent=fmt(bal);
+    balEl.style.color=bal>=0?'var(--income)':'var(--expense)';
 
-  // Gráfica anual
-  var annData=Array(12).fill(null).map(function(){return{i:0,e:0,s:0};});
-  ST.movements.filter(function(mv){return new Date(mv.date+'T12:00:00').getFullYear()===ST.year;})
-    .forEach(function(mv){
-      var mo=new Date(mv.date+'T12:00:00').getMonth();
+    // Gráfica anual — calcula primero, luego un solo innerHTML
+    var annData=Array(12).fill(null).map(function(){return{i:0,e:0,s:0};});
+    ST.movements.forEach(function(mv){
+      var d=new Date(mv.date+'T12:00:00');
+      if(d.getFullYear()!==ST.year)return;
+      var mo=d.getMonth();
       if(mv.type==='income')annData[mo].i+=mv.amount;
       else if(mv.type==='expense')annData[mo].e+=mv.amount;
       else if(mv.type==='savings')annData[mo].s+=mv.amount;
     });
-  var maxVal=Math.max(1,annData.reduce(function(mx,d){return Math.max(mx,d.i,d.e,d.s);},0));
-  document.getElementById('annual-chart').innerHTML=annData.map(function(d,i){
-    var hi=Math.round(d.i/maxVal*86);var he=Math.round(d.e/maxVal*86);var hs=Math.round(d.s/maxVal*86);
-    var isCur=i===ST.month;
-    return '<div style="display:flex;flex-direction:column;align-items:center;flex:1;cursor:pointer;" onclick="ST.month='+i+';_calSelectedDay=null;renderReportes();">'
-      +(isCur?'<div style="position:absolute;inset:-4px 0;background:rgba(37,99,235,.06);border-radius:6px;z-index:0;"></div>':'')
-      +'<div style="width:100%;display:flex;gap:1px;align-items:flex-end;position:relative;z-index:1;">'
-      +'<div style="flex:1;height:'+hi+'px;background:#16A34A;border-radius:3px 3px 0 0;min-height:'+(d.i>0?3:0)+'px;"></div>'
-      +'<div style="flex:1;height:'+he+'px;background:#DC2626;border-radius:3px 3px 0 0;min-height:'+(d.e>0?3:0)+'px;"></div>'
-      +'<div style="flex:1;height:'+hs+'px;background:#D97706;border-radius:3px 3px 0 0;min-height:'+(d.s>0?3:0)+'px;"></div>'
-      +'</div></div>';
-  }).join('');
-  document.getElementById('annual-chart-labels').innerHTML=MONTHS_SHORT.map(function(l,i){
-    return '<div style="flex:1;text-align:center;font-size:10px;font-weight:'+(i===ST.month?'700':'500')+';color:'+(i===ST.month?'var(--blue-mid)':'var(--gray-light)')+';">'+l+'</div>';
-  }).join('');
+    var maxVal=Math.max(1,annData.reduce(function(mx,d){return Math.max(mx,d.i,d.e,d.s);},0));
+    var chartH=document.getElementById('annual-chart');
+    if(chartH){
+      chartH.innerHTML=annData.map(function(d,i){
+        var hi=Math.round(d.i/maxVal*82);var he=Math.round(d.e/maxVal*82);var hs=Math.round(d.s/maxVal*82);
+        var isCur=i===ST.month;
+        return '<div style="position:relative;display:flex;flex-direction:column;align-items:center;flex:1;cursor:pointer;border-radius:6px;background:'+(isCur?'rgba(37,99,235,.07)':'transparent')+';padding-bottom:0;" onclick="repSelectMonth('+i+')">'
+          +'<div style="width:100%;display:flex;gap:1px;align-items:flex-end;">'
+          +'<div style="flex:1;height:'+hi+'px;background:#16A34A;border-radius:3px 3px 0 0;min-height:'+(d.i>0?3:0)+'px;"></div>'
+          +'<div style="flex:1;height:'+he+'px;background:#DC2626;border-radius:3px 3px 0 0;min-height:'+(d.e>0?3:0)+'px;"></div>'
+          +'<div style="flex:1;height:'+hs+'px;background:#D97706;border-radius:3px 3px 0 0;min-height:'+(d.s>0?3:0)+'px;"></div>'
+          +'</div></div>';
+      }).join('');
+    }
+    var labH=document.getElementById('annual-chart-labels');
+    if(labH){
+      labH.innerHTML=MONTHS_SHORT.map(function(l,i){
+        return '<div style="flex:1;text-align:center;font-size:10px;font-weight:'+(i===ST.month?'700':'500')+';color:'+(i===ST.month?'var(--blue-mid)':'var(--gray-light)')+';">'+l+'</div>';
+      }).join('');
+    }
 
-  // Render cal
-  var dayMap=buildDayMap(ST.year,ST.month);
-  document.getElementById('gcal-body').innerHTML=_calView==='mes'?renderCalMonth(dayMap):renderCalWeek(dayMap);
+    // Calendario — aplazado un frame para no bloquear el hilo principal
+    var calBody=document.getElementById('gcal-body');
+    if(calBody){
+      var dayMap=buildDayMap(ST.year,ST.month);
+      calBody.innerHTML=_calView==='mes'?renderCalMonth(dayMap):renderCalWeek();
+    }
 
-  // Categorías
-  var catMap={};
-  movsMonth.filter(function(mv){return mv.type==='expense';})
-    .forEach(function(mv){catMap[mv.category||'Otro']=(catMap[mv.category||'Otro']||0)+mv.amount;});
-  var total=Object.values(catMap).reduce(function(a,v){return a+v;},0);
-  var bars=Object.keys(catMap).sort(function(a,b){return catMap[b]-catMap[a];}).slice(0,8);
-  var card=document.getElementById('cat-bars-card');
-  if(!bars.length){card.innerHTML='<div style="color:var(--gray-light);text-align:center;padding:16px;font-size:14px;">Sin gastos este mes.</div>';return;}
-  card.innerHTML=bars.map(function(k){
-    var pct=total>0?Math.round(catMap[k]/total*100):0;
-    return '<div class="cat-row"><div class="cat-label">'+k+'</div><div class="cat-track"><div class="cat-fill" style="width:'+pct+'%"></div></div><div class="cat-val">'+fmt(catMap[k])+'</div></div>';
-  }).join('');
+    // Categorías
+    var catMap={};
+    movsMonth.filter(function(mv){return mv.type==='expense';})
+      .forEach(function(mv){catMap[mv.category||'Otro']=(catMap[mv.category||'Otro']||0)+mv.amount;});
+    var total=Object.values(catMap).reduce(function(a,v){return a+v;},0);
+    var bars=Object.keys(catMap).sort(function(a,b){return catMap[b]-catMap[a];}).slice(0,8);
+    var card=document.getElementById('cat-bars-card');
+    if(card){
+      if(!bars.length){card.innerHTML='<div style="color:var(--gray-light);text-align:center;padding:16px;font-size:14px;">Sin gastos este mes.</div>';}
+      else{card.innerHTML=bars.map(function(k){
+        var pct=total>0?Math.round(catMap[k]/total*100):0;
+        return '<div class="cat-row"><div class="cat-label">'+k+'</div><div class="cat-track"><div class="cat-fill" style="width:'+pct+'%"></div></div><div class="cat-val">'+fmt(catMap[k])+'</div></div>';
+      }).join('');}
+    }
+  } catch(e){
+    console.error('renderReportes error:',e);
+  }
+}
+
+function repSelectMonth(i){
+  ST.month=i;_calSelectedDay=null;
+  scheduleRenderReportes();
 }
 
 // RENDER METAS
