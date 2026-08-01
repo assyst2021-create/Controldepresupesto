@@ -206,6 +206,59 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
 .bnav-btn .bn-icon{font-size:21px;}
 .fab{width:52px;height:52px;background:linear-gradient(135deg,var(--blue-mid),var(--blue-light));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;color:#fff;border:none;cursor:pointer;box-shadow:0 4px 16px rgba(37,99,235,.4);}
 
+/* CALENDAR GOOGLE-STYLE */
+.gcal-wrap{display:flex;gap:0;border-radius:20px;overflow:hidden;border:1px solid var(--border);background:#fff;}
+.gcal-main{flex:1;min-width:0;}
+.gcal-toolbar{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--border);}
+.gcal-month-label{font-size:18px;font-weight:800;color:var(--gray-dark);min-width:160px;}
+.gcal-nav-btn{width:32px;height:32px;border:none;border-radius:8px;background:#F1F5F9;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:background .15s;}
+.gcal-nav-btn:hover{background:#E2E8F0;}
+.gcal-today-btn{padding:6px 14px;border:1.5px solid var(--border);border-radius:8px;background:transparent;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;cursor:pointer;color:var(--gray);}
+.gcal-today-btn:hover{background:#F8FAFC;}
+.gcal-view-toggle{display:flex;border:1.5px solid var(--border);border-radius:10px;overflow:hidden;margin-left:auto;}
+.gcal-vbtn{padding:6px 16px;border:none;background:transparent;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;cursor:pointer;color:var(--gray);transition:all .15s;}
+.gcal-vbtn.active{background:var(--blue-mid);color:#fff;}
+/* Month grid */
+.gcal-weekdays{display:grid;grid-template-columns:repeat(7,1fr);border-bottom:1px solid var(--border);}
+.gcal-wd{text-align:center;padding:8px 0;font-size:11px;font-weight:700;color:var(--gray-light);text-transform:uppercase;letter-spacing:.06em;}
+.gcal-days{display:grid;grid-template-columns:repeat(7,1fr);}
+.gcal-day{min-height:90px;border-right:1px solid #F1F5F9;border-bottom:1px solid #F1F5F9;padding:6px 7px;cursor:pointer;transition:background .1s;position:relative;}
+.gcal-day:nth-child(7n){border-right:none;}
+.gcal-day:hover{background:#FAFBFF;}
+.gcal-day.other-month .gcal-dn{color:#CBD5E1;}
+.gcal-day.today .gcal-dn-wrap{display:inline-flex;width:26px;height:26px;background:var(--blue-mid);border-radius:50%;align-items:center;justify-content:center;}
+.gcal-day.today .gcal-dn{color:#fff;font-weight:800;}
+.gcal-day.selected{background:var(--blue-pale);}
+.gcal-dn{font-size:13px;font-weight:600;color:var(--gray-dark);}
+.gcal-dn-wrap{display:inline-flex;align-items:center;justify-content:center;margin-bottom:4px;}
+.gcal-chip{font-size:11px;font-weight:600;padding:2px 7px;border-radius:6px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;display:block;cursor:pointer;}
+.gcal-chip.inc{background:#DCFCE7;color:#15803D;}
+.gcal-chip.exp{background:#FEE2E2;color:#B91C1C;}
+.gcal-chip.sav{background:#FEF9C3;color:#92400E;}
+.gcal-more{font-size:11px;color:var(--blue-mid);font-weight:700;cursor:pointer;}
+/* Side panel */
+.gcal-side{width:260px;flex-shrink:0;border-left:1px solid var(--border);display:none;flex-direction:column;}
+.gcal-side.open{display:flex;}
+.gcal-side-head{padding:16px 16px 12px;border-bottom:1px solid var(--border);}
+.gcal-side-date{font-size:15px;font-weight:800;color:var(--gray-dark);}
+.gcal-side-sub{font-size:12px;color:var(--gray-light);margin-top:2px;}
+.gcal-side-movs{flex:1;overflow-y:auto;padding:10px 12px;display:flex;flex-direction:column;gap:8px;}
+.gcal-side-mov{background:#F8FAFC;border-radius:12px;padding:10px 12px;}
+.gsm-desc{font-size:13px;font-weight:700;color:var(--gray-dark);}
+.gsm-cat{font-size:11px;color:var(--gray-light);margin-top:1px;}
+.gsm-amt{font-size:14px;font-weight:800;margin-top:6px;}
+/* Week view */
+.gcal-week-grid{display:grid;grid-template-columns:40px repeat(7,1fr);border-top:1px solid var(--border);}
+.gcal-week-col{border-right:1px solid #F1F5F9;}
+.gcal-week-col:last-child{border-right:none;}
+.gcal-week-dh{text-align:center;padding:8px 4px;border-bottom:1px solid var(--border);}
+.gcal-week-dh .wdn{font-size:10px;font-weight:700;color:var(--gray-light);text-transform:uppercase;}
+.gcal-week-dh .wdd{font-size:20px;font-weight:800;color:var(--gray-dark);line-height:1.2;}
+.gcal-week-dh.today-col .wdd{background:var(--blue-mid);color:#fff;width:34px;height:34px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;}
+.gcal-week-body{min-height:200px;padding:6px 4px;display:flex;flex-direction:column;gap:4px;}
+.gcal-time-col{padding-top:8px;}
+.gcal-time-row{height:28px;font-size:10px;color:var(--gray-light);font-weight:500;text-align:right;padding-right:6px;}
+
 @media(max-width:767px){
   #sidebar{display:none;}
   #bottom-nav{display:block;}
@@ -216,6 +269,11 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
   .panel-grid,.budget-grid{grid-template-columns:1fr;}
   .modal-box{padding:22px 18px;}
   .modal-row{grid-template-columns:1fr;}
+  .gcal-side{width:100%;border-left:none;border-top:1px solid var(--border);}
+  .gcal-wrap{flex-direction:column;}
+  .gcal-day{min-height:60px;}
+  .gcal-chip{display:none;}
+  .gcal-more{font-size:10px;}
 }
 </style>
 </head>
@@ -541,15 +599,6 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
     <div id="screen-reportes" class="screen" style="display:none;">
       <div class="main-header"><h2>Indicadores</h2></div>
       <div class="main-body">
-        <!-- Nav mes/año -->
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
-          <button class="btn btn-ghost" style="padding:8px 14px;" onclick="repPrevMonth()">&#8592; Anterior</button>
-          <div style="text-align:center;">
-            <div id="rep-month-nav" style="font-size:18px;font-weight:800;color:var(--gray-dark);">-</div>
-            <div id="rep-year-nav" style="font-size:13px;color:var(--gray-light);margin-top:1px;">-</div>
-          </div>
-          <button class="btn btn-ghost" style="padding:8px 14px;" onclick="repNextMonth()">Siguiente &#8594;</button>
-        </div>
         <!-- Resumen mensual -->
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;">
           <div class="card stat-card"><div class="sc-label">Ingresos</div><div class="sc-val" style="color:var(--income);font-size:22px;" id="rep-income">$0</div></div>
@@ -568,15 +617,28 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
             <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:3px;background:#D97706;display:inline-block;"></span>Ahorro</span>
           </div>
         </div>
-        <!-- Calendario -->
-        <div class="section-head">Calendario de movimientos</div>
-        <div class="card" style="padding:16px;margin-bottom:20px;">
-          <div id="cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;"></div>
-        </div>
-        <!-- Detalle día seleccionado -->
-        <div id="cal-day-detail" style="display:none;margin-bottom:20px;">
-          <div class="section-head" id="cal-day-title">Movimientos del día</div>
-          <div class="card" id="cal-day-card"></div>
+        <!-- Calendario estilo Google -->
+        <div class="gcal-wrap" style="margin-bottom:20px;">
+          <div class="gcal-main">
+            <div class="gcal-toolbar">
+              <button class="gcal-nav-btn" onclick="repPrevMonth()">&#8249;</button>
+              <button class="gcal-nav-btn" onclick="repNextMonth()">&#8250;</button>
+              <div class="gcal-month-label" id="gcal-label">-</div>
+              <button class="gcal-today-btn" onclick="calGoToday()">Hoy</button>
+              <div class="gcal-view-toggle">
+                <button class="gcal-vbtn active" id="gcal-vbtn-mes" onclick="setCalView('mes')">Mes</button>
+                <button class="gcal-vbtn" id="gcal-vbtn-sem" onclick="setCalView('semana')">Semana</button>
+              </div>
+            </div>
+            <div id="gcal-body"></div>
+          </div>
+          <div class="gcal-side" id="gcal-side">
+            <div class="gcal-side-head">
+              <div class="gcal-side-date" id="gcal-side-date">-</div>
+              <div class="gcal-side-sub" id="gcal-side-sub">Sin movimientos</div>
+            </div>
+            <div class="gcal-side-movs" id="gcal-side-movs"></div>
+          </div>
         </div>
         <!-- Gastos por categoría -->
         <div class="section-head">Gastos por categoría</div>
@@ -768,26 +830,168 @@ function renderCompras(){
 
 // RENDER INDICADORES
 var _calSelectedDay=null;
+var _calView='mes'; // 'mes' | 'semana'
+var _calWeekOffset=0; // semanas desde hoy
 
-function repPrevMonth(){
-  ST.month--;
-  if(ST.month<0){ST.month=11;ST.year--;}
-  _calSelectedDay=null;
+function calGoToday(){
+  var now=new Date();
+  ST.month=now.getMonth();ST.year=now.getFullYear();
+  _calWeekOffset=0;_calSelectedDay=null;
   renderReportes();
 }
-function repNextMonth(){
-  ST.month++;
-  if(ST.month>11){ST.month=0;ST.year++;}
-  _calSelectedDay=null;
+function setCalView(v){
+  _calView=v;_calSelectedDay=null;
+  document.getElementById('gcal-vbtn-mes').classList.toggle('active',v==='mes');
+  document.getElementById('gcal-vbtn-sem').classList.toggle('active',v==='semana');
   renderReportes();
+}
+function repPrevMonth(){
+  if(_calView==='semana'){_calWeekOffset--;_calSelectedDay=null;renderReportes();return;}
+  ST.month--;if(ST.month<0){ST.month=11;ST.year--;}_calSelectedDay=null;renderReportes();
+}
+function repNextMonth(){
+  if(_calView==='semana'){_calWeekOffset++;_calSelectedDay=null;renderReportes();return;}
+  ST.month++;if(ST.month>11){ST.month=0;ST.year++;}_calSelectedDay=null;renderReportes();
+}
+
+function buildDayMap(year,month){
+  var map={};
+  ST.movements.filter(function(mv){
+    var d=new Date(mv.date+'T12:00:00');
+    return d.getFullYear()===year&&d.getMonth()===month;
+  }).forEach(function(mv){
+    var d=parseInt(mv.date.slice(8,10));
+    if(!map[d])map[d]=[];
+    map[d].push(mv);
+  });
+  return map;
+}
+
+function openCalSide(day,year,month,movs){
+  _calSelectedDay=day;
+  var DAYS_LONG=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+  var dt=new Date(year,month,day);
+  document.getElementById('gcal-side-date').textContent=DAYS_LONG[dt.getDay()]+', '+day+' de '+MONTHS_FULL[month];
+  var totI=movs.filter(function(m){return m.type==='income';}).reduce(function(a,m){return a+m.amount;},0);
+  var totE=movs.filter(function(m){return m.type==='expense';}).reduce(function(a,m){return a+m.amount;},0);
+  var parts=[];
+  if(totI)parts.push('<span style="color:#15803D;font-weight:700;">+'+fmt(totI)+'</span>');
+  if(totE)parts.push('<span style="color:#B91C1C;font-weight:700;">-'+fmt(totE)+'</span>');
+  document.getElementById('gcal-side-sub').innerHTML=parts.length?parts.join(' · '):'Sin movimientos';
+  document.getElementById('gcal-side-movs').innerHTML=movs.map(function(mv){
+    var colors={income:'#15803D',expense:'#B91C1C',savings:'#92400E'};
+    return '<div class="gcal-side-mov">'
+      +'<div class="gsm-desc">'+mv.icon+' '+mv.description+'</div>'
+      +'<div class="gsm-cat">'+mv.category+'</div>'
+      +'<div class="gsm-amt" style="color:'+colors[mv.type]+';">'+sign(mv.type)+fmt(mv.amount)+'</div>'
+      +'</div>';
+  }).join('');
+  document.getElementById('gcal-side').classList.add('open');
+}
+
+function renderCalMonth(dayMap){
+  var year=ST.year,month=ST.month;
+  var firstDay=new Date(year,month,1).getDay();
+  var daysInMonth=new Date(year,month+1,0).getDate();
+  var prevDays=new Date(year,month,0).getDate();
+  var today=new Date();
+  var DAYS=['LUN','MAR','MIÉ','JUE','VIE','SÁB','DOM'];
+  // Adjust so week starts Monday
+  var startOffset=(firstDay+6)%7; // Mon=0
+
+  var wdHtml='<div class="gcal-weekdays">'+DAYS.map(function(d){return '<div class="gcal-wd">'+d+'</div>';}).join('')+'</div>';
+
+  var cells='';
+  var totalCells=Math.ceil((startOffset+daysInMonth)/7)*7;
+  for(var i=0;i<totalCells;i++){
+    var dayNum,isCurMonth=true,cellYear=year,cellMonth=month;
+    if(i<startOffset){dayNum=prevDays-startOffset+i+1;isCurMonth=false;cellMonth=month-1;if(cellMonth<0){cellMonth=11;cellYear--;}}
+    else if(i>=startOffset+daysInMonth){dayNum=i-startOffset-daysInMonth+1;isCurMonth=false;cellMonth=month+1;if(cellMonth>11){cellMonth=0;cellYear++;}}
+    else{dayNum=i-startOffset+1;}
+    var isToday=today.getFullYear()===cellYear&&today.getMonth()===cellMonth&&today.getDate()===dayNum;
+    var isSel=_calSelectedDay===dayNum&&isCurMonth;
+    var movs=isCurMonth&&dayMap[dayNum]?dayMap[dayNum]:[];
+    var dnWrap=isToday?'<div class="gcal-dn-wrap"><div class="gcal-dn">'+dayNum+'</div></div>':'<div class="gcal-dn-wrap"><div class="gcal-dn">'+dayNum+'</div></div>';
+    // Show up to 2 chips, then "+N más"
+    var chips='';
+    var shown=Math.min(2,movs.length);
+    for(var j=0;j<shown;j++){
+      var mv=movs[j];
+      chips+='<span class="gcal-chip '+cls(mv.type)+'">'+sign(mv.type)+' '+mv.description+'</span>';
+    }
+    if(movs.length>2)chips+='<span class="gcal-more">+' +(movs.length-2)+' más</span>';
+    var cellCls='gcal-day'+(isCurMonth?'':' other-month')+(isToday?' today':'')+(isSel?' selected':'');
+    var onclick=movs.length||isCurMonth?'onclick="selectGcalDay('+dayNum+','+cellYear+','+cellMonth+')"':'';
+    cells+='<div class="'+cellCls+'" '+onclick+'>'+dnWrap+chips+'</div>';
+  }
+  return wdHtml+'<div class="gcal-days">'+cells+'</div>';
+}
+
+function renderCalWeek(dayMap){
+  var now=new Date();
+  var todayMs=new Date(now.getFullYear(),now.getMonth(),now.getDate()).getTime();
+  // Get Monday of current week + offset
+  var dow=(now.getDay()+6)%7;
+  var mondayMs=todayMs-dow*86400000+_calWeekOffset*7*86400000;
+  var DAYS_SHORT=['LUN','MAR','MIÉ','JUE','VIE','SÁB','DOM'];
+  var html='<div class="gcal-week-grid">';
+  // Header row
+  html+='<div class="gcal-week-col" style="border-bottom:1px solid var(--border);"></div>';
+  var weekDates=[];
+  for(var i=0;i<7;i++){
+    var dt=new Date(mondayMs+i*86400000);
+    weekDates.push(dt);
+    var isToday=dt.getTime()===todayMs;
+    html+='<div class="gcal-week-col gcal-week-dh'+(isToday?' today-col':'')+'"><div class="wdn">'+DAYS_SHORT[i]+'</div><div class="wdd">'+dt.getDate()+'</div></div>';
+  }
+  html+='</div>';
+  // Body
+  html+='<div class="gcal-week-grid" style="align-items:start;">';
+  html+='<div class="gcal-time-col"></div>';
+  for(var i=0;i<7;i++){
+    var dt=weekDates[i];
+    var yr=dt.getFullYear(),mo=dt.getMonth(),dy=dt.getDate();
+    // Get movs for this day
+    var movs=ST.movements.filter(function(mv){
+      var d=new Date(mv.date+'T12:00:00');
+      return d.getFullYear()===yr&&d.getMonth()===mo&&d.getDate()===dy;
+    });
+    var isToday=dt.getTime()===todayMs;
+    var isSel=_calSelectedDay===dy&&ST.month===mo&&ST.year===yr;
+    html+='<div class="gcal-week-col gcal-week-body'+(isToday?' today-col':'')+(isSel?' selected':'')
+      +'" onclick="selectGcalDay('+dy+','+yr+','+mo+')" style="cursor:pointer;min-height:120px;">';
+    movs.forEach(function(mv){
+      html+='<span class="gcal-chip '+cls(mv.type)+'" style="display:block;margin-bottom:3px;">'+mv.icon+' '+mv.description+'<br><strong>'+sign(mv.type)+fmt(mv.amount)+'</strong></span>';
+    });
+    if(!movs.length)html+='<div style="height:120px;"></div>';
+    html+='</div>';
+  }
+  html+='</div>';
+  return html;
+}
+
+function selectGcalDay(day,year,month){
+  // Update ST.month/year to the clicked cell's month if different
+  var oldSel=_calSelectedDay;
+  if(year!==ST.year||month!==ST.month){ST.year=year;ST.month=month;}
+  var movs=ST.movements.filter(function(mv){
+    var d=new Date(mv.date+'T12:00:00');
+    return d.getFullYear()===year&&d.getMonth()===month&&d.getDate()===day;
+  });
+  if(movs.length||oldSel!==day){
+    openCalSide(day,year,month,movs);
+  } else {
+    _calSelectedDay=null;
+    document.getElementById('gcal-side').classList.remove('open');
+  }
+  // Re-render only cal body
+  var dayMap=buildDayMap(ST.year,ST.month);
+  document.getElementById('gcal-body').innerHTML=_calView==='mes'?renderCalMonth(dayMap):renderCalWeek(dayMap);
 }
 
 function renderReportes(){
-  // Header nav
-  document.getElementById('rep-month-nav').textContent=MONTHS_FULL[ST.month];
-  document.getElementById('rep-year-nav').textContent=ST.year;
+  document.getElementById('gcal-label').textContent=MONTHS_FULL[ST.month]+' '+ST.year;
 
-  // Stats del mes seleccionado (filtrar por año)
   var movsMonth=ST.movements.filter(function(mv){
     var d=new Date(mv.date+'T12:00:00');
     return d.getMonth()===ST.month&&d.getFullYear()===ST.year;
@@ -803,7 +1007,7 @@ function renderReportes(){
   balEl.textContent=fmt(bal);
   balEl.style.color=bal>=0?'var(--income)':'var(--expense)';
 
-  // Gráfica anual: agrupar todos los movimientos de ST.year por mes
+  // Gráfica anual
   var annData=Array(12).fill(null).map(function(){return{i:0,e:0,s:0};});
   ST.movements.filter(function(mv){return new Date(mv.date+'T12:00:00').getFullYear()===ST.year;})
     .forEach(function(mv){
@@ -813,28 +1017,24 @@ function renderReportes(){
       else if(mv.type==='savings')annData[mo].s+=mv.amount;
     });
   var maxVal=Math.max(1,annData.reduce(function(mx,d){return Math.max(mx,d.i,d.e,d.s);},0));
-  var chartEl=document.getElementById('annual-chart');
-  var labelsEl=document.getElementById('annual-chart-labels');
-  var colW='calc((100% - '+((12*3-3)*6)+'px) / 12)';
-  chartEl.innerHTML=annData.map(function(d,i){
-    var hi=Math.round(d.i/maxVal*86);
-    var he=Math.round(d.e/maxVal*86);
-    var hs=Math.round(d.s/maxVal*86);
+  document.getElementById('annual-chart').innerHTML=annData.map(function(d,i){
+    var hi=Math.round(d.i/maxVal*86);var he=Math.round(d.e/maxVal*86);var hs=Math.round(d.s/maxVal*86);
     var isCur=i===ST.month;
-    return '<div style="display:flex;flex-direction:column;align-items:center;gap:2px;flex:1;position:relative;">'
-      +(isCur?'<div style="position:absolute;top:-6px;left:50%;transform:translateX(-50%);width:100%;background:rgba(37,99,235,.07);border-radius:6px;height:calc(100% + 10px);z-index:0;"></div>':'')
+    return '<div style="display:flex;flex-direction:column;align-items:center;flex:1;cursor:pointer;" onclick="ST.month='+i+';_calSelectedDay=null;renderReportes();">'
+      +(isCur?'<div style="position:absolute;inset:-4px 0;background:rgba(37,99,235,.06);border-radius:6px;z-index:0;"></div>':'')
       +'<div style="width:100%;display:flex;gap:1px;align-items:flex-end;position:relative;z-index:1;">'
-      +'<div style="flex:1;height:'+hi+'px;background:#16A34A;border-radius:3px 3px 0 0;" title="Ing: '+fmt(d.i)+'"></div>'
-      +'<div style="flex:1;height:'+he+'px;background:#DC2626;border-radius:3px 3px 0 0;" title="Gas: '+fmt(d.e)+'"></div>'
-      +'<div style="flex:1;height:'+hs+'px;background:#D97706;border-radius:3px 3px 0 0;" title="Aho: '+fmt(d.s)+'"></div>'
+      +'<div style="flex:1;height:'+hi+'px;background:#16A34A;border-radius:3px 3px 0 0;min-height:'+(d.i>0?3:0)+'px;"></div>'
+      +'<div style="flex:1;height:'+he+'px;background:#DC2626;border-radius:3px 3px 0 0;min-height:'+(d.e>0?3:0)+'px;"></div>'
+      +'<div style="flex:1;height:'+hs+'px;background:#D97706;border-radius:3px 3px 0 0;min-height:'+(d.s>0?3:0)+'px;"></div>'
       +'</div></div>';
   }).join('');
-  labelsEl.innerHTML=MONTHS_SHORT.map(function(l,i){
+  document.getElementById('annual-chart-labels').innerHTML=MONTHS_SHORT.map(function(l,i){
     return '<div style="flex:1;text-align:center;font-size:10px;font-weight:'+(i===ST.month?'700':'500')+';color:'+(i===ST.month?'var(--blue-mid)':'var(--gray-light)')+';">'+l+'</div>';
   }).join('');
 
-  // Calendario
-  renderCalendar(movsMonth);
+  // Render cal
+  var dayMap=buildDayMap(ST.year,ST.month);
+  document.getElementById('gcal-body').innerHTML=_calView==='mes'?renderCalMonth(dayMap):renderCalWeek(dayMap);
 
   // Categorías
   var catMap={};
@@ -848,68 +1048,6 @@ function renderReportes(){
     var pct=total>0?Math.round(catMap[k]/total*100):0;
     return '<div class="cat-row"><div class="cat-label">'+k+'</div><div class="cat-track"><div class="cat-fill" style="width:'+pct+'%"></div></div><div class="cat-val">'+fmt(catMap[k])+'</div></div>';
   }).join('');
-}
-
-function renderCalendar(movsMonth){
-  var year=ST.year,month=ST.month;
-  var firstDay=new Date(year,month,1).getDay(); // 0=Dom
-  var daysInMonth=new Date(year,month+1,0).getDate();
-  // Build day→movs map
-  var dayMap={};
-  movsMonth.forEach(function(mv){
-    var d=parseInt(mv.date.slice(8,10));
-    if(!dayMap[d])dayMap[d]=[];
-    dayMap[d].push(mv);
-  });
-  var DAYS=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
-  var html=DAYS.map(function(d){
-    return '<div style="text-align:center;font-size:10px;font-weight:700;color:var(--gray-light);padding:4px 0;">'+d+'</div>';
-  }).join('');
-  // Empty cells before first day
-  for(var i=0;i<firstDay;i++) html+='<div></div>';
-  var today=new Date(),isCurrentMonth=(today.getFullYear()===year&&today.getMonth()===month);
-  for(var d=1;d<=daysInMonth;d++){
-    var movs=dayMap[d]||[];
-    var hasInc=movs.some(function(m){return m.type==='income';});
-    var hasExp=movs.some(function(m){return m.type==='expense';});
-    var hasSav=movs.some(function(m){return m.type==='savings';});
-    var isToday=isCurrentMonth&&today.getDate()===d;
-    var isSel=_calSelectedDay===d;
-    var dots=movs.length?'<div style="display:flex;justify-content:center;gap:2px;margin-top:2px;">'
-      +(hasInc?'<span style="width:5px;height:5px;border-radius:50%;background:#16A34A;display:inline-block;"></span>':'')
-      +(hasExp?'<span style="width:5px;height:5px;border-radius:50%;background:#DC2626;display:inline-block;"></span>':'')
-      +(hasSav?'<span style="width:5px;height:5px;border-radius:50%;background:#D97706;display:inline-block;"></span>':'')
-      +'</div>':'';
-    var bg=isSel?'var(--blue-mid)':isToday?'var(--blue-pale)':'transparent';
-    var color=isSel?'#fff':isToday?'var(--blue-mid)':'var(--gray-dark)';
-    var cursor=movs.length?'pointer':'default';
-    html+='<div onclick="selectCalDay('+d+')" style="text-align:center;padding:5px 2px;border-radius:10px;background:'+bg+';cursor:'+cursor+';transition:background .1s;">'
-      +'<div style="font-size:13px;font-weight:'+(isToday||isSel?'700':'500')+';color:'+color+';">'+d+'</div>'
-      +dots
-      +'</div>';
-  }
-  document.getElementById('cal-grid').innerHTML=html;
-  // Day detail
-  if(_calSelectedDay&&dayMap[_calSelectedDay]){
-    var dl=document.getElementById('cal-day-detail');
-    var movsSel=dayMap[_calSelectedDay];
-    document.getElementById('cal-day-title').textContent=_calSelectedDay+' de '+MONTHS_FULL[month]+' de '+year;
-    document.getElementById('cal-day-card').innerHTML=movsSel.map(function(mv){
-      return '<div class="mov-row"><div class="mov-icon-wrap '+cls(mv.type)+'">'+mv.icon+'</div><div style="flex:1;min-width:0;"><div class="mov-desc">'+mv.description+'</div><div class="mov-cat">'+mv.category+'</div></div><div class="mov-amount '+cls(mv.type)+'">'+sign(mv.type)+fmt(mv.amount)+'</div></div>';
-    }).join('');
-    dl.style.display='block';
-  } else {
-    document.getElementById('cal-day-detail').style.display='none';
-  }
-}
-
-function selectCalDay(d){
-  _calSelectedDay=_calSelectedDay===d?null:d;
-  var movsMonth=ST.movements.filter(function(mv){
-    var dt=new Date(mv.date+'T12:00:00');
-    return dt.getMonth()===ST.month&&dt.getFullYear()===ST.year;
-  });
-  renderCalendar(movsMonth);
 }
 
 // RENDER METAS
