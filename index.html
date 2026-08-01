@@ -233,15 +233,7 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
       <h1>Mis Finanzas</h1>
       <p>Control de presupuesto personal</p>
     </div>
-    <div id="auth-tabs">
-      <button class="auth-tab active" onclick="switchAuthTab('login')">Iniciar sesión</button>
-      <button class="auth-tab" onclick="switchAuthTab('register')">Registrarse</button>
-    </div>
     <div id="auth-error" class="auth-error"></div>
-    <div id="auth-name-group" class="form-group" style="display:none">
-      <label>Nombre completo</label>
-      <input id="auth-name" type="text" placeholder="Tu nombre"/>
-    </div>
     <div class="form-group">
       <label>Correo electrónico</label>
       <input id="auth-email" type="email" placeholder="correo@ejemplo.com"/>
@@ -250,7 +242,7 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
       <label>Contraseña</label>
       <input id="auth-pass" type="password" placeholder="••••••••"/>
     </div>
-    <button class="btn-auth" id="auth-btn" onclick="doAuth()">Iniciar sesión</button>
+    <button class="btn-auth" onclick="doAuth()">Iniciar sesión</button>
   </div>
 </div>
 
@@ -351,6 +343,25 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
   </div>
 </div>
 
+<!-- MODAL CREAR USUARIO -->
+<div id="modal-usuario" class="modal-overlay" onclick="if(event.target===this)closeUsuarioModal()">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3>Crear usuario</h3>
+      <button class="modal-close" onclick="closeUsuarioModal()">&#x2715;</button>
+    </div>
+    <div class="form-group"><label>Nombre completo</label><input id="u-nombre" type="text" placeholder="Nombre del usuario"/></div>
+    <div class="form-group"><label>Correo electrónico</label><input id="u-email" type="email" placeholder="correo@ejemplo.com"/></div>
+    <div class="form-group"><label>Contraseña temporal</label><input id="u-pass" type="text" placeholder="Mínimo 6 caracteres"/></div>
+    <div id="u-error" class="auth-error"></div>
+    <div id="u-success" style="background:#DCFCE7;color:#15803D;padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:14px;display:none;"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeUsuarioModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="submitUsuario()">Crear usuario</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL META -->
 <div id="modal-meta" class="modal-overlay" onclick="if(event.target===this)closeMetaModal()">
   <div class="modal-box">
@@ -398,6 +409,8 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
       <div class="nav-section">Análisis</div>
       <button style="{{ navStyle('reportes') }}" onclick="window.__dcNav('reportes')"><span class="n-icon">📊</span> Reportes</button>
       <button style="{{ navStyle('metas') }}" onclick="window.__dcNav('metas')"><span class="n-icon">🎯</span> Metas</button>
+      <div if="{{ isAdmin }}" class="nav-section">Administración</div>
+      <button if="{{ isAdmin }}" style="{{ navStyle('usuarios') }}" onclick="window.__dcNav('usuarios')"><span class="n-icon">👥</span> Usuarios</button>
     </div>
     <div class="sidebar-footer">
       <button class="btn btn-ghost" style="width:100%;justify-content:center;" onclick="doSignOut()">Cerrar sesión</button>
@@ -588,6 +601,29 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
       </div>
     </div>
 
+    <!-- USUARIOS (solo admin) -->
+    <div if="{{ screen === 'usuarios' && isAdmin }}">
+      <div class="main-header"><h2>Usuarios</h2><button class="btn btn-primary" onclick="openUsuarioModal()">+ Crear usuario</button></div>
+      <div class="main-body">
+        <div class="card" style="overflow:hidden;">
+          <div if="{{ profiles.length === 0 }}" class="empty-state"><div class="e-icon">👥</div><p>No hay usuarios registrados</p></div>
+          <div if="{{ profiles.length > 0 }}">
+            <div class="pago-item" each="{{ profiles }}" as="pr">
+              <div class="pago-icon inc" style="background:#EFF6FF;">👤</div>
+              <div class="pago-info">
+                <div class="p-name">{{ pr.nombre }}</div>
+                <div class="p-detail">{{ pr.email }} · {{ pr.role_txt }} · desde {{ pr.fecha }}</div>
+              </div>
+              <div class="pago-right">
+                <span style="{{ pr.badge_style }}">{{ pr.role_txt }}</span>
+                <button if="{{ !pr.is_admin }}" class="icon-btn del" onclick="deleteUsuario('{{ pr.id }}')">🗑️</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- METAS -->
     <div if="{{ screen === 'metas' }}">
       <div class="main-header"><h2>Metas de ahorro</h2><button class="btn btn-primary" onclick="openMetaModal()">+ Nueva meta</button></div>
@@ -627,8 +663,8 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
 class extends DCLogic {
   state = {
     screen:'panel', year:new Date().getFullYear(), month:new Date().getMonth(),
-    movements:[], GOALS:[], pagos:[], compras:[],
-    movFilter:'all', userName:'', userId:null,
+    movements:[], GOALS:[], pagos:[], compras:[], profiles:[],
+    movFilter:'all', userName:'', userId:null, isAdmin:false,
     MONTHLY_DATA:Array(12).fill(null).map(()=>({i:0,e:0,s:0}))
   };
 
@@ -745,8 +781,16 @@ class extends DCLogic {
     });
     if (alerts.length===0 && monthIncome>0) alerts.push({cls:'success',icon:'✅',title:'Finanzas en orden',msg:'Tus gastos están bajo control este mes.'});
 
+    var profiles = st.profiles.map(function(p){
+      var isAdm = p.role==='admin';
+      return {id:p.id,nombre:p.nombre||p.email,email:p.email,
+        role_txt:isAdm?'Admin':'Usuario',is_admin:isAdm,
+        fecha:p.created_at?p.created_at.slice(0,10):'',
+        badge_style:isAdm?'background:#EFF6FF;color:var(--blue-mid);padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700;':'background:#F1F5F9;color:var(--gray);padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600;'};
+    });
+
     return {
-      screen:st.screen,year:st.year,month:st.month,userName:st.userName,
+      screen:st.screen,year:st.year,month:st.month,userName:st.userName,isAdmin:st.isAdmin,profiles,
       monthIncome,monthExpense,monthSavings,monthBalance,annualExpense,annualSavings,
       recentMovs,filteredMovs,monthTabs,monthLabel,
       repIncome,repExpense,repSavings,repBalance,
@@ -767,32 +811,14 @@ var _sb = window.supabase.createClient(
 );
 window._sb = _sb;
 
-var _authMode = 'login';
-function switchAuthTab(mode) {
-  _authMode = mode;
-  document.querySelectorAll('.auth-tab').forEach(function(t,i){
-    t.classList.toggle('active',(i===0&&mode==='login')||(i===1&&mode==='register'));
-  });
-  document.getElementById('auth-name-group').style.display = mode==='register'?'flex':'none';
-  document.getElementById('auth-btn').textContent = mode==='register'?'Crear cuenta':'Iniciar sesión';
-  document.getElementById('auth-error').style.display='none';
-}
-
 async function doAuth() {
   var email=document.getElementById('auth-email').value.trim();
   var pass=document.getElementById('auth-pass').value;
   var errEl=document.getElementById('auth-error');
   errEl.style.display='none';
   if(!email||!pass){errEl.textContent='Por favor completa todos los campos.';errEl.style.display='block';return;}
-  var res;
-  if (_authMode==='register') {
-    var name=document.getElementById('auth-name').value.trim();
-    res=await _sb.auth.signUp({email,password:pass,options:{data:{nombre:name||email}}});
-    if (!res.error) {errEl.style.background='#DCFCE7';errEl.style.color='#15803D';errEl.textContent='Cuenta creada. Revisa tu correo para confirmar.';errEl.style.display='block';return;}
-  } else {
-    res=await _sb.auth.signInWithPassword({email,password:pass});
-  }
-  if (res.error){errEl.textContent=res.error.message;errEl.style.display='block';}
+  var res=await _sb.auth.signInWithPassword({email,password:pass});
+  if (res.error){errEl.textContent='Correo o contraseña incorrectos.';errEl.style.display='block';}
 }
 
 async function doSignOut() {
@@ -816,17 +842,24 @@ _sb.auth.onAuthStateChange(async function(event,session){
 });
 
 async function loadData(uid) {
-  var [movRes,goalRes,pagosRes,comprasRes] = await Promise.all([
+  var [movRes,goalRes,pagosRes,comprasRes,profileRes] = await Promise.all([
     _sb.from('movimientos').select('*').eq('user_id',uid).order('created_at',{ascending:false}),
     _sb.from('metas').select('*').eq('user_id',uid).order('created_at',{ascending:false}),
     _sb.from('pagos_fijos').select('*').eq('user_id',uid).eq('activo',true).order('tipo').order('nombre'),
-    _sb.from('items_compras').select('*').eq('user_id',uid).order('comprado').order('created_at',{ascending:false})
+    _sb.from('items_compras').select('*').eq('user_id',uid).order('comprado').order('created_at',{ascending:false}),
+    _sb.from('profiles').select('*').eq('id',uid).single()
   ]);
   var movs=(movRes.data||[]).map(function(r){
     return {id:r.id,type:r.tipo,description:r.descripcion,amount:parseFloat(r.monto),category:r.categoria,date:r.fecha,icon:r.icono||'💰',createdAt:r.created_at};
   });
   recomputeAnnual(movs);
-  window.__dcSetState({movements:movs,GOALS:goalRes.data||[],pagos:pagosRes.data||[],compras:comprasRes.data||[]});
+  var isAdmin = profileRes.data && profileRes.data.role==='admin';
+  var updates = {movements:movs,GOALS:goalRes.data||[],pagos:pagosRes.data||[],compras:comprasRes.data||[],isAdmin:isAdmin};
+  if (isAdmin) {
+    var allProfiles = await _sb.from('profiles').select('*').order('created_at',{ascending:false});
+    updates.profiles = allProfiles.data||[];
+  }
+  window.__dcSetState(updates);
 }
 
 function recomputeAnnual(movs) {
@@ -1058,6 +1091,50 @@ async function deleteMeta(id) {
   if(!confirm('¿Eliminar esta meta?'))return;
   var res=await _sb.from('metas').delete().eq('id',id);
   if(!res.error){var st=window.__dcGetState();window.__dcSetState({GOALS:st.GOALS.filter(function(g){return g.id!==id;})});}
+}
+
+// USUARIOS (admin)
+var _sbCreate = window.supabase.createClient(
+  'https://julwbtqrojghvbajsqil.supabase.co',
+  'sb_publishable_xM6DcE3uyrmRGa8amsjgSg_OMydEdpx',
+  {auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}}
+);
+
+function openUsuarioModal(){
+  document.getElementById('u-nombre').value='';
+  document.getElementById('u-email').value='';
+  document.getElementById('u-pass').value='';
+  document.getElementById('u-error').style.display='none';
+  document.getElementById('u-success').style.display='none';
+  document.getElementById('modal-usuario').style.display='flex';
+}
+function closeUsuarioModal(){document.getElementById('modal-usuario').style.display='none';}
+
+async function submitUsuario() {
+  var nombre=document.getElementById('u-nombre').value.trim();
+  var email=document.getElementById('u-email').value.trim();
+  var pass=document.getElementById('u-pass').value;
+  var errEl=document.getElementById('u-error');
+  var sucEl=document.getElementById('u-success');
+  errEl.style.display='none'; sucEl.style.display='none';
+  if(!nombre){errEl.textContent='Escribe el nombre del usuario.';errEl.style.display='block';return;}
+  if(!email){errEl.textContent='Escribe el correo electrónico.';errEl.style.display='block';return;}
+  if(!pass||pass.length<6){errEl.textContent='La contraseña debe tener mínimo 6 caracteres.';errEl.style.display='block';return;}
+  var res=await _sbCreate.auth.signUp({email,password:pass,options:{data:{nombre:nombre}}});
+  if(res.error){errEl.textContent=res.error.message;errEl.style.display='block';return;}
+  sucEl.textContent='Usuario "'+nombre+'" creado exitosamente.';sucEl.style.display='block';
+  document.getElementById('u-nombre').value='';
+  document.getElementById('u-email').value='';
+  document.getElementById('u-pass').value='';
+  var allProfiles=await _sb.from('profiles').select('*').order('created_at',{ascending:false});
+  if(!allProfiles.error) window.__dcSetState({profiles:allProfiles.data||[]});
+}
+
+async function deleteUsuario(id) {
+  if(!confirm('¿Eliminar este usuario? Esta acción no se puede deshacer.'))return;
+  await _sb.from('profiles').delete().eq('id',id);
+  var st=window.__dcGetState();
+  window.__dcSetState({profiles:st.profiles.filter(function(p){return p.id!==id;})});
 }
 </script>
 </body>
