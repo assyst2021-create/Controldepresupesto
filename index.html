@@ -268,13 +268,22 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
       <div class="form-group"><label>Monto (COP $)</label><input id="m-amount" type="number" placeholder="0" min="0"/></div>
       <div class="form-group">
         <label>Categoría</label>
-        <input id="m-cat" type="text" list="cat-datalist" placeholder="Ej: Alimentación"/>
-        <datalist id="cat-datalist">
-          <option value="Alimentación"/><option value="Transporte"/><option value="Vivienda"/>
-          <option value="Salud"/><option value="Educación"/><option value="Entretenimiento"/>
-          <option value="Ropa"/><option value="Servicios"/><option value="Deudas"/>
-          <option value="Salario"/><option value="Ahorro meta"/><option value="Inversión"/><option value="Otro"/>
-        </datalist>
+        <select id="m-cat-sel" onchange="onCatChange()">
+          <option value="Alimentación">🍽️ Alimentación</option>
+          <option value="Transporte">🚗 Transporte</option>
+          <option value="Vivienda">🏠 Vivienda</option>
+          <option value="Salud">💊 Salud</option>
+          <option value="Educación">📚 Educación</option>
+          <option value="Entretenimiento">🎬 Entretenimiento</option>
+          <option value="Ropa">👕 Ropa</option>
+          <option value="Servicios">⚡ Servicios</option>
+          <option value="Deudas">💳 Deudas</option>
+          <option value="Salario">💵 Salario</option>
+          <option value="Ahorro meta">🎯 Ahorro meta</option>
+          <option value="Inversión">📈 Inversión</option>
+          <option value="__otra__">✏️ Otra categoría...</option>
+        </select>
+        <input id="m-cat-custom" type="text" placeholder="Escribe la categoría" style="margin-top:8px;display:none;"/>
       </div>
     </div>
     <div class="modal-row">
@@ -854,12 +863,34 @@ function toggleVis(inputId,btnId){
 
 // MOVIMIENTOS MODAL
 var _editingId=null,_modalType='expense';
+function onCatChange(){
+  var sel=document.getElementById('m-cat-sel');
+  var custom=document.getElementById('m-cat-custom');
+  custom.style.display=sel.value==='__otra__'?'block':'none';
+  if(sel.value==='__otra__')custom.focus();
+}
+function getCatValue(){
+  var sel=document.getElementById('m-cat-sel');
+  if(sel.value==='__otra__'){
+    var v=document.getElementById('m-cat-custom').value.trim();
+    return v||'Otro';
+  }
+  return sel.value;
+}
+function setCatValue(cat){
+  var sel=document.getElementById('m-cat-sel');
+  var custom=document.getElementById('m-cat-custom');
+  var opt=Array.from(sel.options).find(function(o){return o.value===cat;});
+  if(opt){sel.value=cat;custom.style.display='none';}
+  else{sel.value='__otra__';custom.value=cat||'';custom.style.display='block';}
+}
 function openModal(id){
   _editingId=id||null;
   if(!id){
     var now=new Date();_modalType='expense';
     document.getElementById('m-desc').value='';document.getElementById('m-amount').value='';
-    document.getElementById('m-cat').value='';
+    document.getElementById('m-cat-sel').value='Alimentación';
+    document.getElementById('m-cat-custom').value='';document.getElementById('m-cat-custom').style.display='none';
     document.getElementById('m-date').value=now.toISOString().slice(0,10);
     document.getElementById('m-time').value=now.toTimeString().slice(0,5);
     document.getElementById('modal-title').textContent='Nuevo movimiento';
@@ -877,7 +908,7 @@ function setModalType(t){
 async function submitMovement(){
   var desc=document.getElementById('m-desc').value.trim();
   var amt=parseFloat(document.getElementById('m-amount').value);
-  var cat=document.getElementById('m-cat').value.trim()||'Otro';
+  var cat=getCatValue();
   var date=document.getElementById('m-date').value;
   if(!desc){alert('Escribe una descripción.');return;}
   if(!amt||amt<=0){alert('Ingresa un monto válido.');return;}
@@ -897,7 +928,7 @@ function editMovement(id){
   _editingId=id;_modalType=m.type;
   document.getElementById('modal-title').textContent='Editar movimiento';
   document.getElementById('m-desc').value=m.description;document.getElementById('m-amount').value=m.amount;
-  document.getElementById('m-cat').value=m.category;document.getElementById('m-date').value=m.date;
+  setCatValue(m.category);document.getElementById('m-date').value=m.date;
   setModalType(m.type);document.getElementById('modal-overlay').style.display='flex';
 }
 async function deleteMovement(id){
