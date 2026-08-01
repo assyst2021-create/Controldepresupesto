@@ -832,16 +832,135 @@ function renderPanel(){
 
 function renderAlerts(m,balance){
   var alerts=[];
-  var today=new Date().getDate();
-  if(m.i>0&&m.e>m.i*0.9)alerts.push({cls:'danger',icon:'🚨',title:'Gastos muy altos',msg:'Llevas el '+Math.round(m.e/m.i*100)+'% de tus ingresos en gastos este mes.'});
-  else if(m.i>0&&m.e>m.i*0.7)alerts.push({cls:'warn',icon:'⚠️',title:'Gastos elevados',msg:'Llevas el '+Math.round(m.e/m.i*100)+'% de tus ingresos en gastos.'});
-  if(balance<0)alerts.push({cls:'danger',icon:'📉',title:'Balance negativo',msg:'Tus gastos superan tus ingresos este mes.'});
-  if(m.i>0&&m.s<m.i*0.1)alerts.push({cls:'info',icon:'💡',title:'Ahorra más',msg:'Se recomienda ahorrar al menos el 10% de tus ingresos.'});
+  var now=new Date();
+  var today=now.getDate();
+  var curMonth=now.getMonth();
+  var curYear=now.getFullYear();
+
+  // ── Mes anterior para comparaciones ──
+  var prevMonth=curMonth===0?11:curMonth-1;
+  var prevYear=curMonth===0?curYear-1:curYear;
+  var prev=ST.MONTHLY_DATA[prevMonth]||{i:0,e:0,s:0};
+  // Recalcular prev con año correcto
+  var prevMovs=ST.movements.filter(function(mv){
+    var d=new Date(mv.date+'T12:00:00');
+    return d.getMonth()===prevMonth&&d.getFullYear()===prevYear;
+  });
+  var prevI=prevMovs.filter(function(x){return x.type==='income';}).reduce(function(a,x){return a+x.amount;},0);
+  var prevE=prevMovs.filter(function(x){return x.type==='expense';}).reduce(function(a,x){return a+x.amount;},0);
+  var prevS=prevMovs.filter(function(x){return x.type==='savings';}).reduce(function(a,x){return a+x.amount;},0);
+
+  // ── 1. Balance negativo ──
+  if(balance<0)
+    alerts.push({cls:'danger',icon:'📉',title:'Balance negativo',msg:'Tus gastos superan tus ingresos en '+fmt(Math.abs(balance))+' este mes.'});
+
+  // ── 2. Gastos vs ingresos ──
+  if(m.i>0){
+    var pctG=Math.round(m.e/m.i*100);
+    if(pctG>=90)alerts.push({cls:'danger',icon:'🚨',title:'Gastos críticos: '+pctG+'%',msg:'Casi sin margen. Solo te queda '+fmt(m.i-m.e)+' de margen este mes.'});
+    else if(pctG>=70)alerts.push({cls:'warn',icon:'⚠️',title:'Gastos elevados: '+pctG+'%',msg:'Ya consumiste '+pctG+'% de tus ingresos en gastos.'});
+  }
+
+  // ── 3. Ahorro insuficiente ──
+  if(m.i>0&&m.s<m.i*0.1)
+    alerts.push({cls:'info',icon:'💡',title:'Ahorra más',msg:'Solo estás ahorrando el '+Math.round(m.s/m.i*100)+'%. Lo ideal es al menos el 20% de tus ingresos.'});
+
+  // ── 4. Comparación gastos vs mes anterior ──
+  if(prevE>0&&m.e>0){
+    var diffPct=Math.round((m.e-prevE)/prevE*100);
+    if(diffPct>=20)alerts.push({cls:'warn',icon:'📈',title:'Gastos '+diffPct+'% más altos que el mes pasado',msg:'Este mes llevas '+fmt(m.e)+' vs '+fmt(prevE)+' del mes anterior.'});
+    else if(diffPct<=-15)alerts.push({cls:'success',icon:'🎉',title:'¡Gastaste '+Math.abs(diffPct)+'% menos que el mes pasado!',msg:'Ahorraste '+fmt(prevE-m.e)+' en comparación con '+MONTHS_FULL[prevMonth]+'.'});
+  }
+
+  // ── 5. Comparación ingresos vs mes anterior ──
+  if(prevI>0&&m.i>0){
+    var diffI=Math.round((m.i-prevI)/prevI*100);
+    if(diffI>=10)alerts.push({cls:'success',icon:'💰',title:'Ingresos '+diffI+'% más altos',msg:'Tus ingresos subieron '+fmt(m.i-prevI)+' respecto al mes pasado.'});
+    else if(diffI<=-15)alerts.push({cls:'warn',icon:'📉',title:'Ingresos bajaron un '+Math.abs(diffI)+'%',msg:'Este mes ingresaste '+fmt(prevI-m.i)+' menos que en '+MONTHS_FULL[prevMonth]+'.'});
+  }
+
+  // ── 6. Categoría disparada vs promedio ──
+  var catTotals={};
+  var catCounts={};
+  var movsConDatos=ST.movements.filter(function(mv){
+    var d=new Date(mv.date+'T12:00:00');
+    return mv.type==='expense'&&!(d.getMonth()===curMonth&&d.getFullYear()===curYear);
+  });
+  movsConDatos.forEach(function(mv){
+    var cat=mv.category||'Otro';
+    catTotals[cat]=(catTotals[cat]||0)+mv.amount;
+    catCounts[cat]=(catCounts[cat]||0)+1;
+  });
+  var curCatMap={};
+  ST.movements.filter(function(mv){
+    var d=new Date(mv.date+'T12:00:00');
+    return mv.type==='expense'&&d.getMonth()===curMonth&&d.getFullYear()===curYear;
+  }).forEach(function(mv){var c=mv.category||'Otro';curCatMap[c]=(curCatMap[c]||0)+mv.amount;});
+  Object.keys(curCatMap).forEach(function(cat){
+    var avg=catTotals[cat]&&catCounts[cat]?catTotals[cat]/Math.min(catCounts[cat],6):0;
+    if(avg>0&&curCatMap[cat]>avg*1.8&&curCatMap[cat]>50000)
+      alerts.push({cls:'warn',icon:'🔍',title:'Gasto alto en '+cat,msg:'Llevas '+fmt(curCatMap[cat])+' este mes, casi el doble de tu promedio habitual ('+fmt(Math.round(avg))+')'});
+  });
+
+  // ── 7. Pagos próximos ──
   ST.pagos.filter(function(p){return p.tipo==='gasto'&&p.dia_cobro;}).forEach(function(p){
     var d=parseInt(p.dia_cobro);
-    if(d>=today&&d<=today+5)alerts.push({cls:'warn',icon:'📅',title:'Pago próximo: '+p.nombre,msg:'Vence el día '+d+' · '+fmt(p.monto)});
+    if(d>=today&&d<=today+5)
+      alerts.push({cls:'warn',icon:'📅',title:'Pago próximo: '+p.nombre,msg:'Vence el día '+d+' · '+fmt(p.monto)+(p.entidad?' · '+p.entidad:'')});
+    else if(d<today&&today-d<=2)
+      alerts.push({cls:'danger',icon:'🔔',title:'Pago vencido: '+p.nombre,msg:'Debió pagarse el día '+d+' · '+fmt(p.monto)});
   });
-  if(!alerts.length&&m.i>0)alerts.push({cls:'success',icon:'✅',title:'Finanzas en orden',msg:'Tus gastos están bajo control este mes.'});
+
+  // ── 8. Proyección de ahorro hacia metas ──
+  if(ST.goals&&ST.goals.length&&m.s>0){
+    ST.goals.forEach(function(g){
+      var falta=g.meta-g.ahorrado;
+      if(falta>0){
+        var meses=Math.ceil(falta/m.s);
+        if(meses<=24)
+          alerts.push({cls:'info',icon:'🎯',title:'Meta "'+g.nombre+'": '+meses+' mes'+(meses===1?'':'es'),msg:'Si sigues ahorrando '+fmt(m.s)+'/mes, la alcanzas en '+meses+' mes'+(meses===1?'':'es')+'. Faltan '+fmt(falta)+'.'});
+      } else {
+        alerts.push({cls:'success',icon:'🏆',title:'¡Meta alcanzada: '+g.nombre+'!',msg:'Ya tienes '+fmt(g.ahorrado)+' de tu meta de '+fmt(g.meta)+'.'});
+      }
+    });
+  }
+
+  // ── 9. Días sin registrar movimientos ──
+  var latestMov=ST.movements.length?new Date(ST.movements[0].date+'T12:00:00'):null;
+  if(latestMov){
+    var diasSin=Math.floor((now-latestMov)/86400000);
+    if(diasSin>=5)
+      alerts.push({cls:'info',icon:'📝',title:'Llevas '+diasSin+' días sin registrar',msg:'Recuerda mantener tus movimientos al día para que los reportes sean precisos.'});
+  }
+
+  // ── 10. Lista de compras pendiente grande ──
+  if(ST.compras&&ST.compras.length){
+    var pendCompras=ST.compras.filter(function(c){return !c.comprado;});
+    var totalPend=pendCompras.reduce(function(a,c){return a+parseFloat(c.precio_estimado||0);},0);
+    if(totalPend>0&&m.i>0&&totalPend>m.i*0.5)
+      alerts.push({cls:'info',icon:'🛒',title:'Lista de compras: '+fmt(totalPend),msg:'Tienes '+pendCompras.length+' compras pendientes que equivalen al '+Math.round(totalPend/m.i*100)+'% de tus ingresos.'});
+  }
+
+  // ── 11. Gastos fijos vs ingresos fijos ──
+  var totalFijosG=ST.pagos.filter(function(p){return p.tipo==='gasto';}).reduce(function(a,p){return a+parseFloat(p.monto||0);},0);
+  var totalFijosI=ST.pagos.filter(function(p){return p.tipo==='ingreso';}).reduce(function(a,p){return a+parseFloat(p.monto||0);},0);
+  if(totalFijosI>0&&totalFijosG>totalFijosI*0.8)
+    alerts.push({cls:'warn',icon:'💳',title:'Gastos fijos muy altos',msg:'Tus gastos fijos ('+fmt(totalFijosG)+') son el '+Math.round(totalFijosG/totalFijosI*100)+'% de tus ingresos fijos.'});
+
+  // ── 12. Mejor racha de ahorro ──
+  var mejorMes=-1,mejorAhorro=0;
+  ST.MONTHLY_DATA.forEach(function(d,i){if(d&&d.s>mejorAhorro){mejorAhorro=d.s;mejorMes=i;}});
+  if(mejorMes>=0&&mejorAhorro>0&&mejorMes===curMonth&&m.s>0)
+    alerts.push({cls:'success',icon:'⭐',title:'¡Mejor mes de ahorro del año!',msg:'Este mes llevas '+fmt(m.s)+' ahorrado, el mejor resultado del año hasta ahora.'});
+
+  // ── 13. Sin ingresos registrados ──
+  if(m.i===0&&today>5)
+    alerts.push({cls:'info',icon:'💵',title:'Sin ingresos registrados este mes',msg:'¿Ya recibiste tu pago? Recuerda registrar tus ingresos.'});
+
+  // ── Todo bien ──
+  if(!alerts.length)
+    alerts.push({cls:'success',icon:'✅',title:'¡Finanzas en orden!',msg:'Todo bajo control este mes. Sigue así.'});
+
   var el=document.getElementById('alerts-container');
   el.innerHTML=alerts.map(function(a){
     return '<div class="alert-item '+a.cls+'"><div class="a-icon">'+a.icon+'</div><div><div class="a-title">'+a.title+'</div><div class="a-msg">'+a.msg+'</div></div></div>';
