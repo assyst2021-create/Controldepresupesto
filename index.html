@@ -1,8 +1,14 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0F6E56">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Mis Finanzas">
+<link rel="manifest" href="/manifest.json">
+<title>Mis Finanzas</title>
 <script src="./support.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
@@ -12,94 +18,207 @@
   );
 </script>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
-<title>Mis Finanzas</title>
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'DM Sans', sans-serif; background: #F0F2F5; overflow: hidden; }
-  input, select, button, textarea { font-family: 'DM Sans', sans-serif; }
-  input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
-  ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: transparent; } ::-webkit-scrollbar-thumb { background: #D1D5DB; border-radius: 4px; }
-  @keyframes fadeUp  { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
-  @keyframes fadeIn  { from { opacity:0; } to { opacity:1; } }
-  @keyframes scaleIn { from { opacity:0; transform:scale(0.96) translateY(12px); } to { opacity:1; transform:scale(1) translateY(0); } }
-  @keyframes spin    { from { transform:rotate(0deg); } to { transform:rotate(360deg); } }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;overflow:hidden;}
+body{font-family:'DM Sans',sans-serif;background:#F0F2F5;}
+input,select,button,textarea{font-family:'DM Sans',sans-serif;}
+input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;}
+::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:#D1D5DB;border-radius:4px;}
+@keyframes fadeUp {from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+@keyframes fadeIn {from{opacity:0;}to{opacity:1;}}
+@keyframes scaleIn{from{opacity:0;transform:scale(0.95)translateY(8px);}to{opacity:1;transform:scale(1)translateY(0);}}
+@keyframes spin   {from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
 
-  /* AUTH */
-  #auth-overlay {
-    position:fixed; inset:0; z-index:9999;
-    background:linear-gradient(135deg,#0F6E56 0%,#0A5240 60%,#064030 100%);
-    display:none; align-items:center; justify-content:center; padding:20px;
-  }
-  #auth-overlay .card {
-    background:white; border-radius:20px; padding:40px 36px;
-    width:100%; max-width:400px; box-shadow:0 20px 60px rgba(0,0,0,0.18);
-    animation:scaleIn 0.3s ease;
-  }
-  .auth-tab-bar { display:flex; gap:4px; background:#F3F4F6; border-radius:10px; padding:3px; margin-bottom:24px; }
-  .auth-tab { flex:1; padding:7px 8px; border:none; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; transition:all 0.15s; background:transparent; color:#9CA3AF; font-family:'DM Sans',sans-serif; }
-  .auth-tab.active { background:white; color:#111827; box-shadow:0 1px 3px rgba(0,0,0,0.08); }
-  .auth-field { display:flex; flex-direction:column; gap:5px; }
-  .auth-field label { font-size:12px; font-weight:600; color:#374151; }
-  .auth-field input { width:100%; padding:11px 14px; border:1.5px solid #E5E7EB; border-radius:10px; font-size:14px; color:#111827; outline:none; transition:border-color 0.15s; font-family:'DM Sans',sans-serif; }
-  .auth-field input:focus { border-color:#0F6E56; box-shadow:0 0 0 3px rgba(15,110,86,0.1); }
-  #auth-error { display:none; background:#FEF2F2; color:#DC2626; font-size:13px; padding:10px 14px; border-radius:8px; margin-bottom:16px; font-weight:500; }
-  #auth-btn { width:100%; padding:12px; background:#0F6E56; color:white; border:none; border-radius:10px; font-size:14px; font-weight:600; cursor:pointer; font-family:'DM Sans',sans-serif; display:flex; align-items:center; justify-content:center; gap:8px; transition:background 0.15s; }
-  #auth-btn:disabled { background:#9CA3AF; cursor:default; }
-  #auth-btn .spinner { animation:spin 0.8s linear infinite; display:none; }
-  #name-row { display:none; }
+/* AUTH */
+#auth-overlay{position:fixed;inset:0;z-index:9999;background:linear-gradient(135deg,#0F6E56,#064030);display:none;align-items:center;justify-content:center;padding:20px;}
+#auth-overlay .card{background:white;border-radius:20px;padding:36px 32px;width:100%;max-width:390px;box-shadow:0 20px 60px rgba(0,0,0,0.2);animation:scaleIn 0.3s ease;}
+.auth-tab-bar{display:flex;gap:4px;background:#F3F4F6;border-radius:10px;padding:3px;margin-bottom:22px;}
+.auth-tab{flex:1;padding:7px 8px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;background:transparent;color:#9CA3AF;font-family:'DM Sans',sans-serif;transition:all .15s;}
+.auth-tab.active{background:white;color:#111827;box-shadow:0 1px 3px rgba(0,0,0,0.08);}
+.auth-field{display:flex;flex-direction:column;gap:5px;}
+.auth-field label{font-size:12px;font-weight:600;color:#374151;}
+.auth-field input{width:100%;padding:11px 14px;border:1.5px solid #E5E7EB;border-radius:10px;font-size:14px;color:#111827;outline:none;transition:border-color .15s;}
+.auth-field input:focus{border-color:#0F6E56;box-shadow:0 0 0 3px rgba(15,110,86,0.1);}
+#auth-error{display:none;background:#FEF2F2;color:#DC2626;font-size:13px;padding:10px 14px;border-radius:8px;margin-bottom:14px;font-weight:500;}
+#auth-btn{width:100%;padding:12px;background:#0F6E56;color:white;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:background .15s;}
+#auth-btn:disabled{background:#9CA3AF;cursor:default;}
+#auth-btn .spin{animation:spin 0.8s linear infinite;display:none;}
+#name-row{display:none;}
 
-  /* LOADING */
-  #loading-screen {
-    position:fixed; inset:0; z-index:9998; background:#0F6E56;
-    display:flex; align-items:center; justify-content:center;
-  }
-  #loading-screen svg { animation:spin 1s linear infinite; }
+/* LOADING */
+#loading-screen{position:fixed;inset:0;z-index:9998;background:#0F6E56;display:flex;align-items:center;justify-content:center;}
+#loading-screen .ls-spin{animation:spin 1s linear infinite;}
+
+/* MODAL */
+#modal-overlay{position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,0.45);display:none;align-items:flex-end;justify-content:center;animation:fadeIn .15s ease;}
+@media(min-width:640px){#modal-overlay{align-items:center;}}
+#modal-card{background:white;border-radius:20px 20px 0 0;padding:24px 20px 32px;width:100%;max-width:480px;box-shadow:0 -4px 32px rgba(0,0,0,0.12);animation:scaleIn .2s ease;max-height:92vh;overflow-y:auto;}
+@media(min-width:640px){#modal-card{border-radius:20px;padding:28px;}}
+.modal-input{width:100%;padding:10px 14px;border:1.5px solid #E5E7EB;border-radius:10px;font-size:14px;color:#111827;outline:none;font-family:'DM Sans',sans-serif;transition:border-color .15s;}
+.modal-input:focus{border-color:#0F6E56;box-shadow:0 0 0 3px rgba(15,110,86,0.1);}
+.modal-label{font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:5px;}
+
+/* BOTTOM NAV (mobile) */
+#bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:100;background:white;border-top:1px solid #F3F4F6;padding-bottom:env(safe-area-inset-bottom,0);box-shadow:0 -2px 12px rgba(0,0,0,0.06);}
+#bottom-nav .bnav-inner{display:flex;height:58px;}
+.bnav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:none;background:transparent;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:10px;font-weight:500;color:#9CA3AF;transition:color .15s;padding:0;}
+.bnav-btn.active{color:#0F6E56;}
+.bnav-btn svg{transition:stroke .15s;}
+
+/* LAYOUT */
+#app-layout{display:flex;height:100vh;overflow:hidden;}
+aside{width:240px;min-width:240px;background:linear-gradient(170deg,#0F6E56 0%,#0A5240 100%);display:flex;flex-direction:column;overflow:hidden;flex-shrink:0;}
+#main-area{flex:1;overflow-y:auto;padding:28px 32px;min-width:0;padding-bottom:28px;}
+
+/* RESPONSIVE */
+@media(max-width:767px){
+  aside{display:none;}
+  #bottom-nav{display:block;}
+  #main-area{padding:16px 14px 80px;}
+  #app-layout{height:100vh;}
+}
+
+/* NAV BTN BASE */
+.nav-btn{display:flex;align-items:center;gap:10px;width:100%;padding:9px 12px;border:none;border-radius:10px;cursor:pointer;text-align:left;background:transparent;color:rgba(255,255,255,0.6);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:400;transition:all .15s;}
+.nav-btn.active{background:rgba(255,255,255,0.18);color:white;font-weight:600;}
+
+/* TYPE BTNS */
+.type-btn{flex:1;padding:9px 8px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;border-radius:9px;transition:all .15s;border:2px solid #E5E7EB;background:white;color:#9CA3AF;}
 </style>
 </head>
 <body>
 
-<!-- PANTALLA DE CARGA -->
+<!-- LOADING -->
 <div id="loading-screen">
-  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5">
+  <svg class="ls-spin" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5">
     <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
   </svg>
 </div>
 
-<!-- PANTALLA DE AUTH -->
+<!-- AUTH -->
 <div id="auth-overlay">
   <div class="card">
-    <div style="text-align:center; margin-bottom:28px;">
-      <div style="width:56px;height:56px;background:linear-gradient(135deg,#0F6E56,#22C55E);border-radius:16px;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+    <div style="text-align:center;margin-bottom:24px;">
+      <div style="width:52px;height:52px;background:linear-gradient(135deg,#0F6E56,#22C55E);border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
       </div>
-      <div style="font-size:22px;font-weight:700;color:#111827;letter-spacing:-0.5px;">Mis Finanzas</div>
-      <div id="auth-subtitle" style="font-size:14px;color:#9CA3AF;margin-top:4px;">Ingresa a tu cuenta</div>
+      <div style="font-size:20px;font-weight:700;color:#111827;letter-spacing:-0.5px;">Mis Finanzas</div>
+      <div id="auth-subtitle" style="font-size:13px;color:#9CA3AF;margin-top:3px;">Ingresa a tu cuenta</div>
     </div>
     <div id="auth-error"></div>
     <div class="auth-tab-bar">
       <button class="auth-tab active" id="tab-login" onclick="switchTab('login')">Ingresar</button>
       <button class="auth-tab" id="tab-register" onclick="switchTab('register')">Crear cuenta</button>
     </div>
-    <div style="display:flex;flex-direction:column;gap:14px;">
+    <div style="display:flex;flex-direction:column;gap:13px;">
       <div class="auth-field" id="name-row">
         <label>Nombre</label>
-        <input type="text" id="auth-name" placeholder="Tu nombre"/>
+        <input type="text" id="auth-name" placeholder="Tu nombre" autocomplete="name"/>
       </div>
       <div class="auth-field">
         <label>Correo electronico</label>
-        <input type="email" id="auth-email" placeholder="correo@ejemplo.com" onkeydown="if(event.key==='Enter')submitAuth()"/>
+        <input type="email" id="auth-email" placeholder="correo@ejemplo.com" autocomplete="email" onkeydown="if(event.key==='Enter')submitAuth()"/>
       </div>
       <div class="auth-field">
         <label>Contrasena</label>
-        <input type="password" id="auth-password" placeholder="••••••••" onkeydown="if(event.key==='Enter')submitAuth()"/>
+        <input type="password" id="auth-password" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')submitAuth()"/>
       </div>
       <button id="auth-btn" onclick="submitAuth()">
-        <svg class="spinner" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+        <svg class="spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
         <span id="auth-btn-text">Ingresar</span>
       </button>
     </div>
   </div>
 </div>
+
+<!-- MODAL (fuera de dc-runtime — 100% vanilla JS) -->
+<div id="modal-overlay" onclick="if(event.target===this)closeModal()">
+  <div id="modal-card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
+      <div id="modal-title" style="font-size:17px;font-weight:700;color:#111827;">Nuevo movimiento</div>
+      <button onclick="closeModal()" style="background:#F3F4F6;border:none;width:32px;height:32px;border-radius:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#6B7280;flex-shrink:0;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <!-- Tipo -->
+    <div style="display:flex;gap:6px;margin-bottom:18px;">
+      <button class="type-btn" id="tbtn-expense"  onclick="setModalType('expense')" >Egreso</button>
+      <button class="type-btn" id="tbtn-income"   onclick="setModalType('income')"  >Ingreso</button>
+      <button class="type-btn" id="tbtn-savings"  onclick="setModalType('savings')" >Ahorro</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px;">
+      <div>
+        <label class="modal-label">Descripcion</label>
+        <input id="m-desc" type="text" class="modal-input" placeholder="Ej: Almuerzo, Mercado, Salario..."/>
+      </div>
+      <div>
+        <label class="modal-label">Monto (COP)</label>
+        <input id="m-amount" type="number" class="modal-input" placeholder="0" min="0" step="any"/>
+      </div>
+      <div>
+        <label class="modal-label">Categoria <span style="color:#9CA3AF;font-weight:400;">(elige o escribe la tuya)</span></label>
+        <input id="m-cat" type="text" class="modal-input" list="cat-datalist" placeholder="Ej: Alimentacion, Salario, Gym..."/>
+        <datalist id="cat-datalist">
+          <option value="Nomina"/>
+          <option value="Freelance"/>
+          <option value="Prima"/>
+          <option value="Vivienda"/>
+          <option value="Alimentacion"/>
+          <option value="Transporte"/>
+          <option value="Servicios"/>
+          <option value="Salud"/>
+          <option value="Entretenimiento"/>
+          <option value="Personal"/>
+          <option value="Educacion"/>
+          <option value="Inversion"/>
+          <option value="Ahorro"/>
+          <option value="Otro"/>
+        </datalist>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div>
+          <label class="modal-label">Fecha</label>
+          <input id="m-date" type="date" class="modal-input"/>
+        </div>
+        <div>
+          <label class="modal-label">Hora</label>
+          <input id="m-time" type="time" class="modal-input"/>
+        </div>
+      </div>
+      <div id="modal-error" style="display:none;background:#FEF2F2;color:#DC2626;font-size:13px;padding:10px 14px;border-radius:8px;font-weight:500;"></div>
+      <button id="modal-save-btn" onclick="submitMovement()" style="width:100%;padding:13px;background:#0F6E56;color:white;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- BOTTOM NAV (mobile) -->
+<nav id="bottom-nav">
+  <div class="bnav-inner">
+    <button class="bnav-btn active" id="bn-panel" onclick="gotoScreen('panel')">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Panel
+    </button>
+    <button class="bnav-btn" id="bn-movimientos" onclick="gotoScreen('movimientos')">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+      Gastos
+    </button>
+    <button class="bnav-btn bnav-add" id="bn-add" onclick="openModal(null)" style="color:#0F6E56;">
+      <div style="width:44px;height:44px;background:linear-gradient(135deg,#0F6E56,#22C55E);border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(15,110,86,0.4);margin-top:-16px;">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </div>
+      Agregar
+    </button>
+    <button class="bnav-btn" id="bn-reportes" onclick="gotoScreen('reportes')">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/></svg>
+      Reportes
+    </button>
+    <button class="bnav-btn" id="bn-metas" onclick="gotoScreen('metas')">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+      Metas
+    </button>
+  </div>
+</nav>
 
 <!-- APP PRINCIPAL -->
 <x-dc>
@@ -107,190 +226,136 @@
   <style>a,a:hover{color:inherit;text-decoration:none;}</style>
 </helmet>
 
-<div style="display:flex;height:100vh;font-family:'DM Sans',sans-serif;overflow:hidden;background:#F0F2F5;">
-
-  <!-- SIDEBAR -->
-  <aside style="width:240px;min-width:240px;background:linear-gradient(170deg,#0F6E56 0%,#0A5240 100%);display:flex;flex-direction:column;overflow:hidden;">
-    <div style="padding:22px 20px 16px;border-bottom:1px solid rgba(255,255,255,0.1);">
+<div id="app-layout">
+  <!-- SIDEBAR (desktop) -->
+  <aside>
+    <div style="padding:20px 18px 14px;border-bottom:1px solid rgba(255,255,255,0.1);">
       <div style="display:flex;align-items:center;gap:10px;">
-        <div style="width:38px;height:38px;background:rgba(255,255,255,0.15);border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+        <div style="width:36px;height:36px;background:rgba(255,255,255,0.15);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
         </div>
         <div>
-          <div style="color:white;font-weight:700;font-size:15px;line-height:1.2;letter-spacing:-0.2px;">Mis Finanzas</div>
+          <div style="color:white;font-weight:700;font-size:14px;letter-spacing:-0.2px;">Mis Finanzas</div>
           <div style="color:rgba(255,255,255,0.5);font-size:11px;margin-top:1px;">{{ userName }}</div>
         </div>
       </div>
     </div>
-    <div style="padding:16px 20px 12px;">
-      <div style="color:rgba(255,255,255,0.45);font-size:10px;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px;font-weight:600;">Ano fiscal</div>
+    <div style="padding:14px 18px 10px;">
+      <div style="color:rgba(255,255,255,0.45);font-size:10px;text-transform:uppercase;letter-spacing:.1em;margin-bottom:7px;font-weight:600;">Ano fiscal</div>
       <div style="display:flex;align-items:center;gap:6px;">
-        <button onClick="{{ prevYear }}" style="background:rgba(255,255,255,0.1);border:none;color:white;width:30px;height:30px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button>
-        <span style="color:white;font-weight:700;font-size:18px;flex:1;text-align:center;letter-spacing:-0.5px;">{{ year }}</span>
-        <button onClick="{{ nextYear }}" style="background:rgba(255,255,255,0.1);border:none;color:white;width:30px;height:30px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg></button>
+        <button onClick="{{ prevYear }}" style="background:rgba(255,255,255,0.1);border:none;color:white;width:28px;height:28px;border-radius:7px;cursor:pointer;display:flex;align-items:center;justify-content:center;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <span style="color:white;font-weight:700;font-size:17px;flex:1;text-align:center;letter-spacing:-0.5px;">{{ year }}</span>
+        <button onClick="{{ nextYear }}" style="background:rgba(255,255,255,0.1);border:none;color:white;width:28px;height:28px;border-radius:7px;cursor:pointer;display:flex;align-items:center;justify-content:center;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
       </div>
     </div>
-    <div style="padding:6px 12px;flex:1;display:flex;flex-direction:column;gap:2px;overflow-y:auto;">
-      <button onClick="{{ goPanel }}" style="{{ panelNavStyle }}">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-        <span>Panel</span>
-      </button>
-      <button onClick="{{ goMovimientos }}" style="{{ movNavStyle }}">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-        <span>Movimientos</span>
-      </button>
-      <button onClick="{{ goReportes }}" style="{{ repNavStyle }}">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/></svg>
-        <span>Reportes</span>
-      </button>
-      <button onClick="{{ goMetas }}" style="{{ metNavStyle }}">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
-        <span>Metas</span>
-      </button>
+    <div style="padding:4px 10px;flex:1;display:flex;flex-direction:column;gap:2px;overflow-y:auto;">
+      <button onClick="{{ goPanel }}"       style="{{ panelNavStyle }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span>Panel</span></button>
+      <button onClick="{{ goMovimientos }}" style="{{ movNavStyle }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg><span>Movimientos</span></button>
+      <button onClick="{{ goReportes }}"   style="{{ repNavStyle }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/></svg><span>Reportes</span></button>
+      <button onClick="{{ goMetas }}"      style="{{ metNavStyle }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg><span>Metas</span></button>
     </div>
-    <div style="padding:14px 20px 20px;border-top:1px solid rgba(255,255,255,0.1);">
-      <div style="color:rgba(255,255,255,0.45);font-size:10px;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px;font-weight:600;">Mes</div>
+    <div style="padding:12px 18px 20px;border-top:1px solid rgba(255,255,255,0.1);">
+      <div style="color:rgba(255,255,255,0.45);font-size:10px;text-transform:uppercase;letter-spacing:.1em;margin-bottom:7px;font-weight:600;">Mes actual</div>
       <div style="display:flex;align-items:center;gap:6px;">
-        <button onClick="{{ prevMonth }}" style="background:rgba(255,255,255,0.1);border:none;color:white;width:30px;height:30px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button>
-        <span style="color:white;font-weight:600;font-size:13px;flex:1;text-align:center;">{{ monthName }}</span>
-        <button onClick="{{ nextMonth }}" style="background:rgba(255,255,255,0.1);border:none;color:white;width:30px;height:30px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg></button>
+        <button onClick="{{ prevMonth }}" style="background:rgba(255,255,255,0.1);border:none;color:white;width:28px;height:28px;border-radius:7px;cursor:pointer;display:flex;align-items:center;justify-content:center;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <span style="color:white;font-weight:600;font-size:12px;flex:1;text-align:center;">{{ monthName }}</span>
+        <button onClick="{{ nextMonth }}" style="background:rgba(255,255,255,0.1);border:none;color:white;width:28px;height:28px;border-radius:7px;cursor:pointer;display:flex;align-items:center;justify-content:center;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
       </div>
-      <button onClick="{{ doSignOut }}" style="margin-top:14px;width:100%;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.6);font-size:12px;font-weight:500;border-radius:8px;padding:8px;cursor:pointer;font-family:'DM Sans',sans-serif;">Cerrar sesion</button>
+      <button onClick="{{ doSignOut }}" style="margin-top:12px;width:100%;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.14);color:rgba(255,255,255,0.55);font-size:12px;border-radius:8px;padding:8px;cursor:pointer;font-family:'DM Sans',sans-serif;">Cerrar sesion</button>
     </div>
   </aside>
 
-  <!-- MAIN -->
-  <main style="flex:1;overflow-y:auto;padding:28px 32px;min-width:0;">
+  <!-- MAIN CONTENT -->
+  <main id="main-area">
 
     <!-- PANEL -->
-    <div if="{{ isPanel }}" style="animation:fadeUp 0.2s ease;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;">
+    <div if="{{ isPanel }}" style="animation:fadeUp .2s ease;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;gap:12px;">
         <div>
-          <div style="font-size:22px;font-weight:700;color:#111827;letter-spacing:-0.5px;">Panel {{ monthName }} {{ year }}</div>
-          <div style="font-size:13px;color:#9CA3AF;margin-top:2px;">Resumen financiero del mes</div>
+          <div style="font-size:20px;font-weight:700;color:#111827;letter-spacing:-.5px;">{{ monthName }} {{ year }}</div>
+          <div style="font-size:13px;color:#9CA3AF;margin-top:2px;">Resumen financiero</div>
         </div>
-        <button onClick="{{ openModal }}" style="display:flex;align-items:center;gap:8px;background:#0F6E56;color:white;border:none;border-radius:11px;padding:10px 18px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;box-shadow:0 2px 8px rgba(15,110,86,0.3);">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          Agregar movimiento
+        <button onclick="openModal(null)" style="display:flex;align-items:center;gap:7px;background:#0F6E56;color:white;border:none;border-radius:10px;padding:9px 16px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;box-shadow:0 2px 8px rgba(15,110,86,0.3);flex-shrink:0;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Agregar
         </button>
       </div>
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px;">
+      <!-- KPIs -->
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:18px;">
         <div style="{{ ki.cardStyle }}" each="{{ kpiCards }}" as="ki">
-          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
-            <div style="{{ ki.iconStyle }}">{{ ki.icon }}</div>
-            <span style="font-size:12px;font-weight:600;color:#6B7280;">{{ ki.label }}</span>
-          </div>
+          <div style="font-size:11px;font-weight:600;color:#6B7280;margin-bottom:6px;">{{ ki.label }}</div>
           <div style="{{ ki.amountStyle }}">{{ ki.amount }}</div>
-          <div style="{{ ki.accentStyle }}"></div>
+          <div style="height:3px;border-radius:2px;margin-top:10px;{{ ki.accentStyle }}"></div>
         </div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
-        <div style="background:white;border-radius:16px;padding:20px;border:1px solid #F3F4F6;">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
-            <div style="font-size:14px;font-weight:700;color:#111827;">Calendario</div>
-            <div style="display:flex;gap:4px;background:#F9FAFB;border-radius:8px;padding:3px;">
-              <button onClick="{{ setMonthView }}" style="{{ monthViewBtnStyle }}">Mes</button>
-              <button onClick="{{ setWeekView }}"  style="{{ weekViewBtnStyle }}">Semana</button>
-            </div>
-          </div>
-          <div if="{{ isMonthView }}">
-            <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:4px;">
-              <div style="text-align:center;font-size:10px;font-weight:600;color:#9CA3AF;padding:4px 0;" each="{{ dayNames }}" as="dn">{{ dn }}</div>
-            </div>
-            <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;">
-              <div style="{{ cd.cellStyle }}" onClick="{{ cd.onClick }}" each="{{ calendarDays }}" as="cd">
-                <span style="{{ cd.numStyle }}">{{ cd.dayNum }}</span>
-                <div if="{{ cd.hasIncome }}"  style="font-size:9px;font-weight:700;color:#16A34A;">{{ cd.incomeFmt }}</div>
-                <div if="{{ cd.hasExpense }}" style="font-size:9px;font-weight:700;color:#F05252;">{{ cd.expenseFmt }}</div>
-                <div if="{{ cd.hasSavings }}" style="font-size:9px;font-weight:700;color:#F59E0B;">{{ cd.savingsFmt }}</div>
-              </div>
-            </div>
-          </div>
-          <div if="{{ isWeekView }}">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-              <button onClick="{{ prevWeek }}" style="background:#F3F4F6;border:none;color:#374151;width:28px;height:28px;border-radius:7px;cursor:pointer;display:flex;align-items:center;justify-content:center;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button>
-              <span style="font-size:12px;font-weight:600;color:#374151;">{{ weekRangeLabel }}</span>
-              <button onClick="{{ nextWeek }}" style="background:#F3F4F6;border:none;color:#374151;width:28px;height:28px;border-radius:7px;cursor:pointer;display:flex;align-items:center;justify-content:center;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg></button>
-            </div>
-            <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px;">
-              <div style="{{ wd.cellStyle }}" onClick="{{ wd.onClick }}" each="{{ weekDays }}" as="wd">
-                <div style="padding:8px 6px 6px;">
-                  <span style="{{ wd.dayNameStyle }}">{{ wd.dayName }}</span>
-                  <span style="{{ wd.dayNumStyle }}">{{ wd.dayNum }}</span>
-                  <div if="{{ wd.hasIncome }}"   style="font-size:10px;color:#16A34A;font-weight:700;">+{{ wd.incomeFmt }}</div>
-                  <div if="{{ wd.hasExpense }}"  style="font-size:10px;color:#F05252;font-weight:700;">-{{ wd.expenseFmt }}</div>
-                  <div if="{{ wd.hasSavings }}"  style="font-size:10px;color:#F59E0B;font-weight:700;">{{ wd.savingsFmt }}</div>
-                </div>
-                <div if="{{ wd.hasAnyMovement }}" style="{{ wd.balanceStyle }}">{{ wd.balanceFmt }}</div>
-              </div>
-            </div>
-          </div>
-          <div if="{{ hasSelectedDay }}" style="margin-top:14px;border-top:1px solid #F3F4F6;padding-top:12px;">
-            <div style="font-size:12px;font-weight:600;color:#374151;margin-bottom:8px;">{{ selectedDayLabel }}</div>
-            <div style="display:flex;flex-direction:column;gap:6px;">
-              <div style="display:flex;align-items:center;gap:8px;" each="{{ selectedDayMovements }}" as="sdm">
-                <div style="{{ sdm.dotStyle }}">{{ sdm.icon }}</div>
-                <div style="flex:1;min-width:0;">
-                  <div style="font-size:12px;font-weight:500;color:#111827;">{{ sdm.description }}</div>
-                  <div style="font-size:11px;color:#9CA3AF;">{{ sdm.category }}</div>
-                </div>
-                <div style="{{ sdm.amountStyle }}">{{ sdm.amountStr }}</div>
-              </div>
-            </div>
-          </div>
+      <!-- Ultimos movimientos -->
+      <div style="background:white;border-radius:14px;border:1px solid #F3F4F6;overflow:hidden;">
+        <div style="padding:14px 16px;border-bottom:1px solid #F3F4F6;display:flex;justify-content:space-between;align-items:center;">
+          <div style="font-size:13px;font-weight:700;color:#111827;">Ultimos movimientos</div>
+          <button onClick="{{ goMovimientos }}" style="font-size:12px;color:#0F6E56;font-weight:600;border:none;background:none;cursor:pointer;font-family:'DM Sans',sans-serif;">Ver todos</button>
         </div>
-        <div style="background:white;border-radius:16px;padding:20px;border:1px solid #F3F4F6;">
-          <div style="font-size:14px;font-weight:700;color:#111827;margin-bottom:12px;">Ultimos movimientos</div>
-          <div if="{{ noRecentMovements }}" style="font-size:13px;color:#9CA3AF;padding:12px 0;">Sin movimientos este mes</div>
-          <div style="display:flex;flex-direction:column;gap:8px;">
-            <div style="display:flex;align-items:center;gap:10px;" each="{{ recentMovements }}" as="rm">
-              <div style="{{ rm.dotStyle }}">{{ rm.icon }}</div>
-              <div style="flex:1;min-width:0;">
-                <div style="font-size:13px;font-weight:500;color:#111827;">{{ rm.description }}</div>
-                <div style="font-size:11px;color:#9CA3AF;">{{ rm.category }} · {{ rm.dateStr }}</div>
-              </div>
-              <div style="{{ rm.amountStyle }}">{{ rm.amountStr }}</div>
-            </div>
+        <div if="{{ noRecentMovements }}" style="padding:30px;text-align:center;color:#9CA3AF;font-size:13px;">Sin movimientos este mes</div>
+        <div style="display:flex;align-items:center;gap:10px;padding:11px 16px;border-bottom:1px solid #F9FAFB;" each="{{ recentMovements }}" as="rm">
+          <div style="{{ rm.dotStyle }}">{{ rm.icon }}</div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:13px;font-weight:500;color:#111827;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ rm.description }}</div>
+            <div style="font-size:11px;color:#9CA3AF;">{{ rm.category }} · {{ rm.timeStr }}</div>
           </div>
+          <div style="{{ rm.amountStyle }}">{{ rm.amountStr }}</div>
         </div>
+      </div>
+      <!-- Mes: selector -->
+      <div style="margin-top:16px;display:flex;align-items:center;justify-content:center;gap:10px;">
+        <button onClick="{{ prevMonth }}" style="background:white;border:1px solid #E5E7EB;color:#374151;width:30px;height:30px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button>
+        <span style="font-size:13px;font-weight:600;color:#374151;min-width:100px;text-align:center;">{{ monthName }} {{ year }}</span>
+        <button onClick="{{ nextMonth }}" style="background:white;border:1px solid #E5E7EB;color:#374151;width:30px;height:30px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg></button>
       </div>
     </div>
 
     <!-- MOVIMIENTOS -->
-    <div if="{{ isMovimientos }}" style="animation:fadeUp 0.2s ease;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;">
+    <div if="{{ isMovimientos }}" style="animation:fadeUp .2s ease;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;gap:12px;">
         <div>
-          <div style="font-size:22px;font-weight:700;color:#111827;letter-spacing:-0.5px;">Movimientos</div>
+          <div style="font-size:20px;font-weight:700;color:#111827;letter-spacing:-.5px;">Movimientos</div>
           <div style="font-size:13px;color:#9CA3AF;margin-top:2px;">{{ monthName }} {{ year }}</div>
         </div>
-        <button onClick="{{ openModal }}" style="display:flex;align-items:center;gap:8px;background:#0F6E56;color:white;border:none;border-radius:11px;padding:10px 18px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;box-shadow:0 2px 8px rgba(15,110,86,0.3);">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        <button onclick="openModal(null)" style="display:flex;align-items:center;gap:7px;background:#0F6E56;color:white;border:none;border-radius:10px;padding:9px 16px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;box-shadow:0 2px 8px rgba(15,110,86,0.3);flex-shrink:0;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           Agregar
         </button>
       </div>
-      <div style="display:flex;gap:12px;margin-bottom:18px;">
+      <!-- Chips resumen -->
+      <div style="display:flex;gap:8px;margin-bottom:14px;overflow-x:auto;padding-bottom:4px;">
         <div style="{{ sc.style }}" each="{{ movSummaryChips }}" as="sc">
-          <div style="font-size:11px;font-weight:600;opacity:0.7;margin-bottom:3px;">{{ sc.label }}</div>
-          <div style="font-size:16px;font-weight:700;">{{ sc.value }}</div>
+          <div style="font-size:10px;font-weight:600;opacity:.7;margin-bottom:2px;">{{ sc.label }}</div>
+          <div style="font-size:15px;font-weight:700;white-space:nowrap;">{{ sc.value }}</div>
         </div>
       </div>
-      <div style="background:white;border-radius:16px;border:1px solid #F3F4F6;overflow:hidden;">
-        <div style="display:flex;gap:4px;padding:12px 16px;border-bottom:1px solid #F3F4F6;background:#FAFAFA;">
+      <!-- Filtros -->
+      <div style="background:white;border-radius:14px;border:1px solid #F3F4F6;overflow:hidden;">
+        <div style="display:flex;gap:4px;padding:10px 12px;border-bottom:1px solid #F3F4F6;background:#FAFAFA;overflow-x:auto;">
           <button style="{{ ft.style }}" onClick="{{ ft.onClick }}" each="{{ filterTabs }}" as="ft">{{ ft.label }}</button>
         </div>
-        <div if="{{ noMovements }}" style="padding:40px;text-align:center;color:#9CA3AF;font-size:14px;">No hay movimientos este mes</div>
-        <div style="display:flex;flex-direction:column;">
-          <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid #F9FAFB;" each="{{ filteredMovements }}" as="fm">
-            <div style="{{ fm.dotStyle }}">{{ fm.icon }}</div>
-            <div style="flex:1;min-width:0;">
-              <div style="font-size:13px;font-weight:500;color:#111827;">{{ fm.description }}</div>
-              <div style="font-size:11px;color:#9CA3AF;margin-top:2px;">{{ fm.category }} · {{ fm.dateStr }}</div>
-              <span style="{{ fm.typeBadgeStyle }}">{{ fm.typeLabel }}</span>
-            </div>
+        <div if="{{ noMovements }}" style="padding:40px;text-align:center;color:#9CA3AF;font-size:14px;">Sin movimientos este mes</div>
+        <div style="display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid #F9FAFB;" each="{{ filteredMovements }}" as="fm">
+          <div style="{{ fm.dotStyle }}">{{ fm.icon }}</div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:13px;font-weight:500;color:#111827;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ fm.description }}</div>
+            <div style="font-size:11px;color:#9CA3AF;">{{ fm.category }} · {{ fm.timeStr }}</div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
             <div style="{{ fm.amountStyle }}">{{ fm.amountStr }}</div>
-            <div style="display:flex;gap:6px;">
-              <button onClick="{{ fm.onEdit }}" style="background:#F3F4F6;border:none;color:#6B7280;width:30px;height:30px;border-radius:7px;cursor:pointer;display:flex;align-items:center;justify-content:center;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
-              <button onClick="{{ fm.onDelete }}" style="background:#FEF2F2;border:none;color:#F05252;width:30px;height:30px;border-radius:7px;cursor:pointer;display:flex;align-items:center;justify-content:center;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>
+            <div style="display:flex;gap:4px;">
+              <button onClick="{{ fm.onEdit }}" style="background:#F3F4F6;border:none;color:#6B7280;width:26px;height:26px;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+              <button onClick="{{ fm.onDelete }}" style="background:#FEF2F2;border:none;color:#F05252;width:26px;height:26px;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>
             </div>
           </div>
         </div>
@@ -298,19 +363,26 @@
     </div>
 
     <!-- REPORTES -->
-    <div if="{{ isReportes }}" style="animation:fadeUp 0.2s ease;">
-      <div style="font-size:22px;font-weight:700;color:#111827;letter-spacing:-0.5px;margin-bottom:6px;">Reportes {{ year }}</div>
-      <div style="font-size:13px;color:#9CA3AF;margin-bottom:24px;">Vision anual de tus finanzas</div>
-      <div style="background:white;border-radius:16px;padding:24px;border:1px solid #F3F4F6;margin-bottom:16px;">
-        <div style="font-size:14px;font-weight:700;color:#111827;margin-bottom:16px;">Resumen anual</div>
-        <div style="display:flex;gap:24px;margin-bottom:20px;">
-          <div><div style="font-size:11px;color:#9CA3AF;font-weight:600;margin-bottom:4px;">INGRESOS</div><div style="{{ annualIncomeStyle }}">{{ annualIncome }}</div></div>
-          <div><div style="font-size:11px;color:#9CA3AF;font-weight:600;margin-bottom:4px;">EGRESOS</div><div style="{{ annualExpenseStyle }}">{{ annualExpense }}</div></div>
-          <div><div style="font-size:11px;color:#9CA3AF;font-weight:600;margin-bottom:4px;">AHORRO</div><div style="{{ annualSavingsStyle }}">{{ annualSavings }}</div></div>
+    <div if="{{ isReportes }}" style="animation:fadeUp .2s ease;">
+      <div style="font-size:20px;font-weight:700;color:#111827;letter-spacing:-.5px;margin-bottom:4px;">Reportes {{ year }}</div>
+      <div style="font-size:13px;color:#9CA3AF;margin-bottom:20px;">Vision anual de tus finanzas</div>
+      <!-- Año -->
+      <div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:16px;">
+        <button onClick="{{ prevYear }}" style="background:white;border:1px solid #E5E7EB;color:#374151;width:30px;height:30px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button>
+        <span style="font-size:15px;font-weight:700;color:#111827;">{{ year }}</span>
+        <button onClick="{{ nextYear }}" style="background:white;border:1px solid #E5E7EB;color:#374151;width:30px;height:30px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg></button>
+      </div>
+      <div style="background:white;border-radius:14px;padding:20px;border:1px solid #F3F4F6;margin-bottom:14px;">
+        <div style="font-size:13px;font-weight:700;color:#111827;margin-bottom:14px;">Resumen anual</div>
+        <div style="display:flex;gap:16px;margin-bottom:18px;overflow-x:auto;">
+          <div style="min-width:90px;"><div style="font-size:10px;color:#9CA3AF;font-weight:600;margin-bottom:3px;">INGRESOS</div><div style="font-size:16px;font-weight:700;color:#16A34A;">{{ annualIncome }}</div></div>
+          <div style="min-width:90px;"><div style="font-size:10px;color:#9CA3AF;font-weight:600;margin-bottom:3px;">EGRESOS</div><div style="font-size:16px;font-weight:700;color:#F05252;">{{ annualExpense }}</div></div>
+          <div style="min-width:90px;"><div style="font-size:10px;color:#9CA3AF;font-weight:600;margin-bottom:3px;">AHORRO</div><div style="font-size:16px;font-weight:700;color:#D97706;">{{ annualSavings }}</div></div>
         </div>
-        <div style="display:flex;align-items:flex-end;gap:6px;height:155px;">
+        <!-- Barras por mes -->
+        <div style="display:flex;align-items:flex-end;gap:4px;height:100px;">
           <div style="display:flex;flex-direction:column;align-items:center;flex:1;" each="{{ monthlyBars }}" as="mb">
-            <div style="display:flex;align-items:flex-end;gap:2px;height:155px;">
+            <div style="display:flex;align-items:flex-end;gap:1px;height:90px;">
               <div style="{{ mb.incomeBarStyle }}"></div>
               <div style="{{ mb.expenseBarStyle }}"></div>
               <div style="{{ mb.savingsBarStyle }}"></div>
@@ -318,24 +390,24 @@
             <div style="{{ mb.labelStyle }}">{{ mb.label }}</div>
           </div>
         </div>
-        <div style="display:flex;gap:16px;margin-top:12px;">
-          <div style="display:flex;align-items:center;gap:5px;"><div style="width:10px;height:10px;border-radius:3px;background:#22C55E;"></div><span style="font-size:11px;color:#6B7280;">Ingresos</span></div>
-          <div style="display:flex;align-items:center;gap:5px;"><div style="width:10px;height:10px;border-radius:3px;background:#F05252;"></div><span style="font-size:11px;color:#6B7280;">Egresos</span></div>
-          <div style="display:flex;align-items:center;gap:5px;"><div style="width:10px;height:10px;border-radius:3px;background:#F59E0B;"></div><span style="font-size:11px;color:#6B7280;">Ahorro</span></div>
+        <div style="display:flex;gap:12px;margin-top:10px;">
+          <div style="display:flex;align-items:center;gap:4px;"><div style="width:8px;height:8px;border-radius:2px;background:#22C55E;"></div><span style="font-size:10px;color:#6B7280;">Ingresos</span></div>
+          <div style="display:flex;align-items:center;gap:4px;"><div style="width:8px;height:8px;border-radius:2px;background:#F05252;"></div><span style="font-size:10px;color:#6B7280;">Egresos</span></div>
+          <div style="display:flex;align-items:center;gap:4px;"><div style="width:8px;height:8px;border-radius:2px;background:#F59E0B;"></div><span style="font-size:10px;color:#6B7280;">Ahorro</span></div>
         </div>
       </div>
-      <div style="background:white;border-radius:16px;padding:24px;border:1px solid #F3F4F6;">
-        <div style="font-size:14px;font-weight:700;color:#111827;margin-bottom:16px;">Egresos por categoria</div>
+      <div style="background:white;border-radius:14px;padding:20px;border:1px solid #F3F4F6;">
+        <div style="font-size:13px;font-weight:700;color:#111827;margin-bottom:14px;">Egresos por categoria</div>
         <div if="{{ noCategoryData }}" style="font-size:13px;color:#9CA3AF;">Sin datos de egresos aun</div>
-        <div style="display:flex;flex-direction:column;gap:12px;">
-          <div style="display:flex;align-items:center;gap:12px;" each="{{ categoryBars }}" as="cb">
-            <div style="width:28px;text-align:center;font-size:16px;">{{ cb.icon }}</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div style="display:flex;align-items:center;gap:10px;" each="{{ categoryBars }}" as="cb">
+            <div style="width:24px;text-align:center;font-size:15px;flex-shrink:0;">{{ cb.icon }}</div>
             <div style="flex:1;min-width:0;">
-              <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+              <div style="display:flex;justify-content:space-between;margin-bottom:3px;">
                 <span style="font-size:12px;font-weight:600;color:#374151;">{{ cb.category }}</span>
                 <span style="font-size:12px;font-weight:600;color:#374151;">{{ cb.pct }}%</span>
               </div>
-              <div style="height:6px;background:#F3F4F6;border-radius:100px;overflow:hidden;">
+              <div style="height:5px;background:#F3F4F6;border-radius:100px;overflow:hidden;">
                 <div style="{{ cb.barStyle }}"></div>
               </div>
               <div style="font-size:11px;color:#9CA3AF;margin-top:2px;">{{ cb.amount }}</div>
@@ -346,28 +418,28 @@
     </div>
 
     <!-- METAS -->
-    <div if="{{ isMetas }}" style="animation:fadeUp 0.2s ease;">
-      <div style="font-size:22px;font-weight:700;color:#111827;letter-spacing:-0.5px;margin-bottom:6px;">Metas de ahorro</div>
-      <div style="font-size:13px;color:#9CA3AF;margin-bottom:24px;">Seguimiento de tus objetivos financieros</div>
-      <div if="{{ noGoals }}" style="background:white;border-radius:16px;padding:40px;text-align:center;color:#9CA3AF;font-size:14px;border:1px solid #F3F4F6;">Aun no tienes metas guardadas</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
-        <div style="background:white;border-radius:16px;padding:22px;border:1px solid #F3F4F6;" each="{{ goalCards }}" as="gc">
-          <div style="display:flex;align-items:flex-start;margin-bottom:14px;">
-            <div style="font-size:28px;margin-right:12px;">{{ gc.icon }}</div>
+    <div if="{{ isMetas }}" style="animation:fadeUp .2s ease;">
+      <div style="font-size:20px;font-weight:700;color:#111827;letter-spacing:-.5px;margin-bottom:4px;">Metas de ahorro</div>
+      <div style="font-size:13px;color:#9CA3AF;margin-bottom:20px;">Tus objetivos financieros</div>
+      <div if="{{ noGoals }}" style="background:white;border-radius:14px;padding:40px;text-align:center;color:#9CA3AF;font-size:14px;border:1px solid #F3F4F6;">Aun no tienes metas guardadas</div>
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div style="background:white;border-radius:14px;padding:18px;border:1px solid #F3F4F6;" each="{{ goalCards }}" as="gc">
+          <div style="display:flex;align-items:flex-start;margin-bottom:12px;">
+            <div style="font-size:24px;margin-right:10px;">{{ gc.icon }}</div>
             <div style="flex:1;min-width:0;">
               <div style="font-size:14px;font-weight:700;color:#111827;">{{ gc.name }}</div>
-              <div style="font-size:12px;color:#9CA3AF;margin-top:2px;">Plazo: {{ gc.deadline }}</div>
+              <div style="font-size:11px;color:#9CA3AF;margin-top:1px;">Plazo: {{ gc.deadline }}</div>
             </div>
             <div style="{{ gc.badgeStyle }}">{{ gc.pct }}%</div>
           </div>
-          <div style="height:8px;background:#F3F4F6;border-radius:100px;overflow:hidden;margin-bottom:10px;">
+          <div style="height:7px;background:#F3F4F6;border-radius:100px;overflow:hidden;margin-bottom:10px;">
             <div style="{{ gc.barStyle }}"></div>
           </div>
           <div style="display:flex;justify-content:space-between;">
-            <div><div style="font-size:11px;color:#9CA3AF;font-weight:600;">AHORRADO</div><div style="font-size:14px;font-weight:700;color:#0F6E56;">{{ gc.saved }}</div></div>
-            <div style="text-align:right;"><div style="font-size:11px;color:#9CA3AF;font-weight:600;">META</div><div style="font-size:14px;font-weight:700;color:#111827;">{{ gc.target }}</div></div>
+            <div><div style="font-size:10px;color:#9CA3AF;font-weight:600;">AHORRADO</div><div style="font-size:13px;font-weight:700;color:#0F6E56;">{{ gc.saved }}</div></div>
+            <div style="text-align:right;"><div style="font-size:10px;color:#9CA3AF;font-weight:600;">META</div><div style="font-size:13px;font-weight:700;color:#111827;">{{ gc.target }}</div></div>
           </div>
-          <div style="margin-top:8px;padding-top:8px;border-top:1px solid #F3F4F6;font-size:12px;color:#9CA3AF;">Faltan {{ gc.remaining }}</div>
+          <div style="margin-top:7px;padding-top:7px;border-top:1px solid #F3F4F6;font-size:11px;color:#9CA3AF;">Faltan {{ gc.remaining }}</div>
         </div>
       </div>
     </div>
@@ -375,355 +447,146 @@
   </main>
 </div>
 
-<!-- MODAL -->
-<div if="{{ showModal }}" onClick="{{ closeModal }}" style="position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:1000;display:flex;align-items:center;justify-content:center;animation:fadeIn 0.15s ease;">
-  <div onClick="{{ stopProp }}" style="background:white;border-radius:20px;padding:28px;width:100%;max-width:440px;box-shadow:0 24px 64px rgba(0,0,0,0.18);animation:scaleIn 0.2s ease;">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
-      <div style="font-size:17px;font-weight:700;color:#111827;">{{ modalTitle }}</div>
-      <button onClick="{{ closeModal }}" style="background:#F3F4F6;border:none;width:30px;height:30px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#6B7280;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
-    </div>
-    <div style="display:flex;gap:6px;margin-bottom:18px;">
-      <button style="{{ mt.style }}" onClick="{{ mt.onClick }}" each="{{ modalTypeBtns }}" as="mt">{{ mt.label }}</button>
-    </div>
-    <div style="display:flex;flex-direction:column;gap:14px;">
-      <div>
-        <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:5px;">Descripcion</label>
-        <input type="text" value="{{ formDescription }}" onChange="{{ onDescChange }}" placeholder="Ej: Mercado semanal" style="width:100%;padding:10px 14px;border:1.5px solid #E5E7EB;border-radius:10px;font-size:14px;color:#111827;outline:none;font-family:'DM Sans',sans-serif;"/>
-      </div>
-      <div>
-        <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:5px;">Monto (COP)</label>
-        <input type="number" value="{{ formAmount }}" onChange="{{ onAmountChange }}" placeholder="0" style="width:100%;padding:10px 14px;border:1.5px solid #E5E7EB;border-radius:10px;font-size:14px;color:#111827;outline:none;font-family:'DM Sans',sans-serif;"/>
-      </div>
-      <div>
-        <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:5px;">Categoria</label>
-        <select value="{{ formCategory }}" onChange="{{ onCatChange }}" style="width:100%;padding:10px 14px;border:1.5px solid #E5E7EB;border-radius:10px;font-size:14px;color:#111827;outline:none;background:white;cursor:pointer;font-family:'DM Sans',sans-serif;">
-          <option value="{{ co.value }}" each="{{ categoryOptions }}" as="co">{{ co.label }}</option>
-        </select>
-      </div>
-      <div>
-        <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:5px;">Fecha</label>
-        <input type="date" value="{{ formDate }}" onChange="{{ onDateChange }}" style="width:100%;padding:10px 14px;border:1.5px solid #E5E7EB;border-radius:10px;font-size:14px;color:#111827;outline:none;font-family:'DM Sans',sans-serif;"/>
-      </div>
-      <button onClick="{{ submitMovement }}" style="{{ submitBtnStyle }}">{{ submitBtnLabel }}</button>
-    </div>
-  </div>
-</div>
-
 <script type="text/x-dc" data-dc-script>
 class Component extends DCLogic {
-
   MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
   SHORT  = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-  DNAMES = ['Dom','Lun','Mar','Mie','Jue','Vie','Sab'];
-  CAT_ICONS = {
-    'Nomina':'💼','Nómina':'💼','Freelance':'💻','Prima':'🎁',
-    'Vivienda':'🏠','Alimentacion':'🛒','Alimentación':'🛒',
-    'Transporte':'🚌','Servicios':'💡','Salud':'💊',
-    'Entretenimiento':'🎬','Personal':'👕','Educacion':'📚','Educación':'📚',
-    'Inversion':'📈','Inversión':'📈','Ahorro':'🏦','Otro':'💰'
-  };
-  CATEGORIES = ['Nómina','Freelance','Prima','Vivienda','Alimentación','Transporte','Servicios','Salud','Entretenimiento','Personal','Educación','Inversión','Ahorro','Otro'];
-
+  CAT_ICONS = {'Nomina':'💼','Nómina':'💼','Freelance':'💻','Prima':'🎁','Vivienda':'🏠','Alimentacion':'🛒','Alimentación':'🛒','Transporte':'🚌','Servicios':'💡','Salud':'💊','Entretenimiento':'🎬','Personal':'👕','Educacion':'📚','Educación':'📚','Inversion':'📈','Inversión':'📈','Ahorro':'🏦','Otro':'💰'};
   state = {
-    screen: 'panel',
-    year: new Date().getFullYear(),
-    month: new Date().getMonth(),
-    selectedDay: null,
-    showModal: false, editingId: null, movFilter: 'all', modalType: 'expense',
-    calendarView: 'month',
-    weekStart: (function(){ var d=new Date(); d.setDate(d.getDate()-d.getDay()); return d.toISOString().slice(0,10); })(),
-    movements: [],
-    formDescription: '', formAmount: '', formCategory: 'Otro', formDate: new Date().toISOString().slice(0,10),
-    MONTHLY_DATA: Array(12).fill(null).map(function(){ return {i:0,e:0,s:0}; }),
-    CAT_ANNUAL: [],
-    GOALS: [],
-    userName: '',
-    userId: null,
+    screen:'panel', year:new Date().getFullYear(), month:new Date().getMonth(),
+    movements:[], GOALS:[], MONTHLY_DATA:Array(12).fill(null).map(function(){return{i:0,e:0,s:0};}),
+    CAT_ANNUAL:[], movFilter:'all', userName:'', userId:null,
   };
 
   componentDidMount() {
     window.__dcSetState = this.setState.bind(this);
+    window.__dcGetState = (function(self){ return function(){ return self.state; }; })(this);
+    window.__dcGetCatIcon = (function(self){ return function(cat){ return self.CAT_ICONS[cat]||'💰'; }; })(this);
   }
 
-  fmt(n) { return '$ ' + Math.round(Math.abs(n)).toLocaleString('es-CO'); }
-  fmtShort(n) {
-    n = Math.round(Math.abs(n));
-    if (n === 0) return '';
-    if (n >= 1000000) { var v=(n/1000000).toFixed(1); return '$'+(v.endsWith('.0')?v.slice(0,-2):v)+'M'; }
-    if (n >= 1000) return '$'+Math.round(n/1000)+'k';
+  fmt(n){ return '$ '+Math.round(Math.abs(n)).toLocaleString('es-CO'); }
+  fmtShort(n){
+    n=Math.round(Math.abs(n)); if(!n) return '';
+    if(n>=1000000){ var v=(n/1000000).toFixed(1); return '$'+(v.endsWith('.0')?v.slice(0,-2):v)+'M'; }
+    if(n>=1000) return '$'+Math.round(n/1000)+'k';
     return '$'+n.toLocaleString('es-CO');
   }
-  navBtn(id) {
-    var a = this.state.screen === id;
-    return {
-      display:'flex', alignItems:'center', gap:'10px', width:'100%',
-      padding:'9px 12px', border:'none', borderRadius:'10px', cursor:'pointer',
-      textAlign:'left', background:a?'rgba(255,255,255,0.18)':'transparent',
-      color:a?'white':'rgba(255,255,255,0.6)', fontFamily:"'DM Sans',sans-serif",
-      fontSize:'13px', fontWeight:a?'600':'400', transition:'all 0.15s'
-    };
+  navBtn(id){
+    var a=this.state.screen===id;
+    return 'display:flex;align-items:center;gap:10px;width:100%;padding:9px 12px;border:none;border-radius:10px;cursor:pointer;text-align:left;background:'+(a?'rgba(255,255,255,0.18)':'transparent')+';color:'+(a?'white':'rgba(255,255,255,0.6)')+';font-family:\'DM Sans\',sans-serif;font-size:13px;font-weight:'+(a?'600':'400')+';transition:all .15s;';
   }
-  typeColor(t) { return t==='income'?'#22C55E':t==='savings'?'#F59E0B':'#F05252'; }
-  typeBg(t)    { return t==='income'?'#F0FDF4':t==='savings'?'#FFFBEB':'#FEF2F2'; }
-  typeLabel(t) { return t==='income'?'Ingreso':t==='savings'?'Ahorro':'Egreso'; }
-  signStr(m)   { return (m.type==='expense'?'- ':'+ ') + this.fmt(m.amount); }
+  typeColor(t){ return t==='income'?'#22C55E':t==='savings'?'#F59E0B':'#F05252'; }
+  typeBg(t)   { return t==='income'?'#F0FDF4':t==='savings'?'#FFFBEB':'#FEF2F2'; }
+  typeLabel(t){ return t==='income'?'Ingreso':t==='savings'?'Ahorro':'Egreso'; }
+  signStr(m)  { return (m.type==='expense'?'- ':'+ ')+this.fmt(m.amount); }
+  timeStr(m) {
+    if (m.createdAt) {
+      var d = new Date(m.createdAt);
+      return d.toLocaleDateString('es-CO',{day:'numeric',month:'short'})+' '+d.toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});
+    }
+    if (m.date) {
+      var parts = m.date.split('-');
+      return parseInt(parts[2])+' '+this.SHORT[parseInt(parts[1])-1];
+    }
+    return '';
+  }
 
-  movRow(m) {
-    var self = this;
-    var d = new Date(m.date+'T12:00:00');
+  movRow(m){
+    var self=this;
     return {
-      icon: m.icon||'💰', description: m.description, category: m.category,
-      dateStr: d.getDate() + ' ' + self.SHORT[d.getMonth()],
-      amountStr: self.signStr(m), typeLabel: self.typeLabel(m.type),
-      dotStyle: { width:'40px', height:'40px', borderRadius:'12px', background:self.typeBg(m.type), display:'flex', alignItems:'center', justifyContent:'center', fontSize:'18px', flexShrink:'0' },
-      amountStyle: { fontSize:'13px', fontWeight:'600', color:self.typeColor(m.type), whiteSpace:'nowrap' },
-      typeBadgeStyle: { fontSize:'10px', color:self.typeColor(m.type), background:self.typeBg(m.type), padding:'2px 7px', borderRadius:'100px', marginTop:'4px', display:'inline-block', fontWeight:'600' },
-      onEdit: function(){
-        self.setState({ showModal:true, editingId:m.id, modalType:m.type, formDescription:m.description, formAmount:String(m.amount), formCategory:m.category, formDate:m.date });
-      },
+      icon:m.icon||'💰', description:m.description, category:m.category,
+      timeStr:self.timeStr(m), amountStr:self.signStr(m),
+      dotStyle:'width:38px;height:38px;border-radius:11px;background:'+self.typeBg(m.type)+';display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;',
+      amountStyle:'font-size:13px;font-weight:600;color:'+self.typeColor(m.type)+';white-space:nowrap;',
+      onEdit: function(){ if(window.openModal) window.openModal(m); },
       onDelete: function(){
-        var sb = window._sb; if (!sb) return;
-        sb.from('movimientos').delete().eq('id', m.id).then(function(res){
-          if (!res.error) {
-            var newMovs = self.state.movements.filter(function(mv){ return mv.id !== m.id; });
-            self.setState({ movements: newMovs });
-            self._recomputeAnnual(newMovs);
+        var sb=window._sb; if(!sb) return;
+        sb.from('movimientos').delete().eq('id',m.id).then(function(res){
+          if(!res.error){
+            var n=self.state.movements.filter(function(mv){return mv.id!==m.id;});
+            self.setState({movements:n}); self._recompute(n);
           }
         });
       },
     };
   }
 
-  _recomputeAnnual(movs) {
-    var self = this, year = self.state.year;
-    var monthly = Array(12).fill(null).map(function(){ return {i:0,e:0,s:0}; });
-    var catMap = {};
+  _recompute(movs){
+    var self=this, yr=self.state.year;
+    var monthly=Array(12).fill(null).map(function(){return{i:0,e:0,s:0};});
+    var catMap={};
     movs.forEach(function(m){
-      var d = new Date(m.date+'T12:00:00');
-      if (d.getFullYear() === year) {
-        var mo = d.getMonth();
-        if (m.type==='income')  monthly[mo].i += m.amount;
-        if (m.type==='expense') monthly[mo].e += m.amount;
-        if (m.type==='savings') monthly[mo].s += m.amount;
-        if (m.type==='expense') {
-          var cat = m.category;
-          if (!catMap[cat]) catMap[cat] = { cat:cat, icon:self.CAT_ICONS[cat]||'💰', amount:0 };
-          catMap[cat].amount += m.amount;
+      var d=new Date(m.date+'T12:00:00');
+      if(d.getFullYear()===yr){
+        var mo=d.getMonth();
+        if(m.type==='income')  monthly[mo].i+=m.amount;
+        if(m.type==='expense') monthly[mo].e+=m.amount;
+        if(m.type==='savings') monthly[mo].s+=m.amount;
+        if(m.type==='expense'){
+          if(!catMap[m.category]) catMap[m.category]={cat:m.category,icon:self.CAT_ICONS[m.category]||'💰',amount:0};
+          catMap[m.category].amount+=m.amount;
         }
       }
     });
-    self.setState({ MONTHLY_DATA: monthly, CAT_ANNUAL: Object.values(catMap).sort(function(a,b){ return b.amount-a.amount; }) });
+    self.setState({MONTHLY_DATA:monthly,CAT_ANNUAL:Object.values(catMap).sort(function(a,b){return b.amount-a.amount;})});
   }
 
-  renderVals() {
-    var s = this.state, self = this;
-    var screen=s.screen, year=s.year, month=s.month, selectedDay=s.selectedDay, movFilter=s.movFilter, modalType=s.modalType;
+  renderVals(){
+    var s=this.state, self=this;
+    var year=s.year, month=s.month, movFilter=s.movFilter, screen=s.screen;
+    var monthMovs=s.movements.filter(function(m){var d=new Date(m.date+'T12:00:00');return d.getFullYear()===year&&d.getMonth()===month;});
+    var income  =monthMovs.filter(function(m){return m.type==='income';}).reduce(function(a,m){return a+m.amount;},0);
+    var expenses=monthMovs.filter(function(m){return m.type==='expense';}).reduce(function(a,m){return a+m.amount;},0);
+    var savings =monthMovs.filter(function(m){return m.type==='savings';}).reduce(function(a,m){return a+m.amount;},0);
+    var balance =income-expenses-savings;
 
-    var monthMovs = s.movements.filter(function(m){ var d=new Date(m.date+'T12:00:00'); return d.getFullYear()===year && d.getMonth()===month; });
-    var income   = monthMovs.filter(function(m){ return m.type==='income'; }).reduce(function(a,m){ return a+m.amount; }, 0);
-    var expenses = monthMovs.filter(function(m){ return m.type==='expense'; }).reduce(function(a,m){ return a+m.amount; }, 0);
-    var savings  = monthMovs.filter(function(m){ return m.type==='savings'; }).reduce(function(a,m){ return a+m.amount; }, 0);
-    var balance  = income - expenses - savings;
+    var kpiCards=[
+      {label:'Ingresos',amount:income,color:'#22C55E'},
+      {label:'Egresos', amount:expenses,color:'#F05252'},
+      {label:'Ahorro',  amount:savings, color:'#F59E0B'},
+      {label:'Disponible',amount:balance,color:'#0F6E56'},
+    ].map(function(k){return{label:k.label,amount:self.fmt(k.amount),cardStyle:'background:white;border-radius:12px;padding:14px 16px;border:1px solid #F3F4F6;',amountStyle:'font-size:16px;font-weight:700;color:'+k.color+';letter-spacing:-.3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;',accentStyle:'background:'+k.color+';opacity:.15;'};});
 
-    var kpiCards = [
-      {label:'Ingresos', icon:'↑', amount:income,   color:'#22C55E', bg:'#F0FDF4'},
-      {label:'Egresos',  icon:'↓', amount:expenses, color:'#F05252', bg:'#FEF2F2'},
-      {label:'Ahorro',   icon:'◈', amount:savings,  color:'#F59E0B', bg:'#FFFBEB'},
-      {label:'Disponible',icon:'◎',amount:balance,  color:'#0F6E56', bg:'#F0FDF4'},
-    ].map(function(k){
-      return {
-        label:k.label, icon:k.icon, amount:self.fmt(k.amount),
-        cardStyle:{ background:'white', borderRadius:'14px', padding:'16px 18px', border:'1px solid #F3F4F6' },
-        iconStyle:{ width:'32px', height:'32px', background:k.bg, borderRadius:'9px', display:'flex', alignItems:'center', justifyContent:'center', color:k.color, fontSize:'15px', fontWeight:'700', flexShrink:'0' },
-        amountStyle:{ fontSize:'17px', fontWeight:'700', color:k.color, letterSpacing:'-0.3px', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' },
-        accentStyle:{ height:'3px', borderRadius:'2px', background:k.color, opacity:0.18, marginTop:'10px' }
-      };
-    });
+    var recentMovements=monthMovs.slice().sort(function(a,b){return new Date(b.createdAt||b.date)-new Date(a.createdAt||a.date);}).slice(0,6).map(function(m){return self.movRow(m);});
 
-    // Calendar month view
-    var daysInMonth = new Date(year, month+1, 0).getDate();
-    var firstDow = new Date(year, month, 1).getDay();
-    var today = new Date();
-    var calendarDays = [];
-    for (var i=0; i<firstDow; i++) {
-      calendarDays.push({ dayNum:'', hasIncome:false, hasExpense:false, hasSavings:false, incomeFmt:'', expenseFmt:'', savingsFmt:'', onClick:function(){}, cellStyle:{ padding:'4px 3px', minHeight:'60px' }, numStyle:{} });
-    }
-    for (var day=1; day<=daysInMonth; day++) {
-      (function(d){
-        var dm=monthMovs.filter(function(m){ return new Date(m.date+'T12:00:00').getDate()===d; });
-        var dI=dm.filter(function(m){return m.type==='income';}).reduce(function(a,m){return a+m.amount;},0);
-        var dE=dm.filter(function(m){return m.type==='expense';}).reduce(function(a,m){return a+m.amount;},0);
-        var dS=dm.filter(function(m){return m.type==='savings';}).reduce(function(a,m){return a+m.amount;},0);
-        var isSel=selectedDay===d, isTod=today.getFullYear()===year&&today.getMonth()===month&&today.getDate()===d;
-        calendarDays.push({
-          dayNum:d, hasIncome:dI>0, hasExpense:dE>0, hasSavings:dS>0,
-          incomeFmt:self.fmtShort(dI), expenseFmt:self.fmtShort(dE), savingsFmt:self.fmtShort(dS),
-          onClick:function(){ self.setState({ selectedDay:isSel?null:d }); },
-          cellStyle:{ padding:'4px 3px', minHeight:'60px', borderRadius:'9px', cursor:'pointer', overflow:'hidden', background:isSel?'#0F6E56':isTod?'#F0FDF4':'transparent', border:isSel?'2px solid #0F6E56':isTod?'1.5px solid #0F6E56':'1.5px solid transparent' },
-          numStyle:{ fontSize:'12px', fontWeight:isTod||isSel?'700':'400', color:isSel?'white':isTod?'#0F6E56':'#374151', display:'block', padding:'0 3px' },
-        });
-      })(day);
-    }
-
-    // Calendar week view
-    var isMonthView = s.calendarView !== 'week';
-    var wStart = s.weekStart;
-    var wsd = new Date(wStart+'T12:00:00'), wed2 = new Date(wStart+'T12:00:00'); wed2.setDate(wed2.getDate()+6);
-    var weekRangeLabel = wsd.getDate()+' '+self.SHORT[wsd.getMonth()]+' - '+wed2.getDate()+' '+self.SHORT[wed2.getMonth()]+' '+wed2.getFullYear();
-    var weekDays = [];
-    for (var wi=0; wi<7; wi++) {
-      (function(idx){
-        var wd=new Date(wStart+'T12:00:00'); wd.setDate(wd.getDate()+idx);
-        var wdy=wd.getFullYear(), wdm=wd.getMonth(), wdd=wd.getDate();
-        var wdMovs=s.movements.filter(function(m){ var md=new Date(m.date+'T12:00:00'); return md.getFullYear()===wdy&&md.getMonth()===wdm&&md.getDate()===wdd; });
-        var wI=wdMovs.filter(function(m){return m.type==='income';}).reduce(function(a,m){return a+m.amount;},0);
-        var wE=wdMovs.filter(function(m){return m.type==='expense';}).reduce(function(a,m){return a+m.amount;},0);
-        var wS=wdMovs.filter(function(m){return m.type==='savings';}).reduce(function(a,m){return a+m.amount;},0);
-        var wBal=wI-wE-wS;
-        var wdTod=today.getFullYear()===wdy&&today.getMonth()===wdm&&today.getDate()===wdd;
-        var wdSel=selectedDay===wdd&&year===wdy&&month===wdm;
-        weekDays.push({
-          dayName:self.DNAMES[wd.getDay()], dayNum:wdd, hasIncome:wI>0, hasExpense:wE>0, hasSavings:wS>0, hasAnyMovement:wdMovs.length>0,
-          incomeFmt:self.fmtShort(wI), expenseFmt:self.fmtShort(wE), savingsFmt:self.fmtShort(wS),
-          balanceFmt:(wBal>=0?'= +':'= ')+self.fmtShort(wBal),
-          onClick:function(){ self.setState({ selectedDay:wdSel?null:wdd, year:wdy, month:wdm }); },
-          cellStyle:{ borderRadius:'10px', cursor:'pointer', display:'flex', flexDirection:'column', minHeight:'120px', overflow:'hidden', border:wdSel?'2px solid #0F6E56':wdTod?'2px solid rgba(15,110,86,0.35)':'1.5px solid #EBEBEB', background:wdSel||wdTod?'#F0FDF4':'white' },
-          dayNameStyle:{ fontSize:'9px', fontWeight:'600', color:wdSel||wdTod?'#0F6E56':'#9CA3AF', textTransform:'uppercase', letterSpacing:'0.06em', display:'block' },
-          dayNumStyle:{ fontSize:'20px', fontWeight:'700', color:wdSel||wdTod?'#0F6E56':'#111827', display:'block', lineHeight:'1.1', marginTop:'2px' },
-          balanceStyle:{ fontSize:'10px', fontWeight:'700', color:wBal>=0?'#0F6E56':'#F05252', padding:'5px 6px', borderTop:'1px solid rgba(0,0,0,0.06)', textAlign:'center', marginTop:'auto' },
-        });
-      })(wi);
-    }
-
-    var btnBase = { border:'none', borderRadius:'6px', fontSize:'12px', fontWeight:'600', cursor:'pointer', padding:'5px 12px', fontFamily:"'DM Sans',sans-serif" };
-    var monthViewBtnStyle = Object.assign({}, btnBase, { background:isMonthView?'white':'transparent', color:isMonthView?'#111827':'#9CA3AF', boxShadow:isMonthView?'0 1px 3px rgba(0,0,0,0.08)':'none' });
-    var weekViewBtnStyle  = Object.assign({}, btnBase, { background:!isMonthView?'white':'transparent', color:!isMonthView?'#111827':'#9CA3AF', boxShadow:!isMonthView?'0 1px 3px rgba(0,0,0,0.08)':'none' });
-
-    var recentMovements = monthMovs.slice().sort(function(a,b){ return new Date(b.date)-new Date(a.date); }).slice(0,5).map(function(m){ return self.movRow(m); });
-    var hasSelectedDay = selectedDay !== null;
-    var selMovs = selectedDay ? monthMovs.filter(function(m){ return new Date(m.date+'T12:00:00').getDate()===selectedDay; }) : [];
-    var selectedDayMovements = selMovs.map(function(m){
-      return { icon:m.icon||'💰', description:m.description, category:m.category, amountStr:self.signStr(m),
-        dotStyle:{ width:'32px', height:'32px', borderRadius:'9px', background:self.typeBg(m.type), display:'flex', alignItems:'center', justifyContent:'center', fontSize:'14px', flexShrink:'0' },
-        amountStyle:{ fontSize:'12px', fontWeight:'700', color:self.typeColor(m.type), whiteSpace:'nowrap' } };
-    });
-    var selectedDayLabel = selectedDay ? (selectedDay + ' de ' + self.MONTHS[month]) : '';
-
-    var filterTabs = ['all','income','expense','savings'].map(function(key){
+    var filterTabs=['all','income','expense','savings'].map(function(key){
       var lbl={all:'Todos',income:'Ingresos',expense:'Egresos',savings:'Ahorro'}[key];
-      return { label:lbl, onClick:function(){ self.setState({ movFilter:key }); },
-        style:{ padding:'7px 16px', border:'none', borderRadius:'8px', fontSize:'13px', fontWeight:movFilter===key?'600':'400', cursor:'pointer', background:movFilter===key?'#0F6E56':'transparent', color:movFilter===key?'white':'#9CA3AF', transition:'all 0.15s', fontFamily:"'DM Sans',sans-serif" } };
+      return{label:lbl,onClick:function(){self.setState({movFilter:key});},style:'padding:7px 14px;border:none;border-radius:7px;font-size:12px;font-weight:'+(movFilter===key?'600':'400')+';cursor:pointer;background:'+(movFilter===key?'#0F6E56':'transparent')+';color:'+(movFilter===key?'white':'#9CA3AF')+';transition:all .15s;font-family:\'DM Sans\',sans-serif;white-space:nowrap;'};
     });
-    var filteredMovements = monthMovs.filter(function(m){ return movFilter==='all'||m.type===movFilter; }).sort(function(a,b){ return new Date(b.date)-new Date(a.date); }).map(function(m){ return self.movRow(m); });
-    var movSummaryChips = [{label:'Ingresos',value:self.fmt(income),bg:'#F0FDF4',color:'#16A34A'},{label:'Egresos',value:self.fmt(expenses),bg:'#FEF2F2',color:'#DC2626'},{label:'Ahorro',value:self.fmt(savings),bg:'#FFFBEB',color:'#D97706'}].map(function(c){
-      return { label:c.label, value:c.value, style:{ background:c.bg, borderRadius:'12px', padding:'12px 18px', color:c.color, minWidth:'140px' } };
-    });
+    var filteredMovements=monthMovs.filter(function(m){return movFilter==='all'||m.type===movFilter;}).sort(function(a,b){return new Date(b.createdAt||b.date)-new Date(a.createdAt||a.date);}).map(function(m){return self.movRow(m);});
+    var movSummaryChips=[{label:'Ingresos',value:self.fmt(income),bg:'#F0FDF4',color:'#16A34A'},{label:'Egresos',value:self.fmt(expenses),bg:'#FEF2F2',color:'#DC2626'},{label:'Ahorro',value:self.fmt(savings),bg:'#FFFBEB',color:'#D97706'}].map(function(c){return{label:c.label,value:c.value,style:'background:'+c.bg+';border-radius:10px;padding:10px 14px;color:'+c.color+';min-width:110px;'};});
 
-    var monthly = s.MONTHLY_DATA;
-    var annI=monthly.reduce(function(a,m){return a+m.i;},0), annE=monthly.reduce(function(a,m){return a+m.e;},0), annS=monthly.reduce(function(a,m){return a+m.s;},0);
-    var maxVal = Math.max(monthly.reduce(function(mx,m){ return Math.max(mx, m.i+m.e+m.s); }, 0), 1);
-    var chartH = 130;
-    var monthlyBars = monthly.map(function(m, idx){
-      var isCur = idx===month;
-      return { label:self.SHORT[idx],
-        incomeBarStyle:{ width:'7px', height:m.i>0?(m.i/maxVal*chartH)+'px':'0', background:'#22C55E', borderRadius:'3px 3px 0 0', transition:'height 0.4s', flexShrink:'0' },
-        expenseBarStyle:{ width:'7px', height:m.e>0?(m.e/maxVal*chartH)+'px':'0', background:'#F05252', borderRadius:'3px 3px 0 0', transition:'height 0.4s', flexShrink:'0' },
-        savingsBarStyle:{ width:'7px', height:m.s>0?(m.s/maxVal*chartH)+'px':'0', background:'#F59E0B', borderRadius:'3px 3px 0 0', transition:'height 0.4s', flexShrink:'0' },
-        labelStyle:{ flex:'1', textAlign:'center', fontSize:'10px', fontWeight:isCur?'700':'400', color:isCur?'#0F6E56':'#C4C9D4' } };
+    var monthly=s.MONTHLY_DATA;
+    var annI=monthly.reduce(function(a,m){return a+m.i;},0),annE=monthly.reduce(function(a,m){return a+m.e;},0),annS=monthly.reduce(function(a,m){return a+m.s;},0);
+    var maxVal=Math.max(monthly.reduce(function(mx,m){return Math.max(mx,m.i+m.e+m.s);},0),1);
+    var H=80;
+    var monthlyBars=monthly.map(function(m,idx){
+      var isCur=idx===month;
+      return{label:self.SHORT[idx],incomeBarStyle:'width:5px;height:'+(m.i>0?(m.i/maxVal*H)+'px':'0')+';background:#22C55E;border-radius:3px 3px 0 0;flex-shrink:0;',expenseBarStyle:'width:5px;height:'+(m.e>0?(m.e/maxVal*H)+'px':'0')+';background:#F05252;border-radius:3px 3px 0 0;flex-shrink:0;',savingsBarStyle:'width:5px;height:'+(m.s>0?(m.s/maxVal*H)+'px':'0')+';background:#F59E0B;border-radius:3px 3px 0 0;flex-shrink:0;',labelStyle:'flex:1;text-align:center;font-size:9px;font-weight:'+(isCur?'700':'400')+';color:'+(isCur?'#0F6E56':'#C4C9D4')+';margin-top:3px;'};
     });
-    var catData = s.CAT_ANNUAL;
-    var catTotal = catData.reduce(function(a,c){return a+c.amount;},0)||1;
-    var categoryBars = catData.map(function(c){
-      var pct=Math.round(c.amount/catTotal*100);
-      return { category:c.cat, icon:c.icon, pct:pct, amount:self.fmt(c.amount), barStyle:{ height:'100%', width:pct+'%', background:'linear-gradient(90deg,#0F6E56,#22C55E)', borderRadius:'100px', transition:'width 0.6s' } };
-    });
-    var goalCards = s.GOALS.map(function(g){
-      var pct=Math.min(100,Math.round(g.saved/g.target*100));
-      return { name:g.name, icon:g.icon, pct:pct, deadline:g.deadline, saved:self.fmt(g.saved), target:self.fmt(g.target), remaining:self.fmt(g.target-g.saved),
-        badgeStyle:{ marginLeft:'auto', flexShrink:'0', padding:'4px 10px', borderRadius:'100px', fontSize:'12px', fontWeight:'700', background:pct>=75?'#F0FDF4':pct>=40?'#FFFBEB':'#FEF2F2', color:pct>=75?'#16A34A':pct>=40?'#D97706':'#DC2626' },
-        barStyle:{ height:'100%', width:pct+'%', background:'linear-gradient(90deg,#0F6E56,#22C55E)', borderRadius:'100px' } };
-    });
+    var catData=s.CAT_ANNUAL, catTotal=catData.reduce(function(a,c){return a+c.amount;},0)||1;
+    var categoryBars=catData.map(function(c){var pct=Math.round(c.amount/catTotal*100);return{category:c.cat,icon:c.icon,pct:pct,amount:self.fmt(c.amount),barStyle:'height:100%;width:'+pct+'%;background:linear-gradient(90deg,#0F6E56,#22C55E);border-radius:100px;'};});
+    var goalCards=s.GOALS.map(function(g){var pct=Math.min(100,Math.round(g.saved/g.target*100));return{name:g.name,icon:g.icon,pct:pct,deadline:g.deadline||'Sin plazo',saved:self.fmt(g.saved),target:self.fmt(g.target),remaining:self.fmt(Math.max(0,g.target-g.saved)),badgeStyle:'margin-left:auto;flex-shrink:0;padding:3px 9px;border-radius:100px;font-size:11px;font-weight:700;background:'+(pct>=75?'#F0FDF4':pct>=40?'#FFFBEB':'#FEF2F2')+';color:'+(pct>=75?'#16A34A':pct>=40?'#D97706':'#DC2626')+';',barStyle:'height:100%;width:'+pct+'%;background:linear-gradient(90deg,#0F6E56,#22C55E);border-radius:100px;'};});
 
-    var mColors={income:'#16A34A',expense:'#DC2626',savings:'#D97706'};
-    var mBgs={income:'#F0FDF4',expense:'#FEF2F2',savings:'#FFFBEB'};
-    var modalTypeBtns = ['income','expense','savings'].map(function(key){
-      var lbl={income:'Ingreso',expense:'Egreso',savings:'Ahorro'}[key];
-      return { label:lbl, onClick:function(){ self.setState({ modalType:key }); },
-        style:{ flex:'1', padding:'9px 8px', fontFamily:"'DM Sans',sans-serif", fontSize:'13px', fontWeight:'600', cursor:'pointer', borderRadius:'9px', transition:'all 0.15s', border:'2px solid '+(modalType===key?mColors[key]:'#E5E7EB'), background:modalType===key?mBgs[key]:'white', color:modalType===key?mColors[key]:'#9CA3AF' } };
-    });
-
-    var categoryOptions = self.CATEGORIES.map(function(c){ return { value:c, label:c }; });
-
-    return {
-      userName: s.userName,
-      isPanel: screen==='panel', isMovimientos: screen==='movimientos', isReportes: screen==='reportes', isMetas: screen==='metas',
-      panelNavStyle:self.navBtn('panel'), movNavStyle:self.navBtn('movimientos'), repNavStyle:self.navBtn('reportes'), metNavStyle:self.navBtn('metas'),
-      goPanel:       function(){ self.setState({ screen:'panel' }); },
-      goMovimientos: function(){ self.setState({ screen:'movimientos' }); },
-      goReportes:    function(){ self.setState({ screen:'reportes' }); },
-      goMetas:       function(){ self.setState({ screen:'metas' }); },
-      doSignOut: function(){
-        if (window._sb) window._sb.auth.signOut();
-      },
+    return{
+      userName:s.userName,
+      isPanel:screen==='panel',isMovimientos:screen==='movimientos',isReportes:screen==='reportes',isMetas:screen==='metas',
+      panelNavStyle:self.navBtn('panel'),movNavStyle:self.navBtn('movimientos'),repNavStyle:self.navBtn('reportes'),metNavStyle:self.navBtn('metas'),
+      goPanel:function(){self.setState({screen:'panel'});gotoScreen('panel');},
+      goMovimientos:function(){self.setState({screen:'movimientos'});gotoScreen('movimientos');},
+      goReportes:function(){self.setState({screen:'reportes'});gotoScreen('reportes');},
+      goMetas:function(){self.setState({screen:'metas'});gotoScreen('metas');},
+      doSignOut:function(){if(window._sb)window._sb.auth.signOut();},
       year:year, monthName:self.MONTHS[month],
-      prevYear:  function(){ self.setState({ year:year-1 }); },
-      nextYear:  function(){ self.setState({ year:year+1 }); },
-      prevMonth: function(){ if(month===0) self.setState({month:11,year:year-1,selectedDay:null}); else self.setState({month:month-1,selectedDay:null}); },
-      nextMonth: function(){ if(month===11) self.setState({month:0,year:year+1,selectedDay:null}); else self.setState({month:month+1,selectedDay:null}); },
-      kpiCards, calendarDays, dayNames:self.DNAMES, isMonthView, isWeekView:!isMonthView,
-      weekDays, weekRangeLabel, monthViewBtnStyle, weekViewBtnStyle,
-      setMonthView:function(){ self.setState({ calendarView:'month' }); },
-      setWeekView: function(){ self.setState({ calendarView:'week' }); },
-      prevWeek:function(){ var d=new Date(self.state.weekStart+'T12:00:00'); d.setDate(d.getDate()-7); self.setState({weekStart:d.toISOString().slice(0,10)}); },
-      nextWeek:function(){ var d=new Date(self.state.weekStart+'T12:00:00'); d.setDate(d.getDate()+7); self.setState({weekStart:d.toISOString().slice(0,10)}); },
-      hasSelectedDay, selectedDayLabel, selectedDayMovements,
-      recentMovements, noRecentMovements: recentMovements.length===0,
-      movSummaryChips, filterTabs, filteredMovements, noMovements: filteredMovements.length===0,
-      annualIncome:self.fmt(annI), annualExpense:self.fmt(annE), annualSavings:self.fmt(annS),
-      annualIncomeStyle:{ fontSize:'22px', fontWeight:'700', color:'#16A34A', letterSpacing:'-0.5px' },
-      annualExpenseStyle:{ fontSize:'22px', fontWeight:'700', color:'#F05252', letterSpacing:'-0.5px' },
-      annualSavingsStyle:{ fontSize:'22px', fontWeight:'700', color:'#D97706', letterSpacing:'-0.5px' },
+      prevYear:function(){self.setState({year:year-1});self._recompute(s.movements);},
+      nextYear:function(){self.setState({year:year+1});self._recompute(s.movements);},
+      prevMonth:function(){if(month===0)self.setState({month:11,year:year-1});else self.setState({month:month-1});},
+      nextMonth:function(){if(month===11)self.setState({month:0,year:year+1});else self.setState({month:month+1});},
+      kpiCards, recentMovements, noRecentMovements:recentMovements.length===0,
+      filterTabs, filteredMovements, noMovements:filteredMovements.length===0, movSummaryChips,
+      annualIncome:self.fmt(annI),annualExpense:self.fmt(annE),annualSavings:self.fmt(annS),
       monthlyBars, categoryBars, noCategoryData:categoryBars.length===0,
-      goalCards, noGoals: goalCards.length===0,
-      showModal: s.showModal,
-      openModal:  function(){ self.setState({ showModal:true, editingId:null, formDescription:'', formAmount:'', formCategory:'Otro', modalType:'expense', formDate:new Date().toISOString().slice(0,10) }); },
-      closeModal: function(){ self.setState({ showModal:false }); },
-      stopProp:   function(e){ e.stopPropagation(); },
-      modalTypeBtns, categoryOptions,
-      modalTitle: s.editingId ? 'Editar movimiento' : 'Nuevo movimiento',
-      submitBtnLabel: s.editingId ? 'Actualizar' : 'Guardar',
-      submitBtnStyle:{ width:'100%', padding:'12px', background:'#0F6E56', color:'white', border:'none', borderRadius:'10px', fontSize:'14px', fontWeight:'600', cursor:'pointer', fontFamily:"'DM Sans',sans-serif" },
-      formDescription:s.formDescription, formAmount:s.formAmount, formCategory:s.formCategory, formDate:s.formDate,
-      onDescChange:   function(e){ self.setState({ formDescription:e.target.value }); },
-      onAmountChange: function(e){ self.setState({ formAmount:e.target.value }); },
-      onCatChange:    function(e){ self.setState({ formCategory:e.target.value }); },
-      onDateChange:   function(e){ self.setState({ formDate:e.target.value }); },
-      submitMovement: function(){
-        var st=self.state, sb=window._sb;
-        var desc=st.formDescription.trim(), amt=parseFloat(st.formAmount), cat=st.formCategory||'Otro', dt=st.formDate, mtype=st.modalType, eid=st.editingId;
-        if (!desc || !amt || isNaN(amt) || !dt || !sb || !st.userId) return;
-        var icon2 = self.CAT_ICONS[cat] || '💰';
-        var record = { user_id:st.userId, tipo:mtype, descripcion:desc, monto:amt, categoria:cat, fecha:dt, icono:icon2 };
-        if (eid) {
-          sb.from('movimientos').update(record).eq('id', eid).select().then(function(res){
-            if (!res.error && res.data && res.data[0]) {
-              var updated = st.movements.map(function(mv){ return mv.id!==eid?mv:{id:mv.id,type:mtype,description:desc,amount:amt,category:cat,date:dt,icon:icon2}; });
-              self.setState({ movements:updated, showModal:false, editingId:null });
-              self._recomputeAnnual(updated);
-            }
-          });
-        } else {
-          sb.from('movimientos').insert(record).select().then(function(res){
-            if (!res.error && res.data && res.data[0]) {
-              var r=res.data[0];
-              var newM={id:r.id,type:mtype,description:desc,amount:amt,category:cat,date:dt,icon:icon2};
-              var updated = st.movements.concat([newM]);
-              self.setState({ movements:updated, showModal:false });
-              self._recomputeAnnual(updated);
-            }
-          });
-        }
-      },
+      goalCards, noGoals:goalCards.length===0,
     };
   }
 }
@@ -731,8 +594,8 @@ class Component extends DCLogic {
 </x-dc>
 
 <script>
+/* ===== AUTH ===== */
 var _authMode = 'login';
-
 function switchTab(mode) {
   _authMode = mode;
   document.getElementById('tab-login').classList.toggle('active', mode==='login');
@@ -742,90 +605,213 @@ function switchTab(mode) {
   document.getElementById('auth-btn-text').textContent = mode==='login' ? 'Ingresar' : 'Crear cuenta';
   document.getElementById('auth-error').style.display = 'none';
 }
-
+function setAuthLoading(v) {
+  var btn = document.getElementById('auth-btn');
+  btn.disabled = v; btn.querySelector('.spin').style.display = v ? 'inline' : 'none';
+}
 function showAuthError(msg) {
   var el = document.getElementById('auth-error');
-  el.textContent = msg; el.style.display = 'block';
-  var btn = document.getElementById('auth-btn');
-  btn.disabled = false; btn.querySelector('.spinner').style.display = 'none';
+  el.textContent = msg; el.style.display = 'block'; setAuthLoading(false);
 }
-
 function submitAuth() {
-  var btn = document.getElementById('auth-btn');
-  btn.disabled = true; btn.querySelector('.spinner').style.display = 'inline';
+  setAuthLoading(true);
   document.getElementById('auth-error').style.display = 'none';
   var email = document.getElementById('auth-email').value.trim();
-  var password = document.getElementById('auth-password').value;
-  var sb = window._sb;
-  if (!email || !password) { showAuthError('Completa todos los campos'); return; }
+  var pass  = document.getElementById('auth-password').value;
+  if (!email || !pass) { showAuthError('Completa todos los campos'); return; }
   if (_authMode === 'login') {
-    sb.auth.signInWithPassword({ email:email, password:password }).then(function(res){
-      if (res.error) showAuthError(res.error.message.includes('Invalid login') ? 'Correo o contrasena incorrectos' : res.error.message);
-      else { btn.disabled = false; btn.querySelector('.spinner').style.display = 'none'; }
+    window._sb.auth.signInWithPassword({email:email, password:pass}).then(function(r){
+      if (r.error) showAuthError(r.error.message.includes('Invalid login') ? 'Correo o contrasena incorrectos' : r.error.message);
+      else setAuthLoading(false);
     });
   } else {
     var name = document.getElementById('auth-name').value.trim();
     if (!name) { showAuthError('Escribe tu nombre'); return; }
-    if (password.length < 6) { showAuthError('La contrasena debe tener al menos 6 caracteres'); return; }
-    sb.auth.signUp({ email:email, password:password, options:{ data:{ nombre:name } } }).then(function(res){
-      if (res.error) { showAuthError(res.error.message); return; }
-      if (res.data.user && !res.data.session) {
-        showAuthError('Revisa tu correo y confirma tu cuenta antes de ingresar');
-      } else {
-        btn.disabled = false; btn.querySelector('.spinner').style.display = 'none';
+    if (pass.length < 6) { showAuthError('La contrasena debe tener al menos 6 caracteres'); return; }
+    window._sb.auth.signUp({email:email, password:pass, options:{data:{nombre:name}}}).then(function(r){
+      if (r.error) { showAuthError(r.error.message); return; }
+      if (r.data.user && !r.data.session) { showAuthError('Revisa tu correo y confirma tu cuenta antes de ingresar'); return; }
+      setAuthLoading(false);
+    });
+  }
+}
+
+/* ===== MODAL (100% vanilla JS) ===== */
+var _editingId = null;
+var _modalType = 'expense';
+var _TYPE_COLORS = {income:'#16A34A', expense:'#DC2626', savings:'#D97706'};
+var _TYPE_BGS    = {income:'#F0FDF4', expense:'#FEF2F2', savings:'#FFFBEB'};
+var _TYPE_LBLS   = {income:'Ingreso', expense:'Egreso', savings:'Ahorro'};
+
+function setModalType(t) {
+  _modalType = t;
+  ['income','expense','savings'].forEach(function(k) {
+    var btn = document.getElementById('tbtn-'+k);
+    if (k === t) {
+      btn.style.borderColor = _TYPE_COLORS[k];
+      btn.style.background  = _TYPE_BGS[k];
+      btn.style.color       = _TYPE_COLORS[k];
+    } else {
+      btn.style.borderColor = '#E5E7EB';
+      btn.style.background  = 'white';
+      btn.style.color       = '#9CA3AF';
+    }
+  });
+}
+
+function openModal(m) {
+  _editingId = null; _modalType = 'expense';
+  var now = new Date();
+  var dateStr = now.toISOString().slice(0,10);
+  var timeStr = now.toTimeString().slice(0,5);
+  if (m) {
+    _editingId = m.id; _modalType = m.type||'expense';
+    document.getElementById('m-desc').value   = m.description||'';
+    document.getElementById('m-amount').value = m.amount||'';
+    document.getElementById('m-cat').value    = m.category||'';
+    document.getElementById('m-date').value   = m.date||dateStr;
+    document.getElementById('m-time').value   = timeStr;
+    document.getElementById('modal-title').textContent = 'Editar movimiento';
+    document.getElementById('modal-save-btn').textContent = 'Actualizar';
+  } else {
+    document.getElementById('m-desc').value   = '';
+    document.getElementById('m-amount').value = '';
+    document.getElementById('m-cat').value    = '';
+    document.getElementById('m-date').value   = dateStr;
+    document.getElementById('m-time').value   = timeStr;
+    document.getElementById('modal-title').textContent = 'Nuevo movimiento';
+    document.getElementById('modal-save-btn').textContent = 'Guardar';
+  }
+  setModalType(_modalType);
+  document.getElementById('modal-error').style.display = 'none';
+  document.getElementById('modal-overlay').style.display = 'flex';
+  document.getElementById('m-desc').focus();
+}
+
+function closeModal() {
+  document.getElementById('modal-overlay').style.display = 'none';
+  _editingId = null;
+}
+
+function submitMovement() {
+  var desc = document.getElementById('m-desc').value.trim();
+  var amt  = parseFloat(document.getElementById('m-amount').value);
+  var cat  = document.getElementById('m-cat').value.trim() || 'Otro';
+  var date = document.getElementById('m-date').value;
+  var sb   = window._sb;
+  var uid  = window.__dcGetState ? window.__dcGetState().userId : null;
+
+  if (!desc) { showModalError('Escribe una descripcion'); return; }
+  if (!amt || isNaN(amt) || amt <= 0) { showModalError('Ingresa un monto valido'); return; }
+  if (!date) { showModalError('Selecciona una fecha'); return; }
+  if (!uid)  { showModalError('Sesion expirada, recarga la pagina'); return; }
+
+  var icon = window.__dcGetCatIcon ? window.__dcGetCatIcon(cat) : '💰';
+  var record = {user_id:uid, tipo:_modalType, descripcion:desc, monto:amt, categoria:cat, fecha:date, icono:icon};
+  var btn = document.getElementById('modal-save-btn');
+  btn.textContent = 'Guardando...'; btn.disabled = true;
+
+  if (_editingId) {
+    sb.from('movimientos').update(record).eq('id', _editingId).select().then(function(res){
+      btn.textContent = 'Actualizar'; btn.disabled = false;
+      if (res.error) { showModalError('Error al guardar: '+res.error.message); return; }
+      if (res.data && res.data[0]) {
+        var r = res.data[0];
+        var st = window.__dcGetState();
+        var updated = st.movements.map(function(mv){
+          return mv.id !== _editingId ? mv : {id:mv.id,type:_modalType,description:desc,amount:amt,category:cat,date:date,icon:icon,createdAt:mv.createdAt};
+        });
+        window.__dcSetState({movements:updated});
+        if (window.__dcRecompute) window.__dcRecompute(updated);
+        closeModal();
+      }
+    });
+  } else {
+    sb.from('movimientos').insert(record).select().then(function(res){
+      btn.textContent = 'Guardar'; btn.disabled = false;
+      if (res.error) { showModalError('Error al guardar: '+res.error.message); return; }
+      if (res.data && res.data[0]) {
+        var r = res.data[0];
+        var newM = {id:r.id,type:_modalType,description:desc,amount:amt,category:cat,date:date,icon:icon,createdAt:r.created_at};
+        var st = window.__dcGetState();
+        var updated = [newM].concat(st.movements);
+        window.__dcSetState({movements:updated});
+        if (window.__dcRecompute) window.__dcRecompute(updated);
+        closeModal();
       }
     });
   }
 }
 
-// Escuchar sesion de Supabase
+function showModalError(msg) {
+  var el = document.getElementById('modal-error');
+  el.textContent = msg; el.style.display = 'block';
+}
+
+/* ===== NAVEGACION ===== */
+function gotoScreen(screen) {
+  if (window.__dcSetState) window.__dcSetState({screen:screen});
+  // bottom nav
+  ['panel','movimientos','reportes','metas'].forEach(function(s){
+    var btn = document.getElementById('bn-'+s);
+    if (btn) btn.classList.toggle('active', s===screen);
+  });
+}
+
+/* ===== SUPABASE AUTH ===== */
 window._sb.auth.onAuthStateChange(function(event, session) {
-  var authOverlay = document.getElementById('auth-overlay');
-  var loadingScreen = document.getElementById('loading-screen');
-  loadingScreen.style.display = 'none';
+  document.getElementById('loading-screen').style.display = 'none';
+  var auth = document.getElementById('auth-overlay');
   if (session && session.user) {
-    authOverlay.style.display = 'none';
+    auth.style.display = 'none';
     var user = session.user;
     var name = (user.user_metadata && user.user_metadata.nombre) || user.email;
-    if (window.__dcSetState) window.__dcSetState({ userId:user.id, userName:name });
+    if (window.__dcSetState) window.__dcSetState({userId:user.id, userName:name});
+
     // Cargar movimientos
-    window._sb.from('movimientos').select('*').eq('user_id', user.id).order('fecha', { ascending:false }).then(function(res){
-      if (res.error || !res.data) return;
-      var movs = res.data.map(function(r){ return { id:r.id, type:r.tipo, description:r.descripcion, amount:parseFloat(r.monto), category:r.categoria, date:r.fecha, icon:r.icono||'💰' }; });
-      if (!window.__dcSetState) return;
-      window.__dcSetState({ movements:movs });
-      // Calcular anual
-      var yr = new Date().getFullYear();
-      var monthly = Array(12).fill(null).map(function(){ return {i:0,e:0,s:0}; });
-      var catMap = {};
-      var CI = {'Nomina':'💼','Nómina':'💼','Freelance':'💻','Prima':'🎁','Vivienda':'🏠','Alimentacion':'🛒','Alimentación':'🛒','Transporte':'🚌','Servicios':'💡','Salud':'💊','Entretenimiento':'🎬','Personal':'👕','Educacion':'📚','Educación':'📚','Inversion':'📈','Inversión':'📈','Ahorro':'🏦','Otro':'💰'};
-      movs.forEach(function(m){
-        var d=new Date(m.date+'T12:00:00');
-        if (d.getFullYear()===yr) {
-          var mo=d.getMonth();
-          if (m.type==='income')  monthly[mo].i+=m.amount;
-          if (m.type==='expense') monthly[mo].e+=m.amount;
-          if (m.type==='savings') monthly[mo].s+=m.amount;
-          if (m.type==='expense') {
-            if (!catMap[m.category]) catMap[m.category]={cat:m.category,icon:CI[m.category]||'💰',amount:0};
-            catMap[m.category].amount+=m.amount;
-          }
-        }
-      });
-      var catAnnual=Object.values(catMap).sort(function(a,b){return b.amount-a.amount;});
-      window.__dcSetState({ MONTHLY_DATA:monthly, CAT_ANNUAL:catAnnual });
+    window._sb.from('movimientos').select('*').eq('user_id', user.id).order('created_at', {ascending:false}).then(function(res){
+      if (res.error || !res.data || !window.__dcSetState) return;
+      var movs = res.data.map(function(r){ return {id:r.id,type:r.tipo,description:r.descripcion,amount:parseFloat(r.monto),category:r.categoria,date:r.fecha,icon:r.icono||'💰',createdAt:r.created_at}; });
+      window.__dcSetState({movements:movs});
+      // Recompute anual
+      recomputeAnnual(movs);
     });
+
     // Cargar metas
     window._sb.from('metas').select('*').eq('user_id', user.id).then(function(res){
       if (res.error || !res.data || !window.__dcSetState) return;
-      var goals=res.data.map(function(r){ return {name:r.nombre,icon:r.icono||'🎯',saved:parseFloat(r.ahorrado||0),target:parseFloat(r.meta),deadline:r.plazo||''}; });
-      window.__dcSetState({ GOALS:goals });
+      var goals = res.data.map(function(r){ return {name:r.nombre,icon:r.icono||'🎯',saved:parseFloat(r.ahorrado||0),target:parseFloat(r.meta),deadline:r.plazo||''}; });
+      window.__dcSetState({GOALS:goals});
     });
   } else {
-    authOverlay.style.display = 'flex';
-    if (window.__dcSetState) window.__dcSetState({ userId:null, userName:'', movements:[], GOALS:[] });
+    auth.style.display = 'flex';
+    if (window.__dcSetState) window.__dcSetState({userId:null,userName:'',movements:[],GOALS:[]});
   }
 });
+
+function recomputeAnnual(movs) {
+  var yr = window.__dcGetState ? window.__dcGetState().year : new Date().getFullYear();
+  var monthly = Array(12).fill(null).map(function(){return{i:0,e:0,s:0};});
+  var catMap = {};
+  var CI = {'Nomina':'💼','Nómina':'💼','Freelance':'💻','Prima':'🎁','Vivienda':'🏠','Alimentacion':'🛒','Alimentación':'🛒','Transporte':'🚌','Servicios':'💡','Salud':'💊','Entretenimiento':'🎬','Personal':'👕','Educacion':'📚','Educación':'📚','Inversion':'📈','Inversión':'📈','Ahorro':'🏦','Otro':'💰'};
+  movs.forEach(function(m){
+    var d=new Date(m.date+'T12:00:00');
+    if(d.getFullYear()===yr){
+      var mo=d.getMonth();
+      if(m.type==='income')  monthly[mo].i+=m.amount;
+      if(m.type==='expense') monthly[mo].e+=m.amount;
+      if(m.type==='savings') monthly[mo].s+=m.amount;
+      if(m.type==='expense'){
+        if(!catMap[m.category]) catMap[m.category]={cat:m.category,icon:CI[m.category]||'💰',amount:0};
+        catMap[m.category].amount+=m.amount;
+      }
+    }
+  });
+  var catAnnual=Object.values(catMap).sort(function(a,b){return b.amount-a.amount;});
+  if(window.__dcSetState) window.__dcSetState({MONTHLY_DATA:monthly,CAT_ANNUAL:catAnnual});
+}
+
+window.__dcRecompute = recomputeAnnual;
 </script>
 </body>
 </html>
