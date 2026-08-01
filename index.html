@@ -346,6 +346,36 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
   </div>
 </div>
 
+<!-- MODAL CAMBIAR CONTRASEÑA -->
+<div id="modal-cambiar-pass" class="modal-overlay" onclick="if(event.target===this)closeCambiarPass()">
+  <div class="modal-box" style="max-width:380px;">
+    <div class="modal-header">
+      <h3>Cambiar contraseña</h3>
+      <button class="modal-close" onclick="closeCambiarPass()">&#x2715;</button>
+    </div>
+    <div class="form-group">
+      <label>Nueva contraseña</label>
+      <div style="position:relative;">
+        <input id="cp-new" type="password" placeholder="Mínimo 6 caracteres" style="padding-right:44px;"/>
+        <button type="button" onclick="toggleVis('cp-new','cp-eye1')" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:18px;color:var(--gray-light);" id="cp-eye1">👁️</button>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Confirmar contraseña</label>
+      <div style="position:relative;">
+        <input id="cp-confirm" type="password" placeholder="Repite la contraseña" style="padding-right:44px;"/>
+        <button type="button" onclick="toggleVis('cp-confirm','cp-eye2')" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:18px;color:var(--gray-light);" id="cp-eye2">👁️</button>
+      </div>
+    </div>
+    <div id="cp-error" class="auth-error"></div>
+    <div id="cp-success" style="background:#DCFCE7;color:#15803D;padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:14px;display:none;">Contraseña actualizada exitosamente.</div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeCambiarPass()">Cancelar</button>
+      <button class="btn btn-primary" onclick="submitCambiarPass()">Guardar</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL CREAR USUARIO -->
 <div id="modal-usuario" class="modal-overlay" onclick="if(event.target===this)closeUsuarioModal()">
   <div class="modal-box">
@@ -416,6 +446,7 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
       <button if="{{ isAdmin }}" style="{{ navStyle('usuarios') }}" onclick="window.__dcNav('usuarios')"><span class="n-icon">👥</span> Usuarios</button>
     </div>
     <div class="sidebar-footer">
+      <button class="btn btn-primary" style="width:100%;justify-content:center;margin-bottom:8px;" onclick="openCambiarPass()">🔑 Cambiar contraseña</button>
       <button class="btn btn-ghost" style="width:100%;justify-content:center;" onclick="doSignOut()">Cerrar sesión</button>
     </div>
   </div>
@@ -612,14 +643,14 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
           <div if="{{ profiles.length === 0 }}" class="empty-state"><div class="e-icon">👥</div><p>No hay usuarios registrados</p></div>
           <div if="{{ profiles.length > 0 }}">
             <div class="pago-item" each="{{ profiles }}" as="pr">
-              <div class="pago-icon inc" style="background:#EFF6FF;">👤</div>
+              <div class="pago-icon" style="{{ pr.avatar_style }}">👤</div>
               <div class="pago-info">
                 <div class="p-name">{{ pr.nombre }}</div>
-                <div class="p-detail">{{ pr.email }} · {{ pr.role_txt }} · desde {{ pr.fecha }}</div>
+                <div class="p-detail">{{ pr.email }} · desde {{ pr.fecha }}</div>
               </div>
               <div class="pago-right">
-                <span style="{{ pr.badge_style }}">{{ pr.role_txt }}</span>
-                <button if="{{ !pr.is_admin }}" class="icon-btn del" onclick="deleteUsuario('{{ pr.id }}')">🗑️</button>
+                <span style="{{ pr.badge_style }}">{{ pr.status_txt }}</span>
+                <button if="{{ !pr.is_admin }}" style="{{ pr.toggle_style }}" onclick="toggleActivo('{{ pr.id }}','{{ pr.activo }}')">{{ pr.toggle_txt }}</button>
               </div>
             </div>
           </div>
@@ -786,10 +817,23 @@ class extends DCLogic {
 
     var profiles = st.profiles.map(function(p){
       var isAdm = p.role==='admin';
-      return {id:p.id,nombre:p.nombre||p.email,email:p.email,
-        role_txt:isAdm?'Admin':'Usuario',is_admin:isAdm,
-        fecha:p.created_at?p.created_at.slice(0,10):'',
-        badge_style:isAdm?'background:#EFF6FF;color:var(--blue-mid);padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700;':'background:#F1F5F9;color:var(--gray);padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600;'};
+      var activo = p.activo !== false;
+      var statusTxt = isAdm ? 'Admin' : (activo ? 'Activo' : 'Inactivo');
+      var badgeStyle = isAdm
+        ? 'background:#EFF6FF;color:var(--blue-mid);padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700;'
+        : activo
+          ? 'background:#DCFCE7;color:#15803D;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700;'
+          : 'background:#FEE2E2;color:#B91C1C;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700;';
+      var avatarStyle = activo
+        ? 'background:#EFF6FF;width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;'
+        : 'background:#F1F5F9;width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;opacity:.5;';
+      var toggleStyle = activo
+        ? 'padding:5px 12px;border:1.5px solid #DC2626;border-radius:8px;background:transparent;color:#DC2626;font-family:Inter,sans-serif;font-size:12px;font-weight:600;cursor:pointer;'
+        : 'padding:5px 12px;border:1.5px solid #16A34A;border-radius:8px;background:transparent;color:#16A34A;font-family:Inter,sans-serif;font-size:12px;font-weight:600;cursor:pointer;';
+      return {id:p.id,nombre:p.nombre||p.email,email:p.email,is_admin:isAdm,activo:activo,
+        status_txt:statusTxt,badge_style:badgeStyle,avatar_style:avatarStyle,
+        toggle_txt:activo?'Desactivar':'Activar',toggle_style:toggleStyle,
+        fecha:p.created_at?p.created_at.slice(0,10):''};
     });
 
     return {
@@ -815,8 +859,11 @@ var _sb = window.supabase.createClient(
 window._sb = _sb;
 
 function togglePassVis() {
-  var inp=document.getElementById('auth-pass');
-  var eye=document.getElementById('pass-eye');
+  toggleVis('auth-pass','pass-eye');
+}
+function toggleVis(inputId,btnId) {
+  var inp=document.getElementById(inputId);
+  var eye=document.getElementById(btnId);
   if(inp.type==='password'){inp.type='text';eye.textContent='🙈';}
   else{inp.type='password';eye.textContent='👁️';}
 }
@@ -839,6 +886,15 @@ _sb.auth.onAuthStateChange(async function(event,session){
   document.getElementById('loading-screen').style.display='none';
   if (session&&session.user) {
     var user=session.user;
+    var profileCheck=await _sb.from('profiles').select('activo,role').eq('id',user.id).single();
+    if (profileCheck.data && profileCheck.data.activo===false) {
+      await _sb.auth.signOut();
+      var errEl=document.getElementById('auth-error');
+      errEl.textContent='Tu cuenta está desactivada. Contacta al administrador.';
+      errEl.style.display='block';
+      document.getElementById('auth-overlay').style.display='flex';
+      return;
+    }
     document.getElementById('auth-overlay').style.display='none';
     var name=(user.user_metadata&&user.user_metadata.nombre)||user.email;
     if (window.__dcSetState) {
@@ -847,7 +903,7 @@ _sb.auth.onAuthStateChange(async function(event,session){
     }
   } else {
     document.getElementById('auth-overlay').style.display='flex';
-    if (window.__dcSetState) window.__dcSetState({userId:null,userName:'',movements:[],GOALS:[],pagos:[],compras:[]});
+    if (window.__dcSetState) window.__dcSetState({userId:null,userName:'',movements:[],GOALS:[],pagos:[],compras:[],profiles:[],isAdmin:false});
   }
 });
 
@@ -1140,11 +1196,37 @@ async function submitUsuario() {
   if(!allProfiles.error) window.__dcSetState({profiles:allProfiles.data||[]});
 }
 
-async function deleteUsuario(id) {
-  if(!confirm('¿Eliminar este usuario? Esta acción no se puede deshacer.'))return;
-  await _sb.from('profiles').delete().eq('id',id);
-  var st=window.__dcGetState();
-  window.__dcSetState({profiles:st.profiles.filter(function(p){return p.id!==id;})});
+async function toggleActivo(id, activo) {
+  var nuevoEstado = activo==='true' || activo===true ? false : true;
+  var accion = nuevoEstado ? 'activar' : 'desactivar';
+  if(!confirm('¿Deseas '+accion+' este usuario?'))return;
+  var res=await _sb.from('profiles').update({activo:nuevoEstado}).eq('id',id).select();
+  if(!res.error){
+    var st=window.__dcGetState();
+    window.__dcSetState({profiles:st.profiles.map(function(p){return p.id===id?Object.assign({},p,{activo:nuevoEstado}):p;})});
+  }
+}
+
+function openCambiarPass(){
+  document.getElementById('cp-new').value='';
+  document.getElementById('cp-confirm').value='';
+  document.getElementById('cp-error').style.display='none';
+  document.getElementById('cp-success').style.display='none';
+  document.getElementById('modal-cambiar-pass').style.display='flex';
+}
+function closeCambiarPass(){document.getElementById('modal-cambiar-pass').style.display='none';}
+
+async function submitCambiarPass(){
+  var newPass=document.getElementById('cp-new').value;
+  var confirm=document.getElementById('cp-confirm').value;
+  var errEl=document.getElementById('cp-error');
+  var sucEl=document.getElementById('cp-success');
+  errEl.style.display='none';sucEl.style.display='none';
+  if(!newPass||newPass.length<6){errEl.textContent='La contraseña debe tener mínimo 6 caracteres.';errEl.style.display='block';return;}
+  if(newPass!==confirm){errEl.textContent='Las contraseñas no coinciden.';errEl.style.display='block';return;}
+  var res=await _sb.auth.updateUser({password:newPass});
+  if(res.error){errEl.textContent=res.error.message;errEl.style.display='block';}
+  else{sucEl.style.display='block';document.getElementById('cp-new').value='';document.getElementById('cp-confirm').value='';}
 }
 </script>
 </body>
