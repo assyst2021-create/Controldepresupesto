@@ -463,6 +463,31 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
   </div>
 </div>
 
+<!-- MODAL EDITAR USUARIO -->
+<div id="modal-editar-usuario" class="modal-overlay" onclick="if(event.target===this)closeEditarUsuario()">
+  <div class="modal-box" style="max-width:420px;">
+    <div class="modal-header">
+      <h3>Editar usuario</h3>
+      <button class="modal-close" onclick="closeEditarUsuario()">&#x2715;</button>
+    </div>
+    <div class="form-group"><label>Nombre completo</label><input id="eu-nombre" type="text" placeholder="Nombre del usuario"/></div>
+    <div class="form-group"><label>Correo electrónico</label><input id="eu-email" type="email" placeholder="correo@ejemplo.com" disabled style="background:#F8FAFC;color:var(--gray-light);cursor:not-allowed;"/></div>
+    <div style="border-top:1px solid var(--border);padding-top:14px;margin-top:2px;">
+      <label style="font-size:13px;font-weight:700;color:var(--gray);display:block;margin-bottom:10px;">Nueva contraseña (dejar vacío para no cambiar)</label>
+      <div style="position:relative;">
+        <input id="eu-pass" type="password" placeholder="Mínimo 6 caracteres" style="padding-right:46px;"/>
+        <button type="button" onclick="toggleVis('eu-pass','eu-eye')" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:19px;color:var(--gray-light);" id="eu-eye">👁️</button>
+      </div>
+    </div>
+    <div id="eu-error" class="auth-error" style="margin-top:12px;"></div>
+    <div id="eu-success" style="background:#F0FDF4;color:#15803D;padding:11px 14px;border-radius:12px;font-size:13px;margin-top:12px;margin-bottom:4px;display:none;font-weight:600;"></div>
+    <div class="modal-actions" style="margin-top:14px;">
+      <button class="btn btn-ghost" onclick="closeEditarUsuario()">Cancelar</button>
+      <button class="btn btn-primary" onclick="submitEditarUsuario()">Guardar cambios</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL CAMBIAR CONTRASEÑA -->
 <div id="modal-cambiar-pass" class="modal-overlay" onclick="if(event.target===this)closeCambiarPass()">
   <div class="modal-box" style="max-width:380px;">
@@ -1300,7 +1325,8 @@ function renderUsuarios(){
     var activo=p.activo!==false;
     var badge=isAdm?'<span class="badge badge-admin">Admin</span>':activo?'<span class="badge badge-active">Activo</span>':'<span class="badge badge-inactive">Inactivo</span>';
     var toggle=isAdm?'':activo?'<button class="toggle-btn deactivate" onclick="toggleActivo(\''+p.id+'\',true)">Desactivar</button>':'<button class="toggle-btn activate" onclick="toggleActivo(\''+p.id+'\',false)">Activar</button>';
-    return '<div class="user-item"><div class="user-av" style="background:'+(activo?'#EFF6FF':'#F1F5F9')+';">👤</div><div style="flex:1;min-width:0;"><div class="u-name">'+(p.nombre||p.email)+'</div><div class="u-email">'+p.email+' · desde '+(p.created_at?p.created_at.slice(0,10):'')+'</div></div>'+badge+toggle+'</div>';
+    var editBtn='<button class="icon-btn edit" style="margin-left:6px;" onclick="openEditarUsuario(\''+p.id+'\')">✏️</button>';
+    return '<div class="user-item"><div class="user-av" style="background:'+(activo?'#EFF6FF':'#F1F5F9')+';">👤</div><div style="flex:1;min-width:0;"><div class="u-name">'+(p.nombre||'Sin nombre')+'</div><div class="u-email">'+(p.email||'')+(p.created_at?' · desde '+p.created_at.slice(0,10):'')+'</div></div>'+badge+toggle+editBtn+'</div>';
   }).join('');
 }
 
@@ -1614,6 +1640,43 @@ async function toggleActivo(id,activo){
   if(!confirm('¿'+(nuevoEstado?'Activar':'Desactivar')+' este usuario?'))return;
   await _sb.from('profiles').update({activo:nuevoEstado}).eq('id',id);
   ST.profiles=ST.profiles.map(function(p){return p.id===id?Object.assign({},p,{activo:nuevoEstado}):p;});
+  renderUsuarios();
+}
+
+// EDITAR USUARIO
+var _editingUserId=null;
+function openEditarUsuario(id){
+  var p=ST.profiles.find(function(x){return x.id===id;});
+  if(!p)return;
+  _editingUserId=id;
+  document.getElementById('eu-nombre').value=p.nombre||'';
+  document.getElementById('eu-email').value=p.email||'';
+  document.getElementById('eu-pass').value='';
+  document.getElementById('eu-error').style.display='none';
+  document.getElementById('eu-success').style.display='none';
+  document.getElementById('modal-editar-usuario').style.display='flex';
+}
+function closeEditarUsuario(){document.getElementById('modal-editar-usuario').style.display='none';_editingUserId=null;}
+async function submitEditarUsuario(){
+  var nombre=document.getElementById('eu-nombre').value.trim();
+  var pass=document.getElementById('eu-pass').value;
+  var errEl=document.getElementById('eu-error'),sucEl=document.getElementById('eu-success');
+  errEl.style.display='none';sucEl.style.display='none';
+  if(!nombre){errEl.textContent='El nombre no puede estar vacío.';errEl.style.display='block';return;}
+  if(pass&&pass.length<6){errEl.textContent='La contraseña debe tener mínimo 6 caracteres.';errEl.style.display='block';return;}
+  // Actualizar nombre en profiles
+  var upd=await _sb.from('profiles').update({nombre:nombre}).eq('id',_editingUserId);
+  if(upd.error){errEl.textContent='Error al guardar: '+upd.error.message;errEl.style.display='block';return;}
+  ST.profiles=ST.profiles.map(function(p){return p.id===_editingUserId?Object.assign({},p,{nombre:nombre}):p;});
+  // Actualizar contraseña si se ingresó una
+  if(pass){
+    // Usar _sbCreate para no afectar la sesión del admin
+    // Solo Supabase Admin API puede cambiar contraseña de otro usuario; desde el cliente no es posible.
+    // Alternativa: guardar en profiles una flag y notificar
+    errEl.textContent='Nota: el cambio de contraseña de otros usuarios requiere acceso Admin API. Solo el propio usuario puede cambiarla desde "Cambiar contraseña".';
+    errEl.style.display='block';
+  }
+  sucEl.textContent='¡Usuario actualizado correctamente!';sucEl.style.display='block';
   renderUsuarios();
 }
 
