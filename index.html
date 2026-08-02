@@ -994,7 +994,7 @@ function renderScreen(screen){
   else if(screen==='compras')renderCompras();
   else if(screen==='reportes')renderReportes();
   else if(screen==='metas')renderMetas();
-  else if(screen==='usuarios')renderUsuarios();
+  else if(screen==='usuarios'&&ST.isAdmin)renderUsuarios();
 }
 
 // RENDER PANEL
@@ -1679,6 +1679,7 @@ async function submitAbono(){
 
 // RENDER USUARIOS
 function renderUsuarios(){
+  if(!ST.isAdmin){navigate('panel');return;}
   var card=document.getElementById('usuarios-card');
   if(!ST.profiles.length){card.innerHTML='<div class="empty-state"><div class="e-icon">👥</div><p>No hay usuarios registrados</p></div>';return;}
   card.innerHTML=ST.profiles.map(function(p){
