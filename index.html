@@ -398,7 +398,7 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
     </div>
     <div class="form-group"><label>Descripción</label><input id="m-desc" type="text" placeholder="Ej: Almuerzo, salario..."/></div>
     <div class="modal-row">
-      <div class="form-group"><label>Monto</label><input id="m-amount" type="number" placeholder="0" min="0" oninput="updateCatSplitInfo()"/></div>
+      <div class="form-group"><label>Monto</label><input id="m-amount" type="text" inputmode="numeric" placeholder="0" oninput="numFmt(this);updateCatSplitInfo()"/></div>
       <div class="form-group"><label>Fecha</label><input id="m-date" type="date"/></div>
     </div>
     <div class="form-group" style="margin-bottom:0;">
@@ -432,7 +432,7 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
     </div>
     <div class="form-group"><label>Nombre</label><input id="p-nombre" type="text" placeholder="Ej: Arriendo, Netflix, Salario..."/></div>
     <div class="modal-row">
-      <div class="form-group"><label>Monto mensual</label><input id="p-monto" type="number" placeholder="0" min="0"/></div>
+      <div class="form-group"><label>Monto mensual</label><input id="p-monto" type="text" inputmode="numeric" placeholder="0" oninput="numFmt(this)"/></div>
       <div class="form-group"><label>¿Qué día del mes?</label>
         <select id="p-dia"><option value="">Sin día específico</option></select>
       </div>
@@ -487,7 +487,7 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
     </div>
     <div class="form-group"><label>Nombre del artículo</label><input id="c-nombre" type="text" placeholder="Ej: Zapatos deportivos..."/></div>
     <div class="modal-row">
-      <div class="form-group"><label>Precio estimado (COP $)</label><input id="c-precio" type="number" placeholder="0" min="0"/></div>
+      <div class="form-group"><label>Precio estimado (COP $)</label><input id="c-precio" type="text" inputmode="numeric" placeholder="0" oninput="numFmt(this)"/></div>
       <div class="form-group"><label>Prioridad</label><select id="c-prioridad"><option value="alta">Alta</option><option value="media" selected>Media</option><option value="baja">Baja</option></select></div>
     </div>
     <div class="form-group">
@@ -515,8 +515,8 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
     </div>
     <div class="form-group"><label>Nombre de la meta</label><input id="mt-nombre" type="text" placeholder="Ej: Vacaciones, Carro..."/></div>
     <div class="modal-row">
-      <div class="form-group"><label>Meta total</label><input id="mt-meta" type="number" placeholder="0" min="0"/></div>
-      <div class="form-group"><label>Ya ahorrado</label><input id="mt-ahorrado" type="number" placeholder="0" min="0"/></div>
+      <div class="form-group"><label>Meta total</label><input id="mt-meta" type="text" inputmode="numeric" placeholder="0" oninput="numFmt(this)"/></div>
+      <div class="form-group"><label>Ya ahorrado</label><input id="mt-ahorrado" type="text" inputmode="numeric" placeholder="0" oninput="numFmt(this)"/></div>
     </div>
     <div class="modal-row">
       <div class="form-group"><label>¿Desde cuándo inicia?</label><input id="mt-inicio" type="date"/></div>
@@ -1044,6 +1044,9 @@ var CURRENCIES={
 };
 var _currency=localStorage.getItem('mf_currency')||'COP';
 function esc(s){if(!s)return '';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+function numFmt(el){var raw=el.value.replace(/\./g,'').replace(/[^0-9]/g,'');el.value=raw?parseInt(raw,10).toLocaleString('es-CO').replace(/,/g,'.'):''}
+function numVal(id){var el=document.getElementById(id);if(!el)return 0;return parseFloat(el.value.replace(/\./g,''))||0;}
+function setNumInput(id,val){var el=document.getElementById(id);if(!el)return;el.value=val?Math.round(parseFloat(val)).toLocaleString('es-CO').replace(/,/g,'.'):'';}
 function fmt(n){
   if(!n||isNaN(n)){var c=CURRENCIES[_currency];return (c?c.sym:'$')+'0';}
   var cur=CURRENCIES[_currency]||CURRENCIES.COP;
@@ -1743,7 +1746,7 @@ function openAbono(id){
       '<div style="font-size:12px;color:#3B82F6;">Ya llevas <b>'+fmt(g.ahorrado||0)+'</b> de <b>'+fmt(g.meta)+'</b> ('+Math.round((g.ahorrado||0)/g.meta*100)+'%)</div>'+
       (calc.cuotaMes?'<div style="font-size:12px;color:#3B82F6;margin-top:4px;">Cuota mensual sugerida: <b>'+fmt(calc.cuotaMes)+'</b></div>':'')+
     '</div>'+
-    '<div class="form-group"><label>¿Cuánto vas a abonar?</label><input id="abono-monto" type="number" placeholder="0" min="0" style="font-size:18px;font-weight:700;"/></div>'+
+    '<div class="form-group"><label>¿Cuánto vas a abonar?</label><input id="abono-monto" type="text" inputmode="numeric" placeholder="0" oninput="numFmt(this)" style="font-size:18px;font-weight:700;"/></div>'+
     '<div id="abono-error" class="auth-error"></div>'+
     '<div class="modal-actions">'+
       '<button class="btn btn-ghost" onclick="closeAbono()">Cancelar</button>'+
@@ -1757,7 +1760,7 @@ function closeAbono(){var m=document.getElementById('modal-abono');if(m)m.remove
 var _savingAbono=false;
 async function submitAbono(){
   if(_savingAbono)return;
-  var monto=parseFloat(document.getElementById('abono-monto').value)||0;
+  var monto=numVal('abono-monto');
   var err=document.getElementById('abono-error');
   if(monto<=0){err.textContent='Ingresa un monto válido.';err.style.display='block';return;}
   var g=ST.goals.find(function(x){return x.id===_abonoId;});
@@ -2097,7 +2100,7 @@ function updateCatSplitInfo(){
   var info=document.getElementById('cat-split-info');
   if(!info)return;
   var n=_selectedCats.length;
-  var amt=parseFloat(document.getElementById('m-amount').value)||0;
+  var amt=numVal('m-amount');
   if(n>1&&amt>0){
     info.style.display='block';
     info.textContent='💡 '+fmt(amt)+' ÷ '+n+' categorías = '+fmt(amt/n)+' por categoría';
@@ -2139,7 +2142,7 @@ var _savingMov=false;
 async function submitMovement(){
   if(_savingMov)return;
   var desc=document.getElementById('m-desc').value.trim();
-  var amt=parseFloat(document.getElementById('m-amount').value);
+  var amt=numVal('m-amount');
   var date=document.getElementById('m-date').value;
   if(!desc){alert('Escribe una descripción.');return;}
   if(!amt||amt<=0){alert('Ingresa un monto válido.');return;}
@@ -2183,7 +2186,7 @@ function editMovement(id){
   var m=ST.movements.find(function(x){return x.id===id;});if(!m)return;
   _editingId=id;_modalType=m.type;
   document.getElementById('modal-title').textContent='Editar movimiento';
-  document.getElementById('m-desc').value=m.description;document.getElementById('m-amount').value=m.amount;
+  document.getElementById('m-desc').value=m.description;setNumInput('m-amount',m.amount);
   setCatValue(m.category);document.getElementById('m-date').value=m.date;
   setModalType(m.type);document.getElementById('modal-overlay').style.display='flex';
 }
@@ -2222,7 +2225,7 @@ var _savingPago=false;
 async function submitPago(){
   if(_savingPago)return;
   var nombre=document.getElementById('p-nombre').value.trim();
-  var monto=parseFloat(document.getElementById('p-monto').value);
+  var monto=numVal('p-monto');
   var dia=parseInt(document.getElementById('p-dia').value)||null;
   var entidad=document.getElementById('p-entidad').value.trim()||null;
   if(!nombre){alert('Escribe un nombre.');return;}
@@ -2251,7 +2254,7 @@ function editPago(id){
   _editingPagoId=id;
   document.getElementById('modal-pago-title').textContent='Editar pago fijo';
   document.getElementById('p-nombre').value=p.nombre;
-  document.getElementById('p-monto').value=p.monto;
+  setNumInput('p-monto',p.monto);
   document.getElementById('p-entidad').value=p.entidad||'';
   buildDiaSelect(p.dia_cobro||'');
   setPagoTipo(p.tipo);
@@ -2318,7 +2321,7 @@ async function submitCompra(){
   var btn=document.querySelector('#modal-compra .btn-primary');
   if(btn){btn.disabled=true;btn.textContent='Guardando...';}
   var nombre=document.getElementById('c-nombre').value.trim();
-  var precio=parseFloat(document.getElementById('c-precio').value)||null;
+  var precio=numVal('c-precio')||null;
   var prioridad=document.getElementById('c-prioridad').value;
   var categoria=_selectedCompraCat||null;
   var url=document.getElementById('c-url').value.trim()||null;
@@ -2344,7 +2347,7 @@ function editCompra(id){
   var c=ST.compras.find(function(x){return x.id===id;});if(!c)return;
   _editingCompraId=id;document.getElementById('modal-compra-title').textContent='Editar compra';
   document.getElementById('c-nombre').value=c.nombre;
-  document.getElementById('c-precio').value=c.precio_estimado||'';
+  setNumInput('c-precio',c.precio_estimado||0);
   document.getElementById('c-prioridad').value=c.prioridad||'media';
   document.getElementById('c-url').value=c.url||'';
   document.getElementById('c-notas').value=c.notas||'';
@@ -2369,8 +2372,8 @@ function openMetaModal(id){
   var today=new Date().toISOString().slice(0,10);
   if(!id){
     document.getElementById('mt-nombre').value='';
-    document.getElementById('mt-meta').value='';
-    document.getElementById('mt-ahorrado').value='0';
+    setNumInput('mt-meta','');
+    setNumInput('mt-ahorrado',0);
     document.getElementById('mt-inicio').value=today;
     document.getElementById('mt-fin').value='';
     document.getElementById('modal-meta-title').textContent='Nueva meta';
@@ -2380,8 +2383,8 @@ function openMetaModal(id){
 function closeMetaModal(){document.getElementById('modal-meta').style.display='none';_editingMetaId=null;}
 async function submitMeta(){
   var nombre=document.getElementById('mt-nombre').value.trim();
-  var meta=parseFloat(document.getElementById('mt-meta').value)||0;
-  var ahorrado=parseFloat(document.getElementById('mt-ahorrado').value)||0;
+  var meta=numVal('mt-meta');
+  var ahorrado=numVal('mt-ahorrado');
   var inicio=document.getElementById('mt-inicio').value||null;
   var fin=document.getElementById('mt-fin').value||null;
   if(!nombre){alert('Escribe un nombre para la meta.');return;}
@@ -2400,8 +2403,8 @@ function editMeta(id){
   _editingMetaId=id;
   document.getElementById('modal-meta-title').textContent='Editar meta';
   document.getElementById('mt-nombre').value=g.nombre;
-  document.getElementById('mt-meta').value=g.meta;
-  document.getElementById('mt-ahorrado').value=g.ahorrado;
+  setNumInput('mt-meta',g.meta);
+  setNumInput('mt-ahorrado',g.ahorrado);
   document.getElementById('mt-inicio').value=g.icono||'';
   document.getElementById('mt-fin').value=g.plazo||'';
   document.getElementById('modal-meta').style.display='flex';
