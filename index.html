@@ -286,6 +286,13 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
   .gcal-chip{display:none;}
   .gcal-more{font-size:10px;}
 }
+/* ===== CATEGORY CHIPS ===== */
+.cat-chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px;}
+.cat-chip{display:inline-flex;align-items:center;gap:5px;padding:7px 13px;border-radius:20px;border:1.5px solid var(--border);font-size:12.5px;font-weight:600;cursor:pointer;background:#F8FAFC;color:var(--gray);transition:background .15s,border-color .15s,color .15s;user-select:none;}
+.cat-chip:hover{border-color:var(--primary);color:var(--primary);}
+.cat-chip.selected{background:var(--primary);border-color:var(--primary);color:#fff;}
+.cat-chip.chip-otra{border-style:dashed;}
+.cat-chip.chip-otra.selected{border-style:solid;}
 /* ===== TOUR ===== */
 #tour-overlay{position:fixed;inset:0;z-index:9000;pointer-events:none;}
 #tour-overlay.active{pointer-events:all;}
@@ -357,30 +364,20 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
     </div>
     <div class="form-group"><label>Descripción</label><input id="m-desc" type="text" placeholder="Ej: Almuerzo, salario..."/></div>
     <div class="modal-row">
-      <div class="form-group"><label>Monto (COP $)</label><input id="m-amount" type="number" placeholder="0" min="0"/></div>
-      <div class="form-group">
-        <label>Categoría</label>
-        <select id="m-cat-sel" onchange="onCatChange()">
-          <option value="Alimentación">🍽️ Alimentación</option>
-          <option value="Transporte">🚗 Transporte</option>
-          <option value="Vivienda">🏠 Vivienda</option>
-          <option value="Salud">💊 Salud</option>
-          <option value="Educación">📚 Educación</option>
-          <option value="Entretenimiento">🎬 Entretenimiento</option>
-          <option value="Ropa">👕 Ropa</option>
-          <option value="Servicios">⚡ Servicios</option>
-          <option value="Deudas">💳 Deudas</option>
-          <option value="Salario">💵 Salario</option>
-          <option value="Ahorro meta">🎯 Ahorro meta</option>
-          <option value="Inversión">📈 Inversión</option>
-          <option value="__otra__">✏️ Otra categoría...</option>
-        </select>
-        <input id="m-cat-custom" type="text" placeholder="Escribe la categoría" style="margin-top:8px;display:none;"/>
-      </div>
-    </div>
-    <div class="modal-row">
+      <div class="form-group"><label>Monto</label><input id="m-amount" type="number" placeholder="0" min="0" oninput="updateCatSplitInfo()"/></div>
       <div class="form-group"><label>Fecha</label><input id="m-date" type="date"/></div>
-      <div class="form-group"><label>Hora</label><input id="m-time" type="time"/></div>
+    </div>
+    <div class="form-group" style="margin-bottom:0;">
+      <label style="display:flex;align-items:center;justify-content:space-between;">
+        <span>Categorías</span>
+        <span id="cat-count-label" style="font-size:11.5px;font-weight:700;color:var(--primary);background:#EFF6FF;border-radius:20px;padding:2px 10px;display:none;"></span>
+      </label>
+      <div class="cat-chips" id="cat-chips-container"></div>
+      <div style="margin-top:8px;display:flex;gap:8px;align-items:center;" id="cat-custom-row" style="display:none;">
+        <input id="m-cat-custom" type="text" placeholder="Escribe la categoría y presiona Enter" style="flex:1;"/>
+        <button type="button" onclick="addCustomCat()" style="background:var(--primary);color:#fff;border:none;border-radius:10px;padding:10px 14px;font-size:13px;font-weight:700;cursor:pointer;">+ Añadir</button>
+      </div>
+      <div id="cat-split-info" style="display:none;margin-top:10px;font-size:13px;font-weight:700;color:var(--primary);background:#EFF6FF;border-radius:12px;padding:10px 14px;text-align:center;"></div>
     </div>
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
@@ -1473,38 +1470,109 @@ function toggleVis(inputId,btnId){
 
 // MOVIMIENTOS MODAL
 var _editingId=null,_modalType='expense';
-function onCatChange(){
-  var sel=document.getElementById('m-cat-sel');
-  var custom=document.getElementById('m-cat-custom');
-  custom.style.display=sel.value==='__otra__'?'block':'none';
-  if(sel.value==='__otra__')custom.focus();
+var CAT_LIST=[
+  {v:'Alimentación',e:'🍽️'},{v:'Transporte',e:'🚗'},{v:'Vivienda',e:'🏠'},
+  {v:'Salud',e:'💊'},{v:'Educación',e:'📚'},{v:'Entretenimiento',e:'🎬'},
+  {v:'Ropa',e:'👕'},{v:'Servicios',e:'⚡'},{v:'Deudas',e:'💳'},
+  {v:'Salario',e:'💵'},{v:'Ahorro meta',e:'🎯'},{v:'Inversión',e:'📈'}
+];
+var _selectedCats=[];
+
+function buildCatChips(preselected){
+  _selectedCats=preselected?[preselected]:[];
+  var container=document.getElementById('cat-chips-container');
+  if(!container)return;
+  var html='';
+  CAT_LIST.forEach(function(c){
+    var sel=_selectedCats.indexOf(c.v)>=0?' selected':'';
+    html+='<button type="button" class="cat-chip'+sel+'" onclick="toggleCat(\''+c.v+'\')">'+c.e+' '+c.v+'</button>';
+  });
+  html+='<button type="button" class="cat-chip chip-otra" id="chip-otra" onclick="toggleOtraChip()">✏️ Otra...</button>';
+  container.innerHTML=html;
+  var row=document.getElementById('cat-custom-row');
+  if(row)row.style.display='none';
+  updateCatCountLabel();
 }
-function getCatValue(){
-  var sel=document.getElementById('m-cat-sel');
-  if(sel.value==='__otra__'){
-    var v=document.getElementById('m-cat-custom').value.trim();
-    return v||'Otro';
+
+function toggleCat(cat){
+  var idx=_selectedCats.indexOf(cat);
+  if(idx>=0){_selectedCats.splice(idx,1);}
+  else{_selectedCats.push(cat);}
+  var chip=document.querySelector('.cat-chip[onclick*="\''+cat+'\'"]');
+  if(chip){chip.classList.toggle('selected',_selectedCats.indexOf(cat)>=0);}
+  updateCatCountLabel();
+  updateCatSplitInfo();
+}
+
+function toggleOtraChip(){
+  var row=document.getElementById('cat-custom-row');
+  var chip=document.getElementById('chip-otra');
+  if(!row||!chip)return;
+  var visible=row.style.display==='flex';
+  row.style.display=visible?'none':'flex';
+  chip.classList.toggle('selected',!visible);
+  if(!visible)document.getElementById('m-cat-custom').focus();
+}
+
+function addCustomCat(){
+  var inp=document.getElementById('m-cat-custom');
+  var val=inp.value.trim();
+  if(!val)return;
+  if(_selectedCats.indexOf(val)<0){
+    _selectedCats.push(val);
+    var container=document.getElementById('cat-chips-container');
+    var btn=document.createElement('button');
+    btn.type='button';
+    btn.className='cat-chip selected';
+    btn.textContent='✏️ '+val;
+    btn.setAttribute('onclick','toggleCat(\''+val.replace(/'/g,"\\'").replace(/\\/g,'\\\\')+'\')');
+    container.insertBefore(btn,document.getElementById('chip-otra'));
   }
-  return sel.value;
+  inp.value='';
+  updateCatCountLabel();
+  updateCatSplitInfo();
 }
-function setCatValue(cat){
-  var sel=document.getElementById('m-cat-sel');
-  var custom=document.getElementById('m-cat-custom');
-  var opt=Array.from(sel.options).find(function(o){return o.value===cat;});
-  if(opt){sel.value=cat;custom.style.display='none';}
-  else{sel.value='__otra__';custom.value=cat||'';custom.style.display='block';}
+
+function updateCatCountLabel(){
+  var lbl=document.getElementById('cat-count-label');
+  if(!lbl)return;
+  var n=_selectedCats.length;
+  lbl.style.display=n>0?'inline-block':'none';
+  lbl.textContent=n===1?'1 categoría':n+' categorías';
 }
+
+function updateCatSplitInfo(){
+  var info=document.getElementById('cat-split-info');
+  if(!info)return;
+  var n=_selectedCats.length;
+  var amt=parseFloat(document.getElementById('m-amount').value)||0;
+  if(n>1&&amt>0){
+    info.style.display='block';
+    info.textContent='💡 '+fmt(amt)+' ÷ '+n+' categorías = '+fmt(amt/n)+' por categoría';
+  } else {
+    info.style.display='none';
+  }
+}
+
+function getCatValue(){return _selectedCats[0]||'Otro';}
+function setCatValue(cat){buildCatChips(cat);}
+
+// Enter en campo personalizado
+document.addEventListener('keydown',function(e){
+  if(e.key==='Enter'&&document.activeElement&&document.activeElement.id==='m-cat-custom'){
+    e.preventDefault();addCustomCat();
+  }
+});
 function openModal(id){
   _editingId=id||null;
   if(!id){
     var now=new Date();_modalType='expense';
-    document.getElementById('m-desc').value='';document.getElementById('m-amount').value='';
-    document.getElementById('m-cat-sel').value='Alimentación';
-    document.getElementById('m-cat-custom').value='';document.getElementById('m-cat-custom').style.display='none';
+    document.getElementById('m-desc').value='';
+    document.getElementById('m-amount').value='';
     document.getElementById('m-date').value=now.toISOString().slice(0,10);
-    document.getElementById('m-time').value=now.toTimeString().slice(0,5);
     document.getElementById('modal-title').textContent='Nuevo movimiento';
     setModalType('expense');
+    buildCatChips(null);
   }
   document.getElementById('modal-overlay').style.display='flex';
 }
@@ -1518,19 +1586,37 @@ function setModalType(t){
 async function submitMovement(){
   var desc=document.getElementById('m-desc').value.trim();
   var amt=parseFloat(document.getElementById('m-amount').value);
-  var cat=getCatValue();
   var date=document.getElementById('m-date').value;
   if(!desc){alert('Escribe una descripción.');return;}
   if(!amt||amt<=0){alert('Ingresa un monto válido.');return;}
   if(!date){alert('Selecciona una fecha.');return;}
-  var icon=CAT_ICONS[cat]||'💰';
-  var record={user_id:ST.userId,tipo:_modalType,descripcion:desc,monto:amt,categoria:cat,fecha:date,icono:icon};
+  var cats=_selectedCats.length>0?_selectedCats:['Otro'];
+  var perCat=amt/cats.length;
+
   if(_editingId){
+    // Edición: actualiza sólo la primera categoría (registro existente)
+    var cat=cats[0];
+    var icon=CAT_ICONS[cat]||'💰';
+    var record={user_id:ST.userId,tipo:_modalType,descripcion:desc,monto:perCat,categoria:cat,fecha:date,icono:icon};
     var res=await _sb.from('movimientos').update(record).eq('id',_editingId).select();
-    if(!res.error&&res.data){ST.movements=ST.movements.map(function(m){return m.id===_editingId?{id:res.data[0].id,type:res.data[0].tipo,description:res.data[0].descripcion,amount:parseFloat(res.data[0].monto),category:res.data[0].categoria,date:res.data[0].fecha,icon:res.data[0].icono||'💰'}:m;});recomputeAnnual(ST.movements);closeModal();renderScreen(ST.screen);}
+    if(!res.error&&res.data){
+      ST.movements=ST.movements.map(function(m){
+        return m.id===_editingId?{id:res.data[0].id,type:res.data[0].tipo,description:res.data[0].descripcion,amount:parseFloat(res.data[0].monto),category:res.data[0].categoria,date:res.data[0].fecha,icon:res.data[0].icono||'💰'}:m;
+      });
+      recomputeAnnual(ST.movements);closeModal();renderScreen(ST.screen);
+    }
   } else {
-    var res=await _sb.from('movimientos').insert(record).select();
-    if(!res.error&&res.data){var r=res.data[0];ST.movements.unshift({id:r.id,type:r.tipo,description:r.descripcion,amount:parseFloat(r.monto),category:r.categoria,date:r.fecha,icon:r.icono||'💰'});recomputeAnnual(ST.movements);closeModal();renderScreen(ST.screen);}
+    // Inserción: un registro por cada categoría seleccionada
+    var records=cats.map(function(cat){
+      return {user_id:ST.userId,tipo:_modalType,descripcion:desc+(cats.length>1?' ('+cat+')':''),monto:perCat,categoria:cat,fecha:date,icono:CAT_ICONS[cat]||'💰'};
+    });
+    var res=await _sb.from('movimientos').insert(records).select();
+    if(!res.error&&res.data){
+      res.data.forEach(function(r){
+        ST.movements.unshift({id:r.id,type:r.tipo,description:r.descripcion,amount:parseFloat(r.monto),category:r.categoria,date:r.fecha,icon:r.icono||'💰'});
+      });
+      recomputeAnnual(ST.movements);closeModal();renderScreen(ST.screen);
+    }
   }
 }
 function editMovement(id){
