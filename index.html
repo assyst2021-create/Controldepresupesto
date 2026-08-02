@@ -296,10 +296,8 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
 .cat-list-item:last-child{border-bottom:none;}
 .cat-list-item:hover{background:#F0F7FF;}
 .cat-list-item.selected{background:#EFF6FF;}
-.cat-list-item .cat-check{width:18px;height:18px;border-radius:5px;border:2px solid #CBD5E1;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:background .12s,border-color .12s;}
-.cat-list-item.selected .cat-check{background:var(--primary);border-color:var(--primary);}
-.cat-list-item .cat-check::after{content:'';display:none;width:5px;height:9px;border:2px solid #fff;border-top:none;border-left:none;transform:rotate(45deg);margin-top:-2px;}
-.cat-list-item.selected .cat-check::after{display:block;}
+.cat-list-item .cat-check{width:18px;height:18px;border-radius:5px;border:2px solid #CBD5E1;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:background .12s,border-color .12s;font-size:12px;font-weight:900;color:transparent;line-height:1;}
+.cat-list-item.selected .cat-check{background:var(--primary);border-color:var(--primary);color:#fff;}
 .cat-chips-wrap{margin-top:4px;}
 /* ===== TOUR ===== */
 #tour-overlay{position:fixed;inset:0;z-index:9000;pointer-events:none;}
@@ -1830,12 +1828,12 @@ function buildCatChips(preselected){
   var html='<div class="cat-list">';
   getCatList().forEach(function(c){
     var sel=_selectedCats.indexOf(c.v)>=0?' selected':'';
-    html+='<div class="cat-list-item'+sel+'" data-cat="'+esc(c.v)+'" onclick="toggleCat(this)"><div class="cat-check"></div><span>'+esc(c.e)+'</span><span>'+esc(c.v)+'</span></div>';
+    html+='<div class="cat-list-item'+sel+'" data-cat="'+esc(c.v)+'" onclick="toggleCat(this)"><div class="cat-check">✓</div><span>'+esc(c.e)+'</span><span>'+esc(c.v)+'</span></div>';
   });
   html+='</div>';
   container.innerHTML=html;
   if(preselected&&!getCatList().find(function(c){return c.v===preselected;})){
-    var extra='<div class="cat-list-item selected" data-cat="'+esc(preselected)+'" onclick="toggleCat(this)"><div class="cat-check"></div><span>🏷️</span><span>'+esc(preselected)+'</span></div>';
+    var extra='<div class="cat-list-item selected" data-cat="'+esc(preselected)+'" onclick="toggleCat(this)"><div class="cat-check">✓</div><span>🏷️</span><span>'+esc(preselected)+'</span></div>';
     var list=container.querySelector('.cat-list');
     if(list)list.insertAdjacentHTML('beforeend',extra);
     if(_selectedCats.indexOf(preselected)<0)_selectedCats.push(preselected);
@@ -2194,7 +2192,7 @@ function buildCompraCatChips(preselected){
   var html='<div class="cat-list">';
   getCompraCatList().forEach(function(c){
     var sel=_selectedCompraCat===c.v?' selected':'';
-    html+='<div class="cat-list-item'+sel+'" data-ccat="'+esc(c.v)+'" onclick="toggleCompraCat(this)"><div class="cat-check"></div><span>'+esc(c.e)+'</span><span>'+esc(c.v)+'</span></div>';
+    html+='<div class="cat-list-item'+sel+'" data-ccat="'+esc(c.v)+'" onclick="toggleCompraCat(this)"><div class="cat-check">✓</div><span>'+esc(c.e)+'</span><span>'+esc(c.v)+'</span></div>';
   });
   html+='</div>';
   wrap.innerHTML=html;
