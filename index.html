@@ -371,9 +371,12 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
       <div class="form-group"><label>Fecha</label><input id="m-date" type="date"/></div>
     </div>
     <div class="form-group" style="margin-bottom:0;">
-      <label style="display:flex;align-items:center;justify-content:space-between;">
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
         <span>Categorías</span>
-        <span id="cat-count-label" style="font-size:11.5px;font-weight:700;color:var(--primary);background:#EFF6FF;border-radius:20px;padding:2px 10px;display:none;"></span>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span id="cat-count-label" style="font-size:11.5px;font-weight:700;color:var(--primary);background:#EFF6FF;border-radius:20px;padding:2px 10px;display:none;"></span>
+          <button type="button" onclick="openCatManager()" style="font-size:11.5px;font-weight:700;color:var(--gray);background:#F1F5F9;border:1.5px solid var(--border);border-radius:20px;padding:3px 10px;cursor:pointer;">⚙️ Gestionar</button>
+        </div>
       </label>
       <div class="cat-chips" id="cat-chips-container"></div>
       <div style="margin-top:8px;display:flex;gap:8px;align-items:center;" id="cat-custom-row" style="display:none;">
@@ -485,6 +488,33 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
   </div>
 </div>
 
+<!-- MODAL GESTOR DE CATEGORÍAS -->
+<div id="modal-cat-manager" class="modal-overlay" onclick="if(event.target===this)closeCatManager()">
+  <div class="modal-box" style="max-width:440px;">
+    <div class="modal-header">
+      <h3>⚙️ Mis categorías</h3>
+      <button class="modal-close" onclick="closeCatManager()">&#x2715;</button>
+    </div>
+    <p style="font-size:13px;color:var(--gray-light);margin-bottom:16px;">Crea tus propias categorías. Aparecerán en todos los movimientos junto a las predeterminadas.</p>
+    <!-- Agregar nueva -->
+    <div style="display:flex;gap:8px;margin-bottom:18px;">
+      <input id="cm-emoji" type="text" placeholder="🏷️" maxlength="3" style="width:54px;text-align:center;font-size:20px;border:1.5px solid var(--border);border-radius:10px;padding:9px;flex-shrink:0;"/>
+      <input id="cm-nombre" type="text" placeholder="Nombre de la categoría..." style="flex:1;"/>
+      <button onclick="addCatManager()" style="background:var(--primary);color:#fff;border:none;border-radius:10px;padding:10px 16px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;">+ Agregar</button>
+    </div>
+    <div id="cm-error" class="auth-error"></div>
+    <!-- Lista predeterminadas -->
+    <div style="font-size:11px;font-weight:800;color:var(--gray-light);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">Predeterminadas</div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:18px;" id="cm-default-list"></div>
+    <!-- Lista personalizadas -->
+    <div style="font-size:11px;font-weight:800;color:var(--primary);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">Mis categorías personalizadas</div>
+    <div id="cm-custom-list" style="display:flex;flex-direction:column;gap:8px;"></div>
+    <div id="cm-empty" style="font-size:13px;color:var(--gray-light);text-align:center;padding:16px;display:none;">Aún no has creado categorías personalizadas.</div>
+    <div class="modal-actions" style="margin-top:18px;">
+      <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="closeCatManager()">Listo</button>
+    </div>
+  </div>
+</div>
 <!-- MODAL EDITAR USUARIO -->
 <div id="modal-editar-usuario" class="modal-overlay" onclick="if(event.target===this)closeEditarUsuario()">
   <div class="modal-box" style="max-width:420px;">
@@ -1716,6 +1746,7 @@ _sb.auth.onAuthStateChange(async function(event,session){
     document.getElementById('admin-nav-section').style.display=isAdmin?'block':'none';
     document.getElementById('auth-overlay').style.display='none';
     await loadData(user.id,isAdmin);
+    loadCustomCats();
     renderScreen(ST.screen);
     populateCurrencySels();
     if(!localStorage.getItem('mf_tour_done')){startTour();}
@@ -1752,12 +1783,25 @@ function toggleVis(inputId,btnId){
 
 // MOVIMIENTOS MODAL
 var _editingId=null,_modalType='expense';
-var CAT_LIST=[
+var CAT_LIST_DEFAULT=[
   {v:'Alimentación',e:'🍽️'},{v:'Transporte',e:'🚗'},{v:'Vivienda',e:'🏠'},
   {v:'Salud',e:'💊'},{v:'Educación',e:'📚'},{v:'Entretenimiento',e:'🎬'},
   {v:'Ropa',e:'👕'},{v:'Servicios',e:'⚡'},{v:'Deudas',e:'💳'},
   {v:'Salario',e:'💵'},{v:'Ahorro meta',e:'🎯'},{v:'Inversión',e:'📈'}
 ];
+var _customCats=[];
+function _catsKey(){return 'mf_cats_'+(ST.userId||'guest');}
+function loadCustomCats(){
+  try{var s=localStorage.getItem(_catsKey());_customCats=s?JSON.parse(s):[];}
+  catch(e){_customCats=[];}
+}
+function saveCustomCats(){
+  try{localStorage.setItem(_catsKey(),JSON.stringify(_customCats));}catch(e){}
+}
+function getCatList(){
+  return CAT_LIST_DEFAULT.concat(_customCats.map(function(c){return{v:c.v,e:c.e||'🏷️',custom:true};}));
+}
+var CAT_LIST=CAT_LIST_DEFAULT;
 var _selectedCats=[];
 
 function buildCatChips(preselected){
@@ -1765,7 +1809,7 @@ function buildCatChips(preselected){
   var container=document.getElementById('cat-chips-container');
   if(!container)return;
   var html='';
-  CAT_LIST.forEach(function(c){
+  getCatList().forEach(function(c){
     var sel=_selectedCats.indexOf(c.v)>=0?' selected':'';
     html+='<button type="button" class="cat-chip'+sel+'" data-cat="'+c.v.replace(/"/g,'&quot;')+'" onclick="toggleCat(this)">'+c.e+' '+c.v+'</button>';
   });
@@ -1802,6 +1846,84 @@ function toggleOtraChip(){
   if(!visible)document.getElementById('m-cat-custom').focus();
 }
 
+// ===== GESTOR DE CATEGORÍAS =====
+function openCatManager(){
+  loadCustomCats();
+  // Lista predeterminadas (solo chips de color)
+  var defEl=document.getElementById('cm-default-list');
+  if(defEl){
+    defEl.innerHTML=CAT_LIST_DEFAULT.map(function(c){
+      return '<span style="display:inline-flex;align-items:center;gap:4px;background:#F1F5F9;border-radius:20px;padding:5px 12px;font-size:12px;font-weight:600;color:var(--gray);">'+c.e+' '+c.v+'</span>';
+    }).join('');
+  }
+  renderCmCustomList();
+  document.getElementById('cm-error').style.display='none';
+  document.getElementById('cm-emoji').value='';
+  document.getElementById('cm-nombre').value='';
+  document.getElementById('modal-cat-manager').style.display='flex';
+}
+function closeCatManager(){
+  document.getElementById('modal-cat-manager').style.display='none';
+  // Refrescar chips si el modal de movimiento está abierto
+  var movModal=document.getElementById('modal-overlay');
+  if(movModal&&movModal.style.display==='flex'){
+    var cur=_selectedCats.slice();
+    buildCatChips(null);
+    cur.forEach(function(c){
+      var chip=document.querySelector('[data-cat="'+c.replace(/"/g,'&quot;')+'"]');
+      if(chip){chip.classList.add('selected');}
+      if(_selectedCats.indexOf(c)<0)_selectedCats.push(c);
+    });
+    updateCatCountLabel();
+  }
+}
+function renderCmCustomList(){
+  var el=document.getElementById('cm-custom-list');
+  var empty=document.getElementById('cm-empty');
+  if(!el)return;
+  if(!_customCats.length){el.innerHTML='';if(empty)empty.style.display='block';return;}
+  if(empty)empty.style.display='none';
+  el.innerHTML=_customCats.map(function(c,i){
+    return '<div style="display:flex;align-items:center;gap:10px;background:#F8FAFC;border:1.5px solid var(--border);border-radius:12px;padding:10px 14px;">'+
+      '<span style="font-size:20px;width:30px;text-align:center;">'+c.e+'</span>'+
+      '<span style="flex:1;font-size:14px;font-weight:600;color:var(--gray-dark);">'+c.v+'</span>'+
+      '<button onclick="editCatManager('+i+')" style="background:#EFF6FF;border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;color:#1E40AF;cursor:pointer;">✏️ Editar</button>'+
+      '<button onclick="deleteCatManager('+i+')" style="background:#FEF2F2;border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;color:#DC2626;cursor:pointer;">🗑️</button>'+
+    '</div>';
+  }).join('');
+}
+function addCatManager(){
+  var nombre=document.getElementById('cm-nombre').value.trim();
+  var emoji=document.getElementById('cm-emoji').value.trim()||'🏷️';
+  var errEl=document.getElementById('cm-error');
+  errEl.style.display='none';
+  if(!nombre){errEl.textContent='Escribe un nombre para la categoría.';errEl.style.display='block';return;}
+  var todos=getCatList();
+  if(todos.find(function(c){return c.v.toLowerCase()===nombre.toLowerCase();})){
+    errEl.textContent='Ya existe una categoría con ese nombre.';errEl.style.display='block';return;
+  }
+  _customCats.push({v:nombre,e:emoji});
+  saveCustomCats();
+  document.getElementById('cm-nombre').value='';
+  document.getElementById('cm-emoji').value='';
+  renderCmCustomList();
+}
+function editCatManager(i){
+  var cat=_customCats[i];if(!cat)return;
+  var nuevoNombre=window.prompt('Nuevo nombre:',cat.v);
+  if(!nuevoNombre||!nuevoNombre.trim())return;
+  var nuevoEmoji=window.prompt('Emoji (opcional):',cat.e||'🏷️');
+  _customCats[i]={v:nuevoNombre.trim(),e:nuevoEmoji||'🏷️'};
+  saveCustomCats();
+  renderCmCustomList();
+}
+function deleteCatManager(i){
+  if(!confirm('¿Eliminar la categoría "'+_customCats[i].v+'"?'))return;
+  _customCats.splice(i,1);
+  saveCustomCats();
+  renderCmCustomList();
+}
+// ===== FIN GESTOR =====
 function renderCustomChip(val,selected){
   var container=document.getElementById('cat-chips-container');
   if(!container)return;
