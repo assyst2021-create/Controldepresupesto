@@ -1936,10 +1936,7 @@ function renderTourStep(){
   if(!bubble||!spotlight||!ov)return;
   ov.style.display='';
 
-  // Dots
   var dots='';for(var i=0;i<total;i++){dots+='<div class="tb-dot'+(i===_tourIdx?' active':'')+'"></div>';}
-
-  // Buttons
   var prevBtn=_tourIdx>0?'<button class="tb-prev" onclick="tourPrev()">← Anterior</button>':'';
   var isLast=_tourIdx===total-1;
   var nextLabel=isLast?'¡Listo! 🎉':'Siguiente →';
@@ -1954,36 +1951,23 @@ function renderTourStep(){
       '<div class="tb-actions">'+skipBtn+prevBtn+'<button class="tb-next" onclick="tourNext()">'+nextLabel+'</button></div>'+
     '</div>';
 
-  if(!step.target||step.pos==='center'){
-    // Centered modal — no spotlight
-    spotlight.style.display='none';
-    bubble.style.cssText='position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);max-width:360px;min-width:280px;background:#fff;border-radius:20px;padding:28px 28px 22px;box-shadow:0 8px 40px rgba(15,23,42,.22);z-index:9002;';
-  } else {
-    spotlight.style.display='';
-    var el=document.querySelector(step.target);
-    if(!el){spotlight.style.display='none';bubble.style.cssText='position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);max-width:360px;min-width:280px;background:#fff;border-radius:20px;padding:28px 28px 22px;box-shadow:0 8px 40px rgba(15,23,42,.22);z-index:9002;';renderBubblePos(bubble,null,step.pos);return;}
-    var r=el.getBoundingClientRect();
-    var pad=8;
-    spotlight.style.cssText='position:fixed;left:'+(r.left-pad)+'px;top:'+(r.top-pad)+'px;width:'+(r.width+pad*2)+'px;height:'+(r.height+pad*2)+'px;border-radius:14px;box-shadow:0 0 0 9999px rgba(15,23,42,.55);z-index:9001;transition:all .35s cubic-bezier(.4,0,.2,1);pointer-events:none;';
-    renderBubblePos(bubble,r,step.pos);
-  }
-}
+  // Burbuja SIEMPRE centrada en pantalla
+  bubble.style.cssText='position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(360px,calc(100vw - 32px));background:#fff;border-radius:22px;padding:28px 28px 22px;box-shadow:0 12px 48px rgba(15,23,42,.25),0 2px 12px rgba(15,23,42,.12);z-index:9002;';
 
-function renderBubblePos(bubble,r,pos){
-  var bw=320,bh=220,gap=14,vp=window.innerWidth,vh=window.innerHeight;
-  var left,top,transform='';
-  if(!r||pos==='center'){
-    left=Math.round((vp-bw)/2);top=Math.round((vh-bh)/2);
-  } else if(pos==='top'||(r.top>bh+gap*2&&pos!=='bottom')){
-    left=Math.min(Math.max(r.left+r.width/2-bw/2,10),vp-bw-10);
-    top=r.top-bh-gap;
-    if(top<10){top=r.bottom+gap;}
+  // Spotlight sobre el elemento (si existe), pero NO mueve la burbuja
+  if(step.target){
+    var el=document.querySelector(step.target);
+    if(el){
+      var r=el.getBoundingClientRect();
+      var pad=8;
+      spotlight.style.cssText='position:fixed;left:'+(r.left-pad)+'px;top:'+(r.top-pad)+'px;width:'+(r.width+pad*2)+'px;height:'+(r.height+pad*2)+'px;border-radius:14px;box-shadow:0 0 0 9999px rgba(15,23,42,.6);z-index:9001;transition:all .35s cubic-bezier(.4,0,.2,1);pointer-events:none;';
+      spotlight.style.display='';
+    } else {
+      spotlight.style.display='none';
+    }
   } else {
-    left=Math.min(Math.max(r.left+r.width/2-bw/2,10),vp-bw-10);
-    top=r.bottom+gap;
-    if(top+bh>vh-10){top=r.top-bh-gap;}
+    spotlight.style.display='none';
   }
-  bubble.style.cssText='position:fixed;left:'+left+'px;top:'+top+'px;max-width:'+bw+'px;min-width:260px;background:#fff;border-radius:20px;padding:24px 26px 20px;box-shadow:0 8px 40px rgba(15,23,42,.18),0 2px 10px rgba(15,23,42,.10);z-index:9002;transition:all .35s cubic-bezier(.4,0,.2,1);';
 }
 
 function tourNext(){
