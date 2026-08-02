@@ -286,6 +286,28 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
   .gcal-chip{display:none;}
   .gcal-more{font-size:10px;}
 }
+/* ===== TOUR ===== */
+#tour-overlay{position:fixed;inset:0;z-index:9000;pointer-events:none;}
+#tour-overlay.active{pointer-events:all;}
+#tour-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.55);opacity:0;transition:opacity .3s;}
+#tour-overlay.active #tour-backdrop{opacity:1;}
+#tour-spotlight{position:fixed;border-radius:14px;box-shadow:0 0 0 9999px rgba(15,23,42,.55);transition:all .35s cubic-bezier(.4,0,.2,1);pointer-events:none;z-index:9001;}
+#tour-bubble{position:fixed;background:#fff;border-radius:20px;padding:24px 26px 20px;max-width:320px;min-width:260px;box-shadow:0 8px 40px rgba(15,23,42,.18),0 2px 10px rgba(15,23,42,.10);z-index:9002;transition:all .35s cubic-bezier(.4,0,.2,1);}
+#tour-bubble .tb-step{font-size:11px;font-weight:800;color:var(--primary);letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px;}
+#tour-bubble .tb-title{font-size:17px;font-weight:800;color:var(--gray-dark);margin-bottom:10px;line-height:1.3;}
+#tour-bubble .tb-body{font-size:13.5px;color:var(--gray);line-height:1.65;text-align:justify;}
+#tour-bubble .tb-arrow{position:absolute;width:14px;height:14px;background:#fff;transform:rotate(45deg);}
+#tour-bubble .tb-footer{display:flex;align-items:center;justify-content:space-between;margin-top:18px;gap:10px;}
+#tour-bubble .tb-dots{display:flex;gap:5px;}
+#tour-bubble .tb-dot{width:7px;height:7px;border-radius:50%;background:var(--border);}
+#tour-bubble .tb-dot.active{background:var(--primary);width:18px;border-radius:4px;}
+#tour-bubble .tb-actions{display:flex;gap:8px;}
+#tour-bubble .tb-skip{font-size:12px;font-weight:700;color:var(--gray-light);background:none;border:none;cursor:pointer;padding:6px 4px;}
+#tour-bubble .tb-prev{font-size:13px;font-weight:700;color:var(--primary);background:#EFF6FF;border:none;border-radius:10px;padding:9px 16px;cursor:pointer;}
+#tour-bubble .tb-next{font-size:13px;font-weight:700;color:#fff;background:var(--primary);border:none;border-radius:10px;padding:9px 18px;cursor:pointer;}
+#tour-bubble .tb-next:hover{background:#1D4ED8;}
+.tour-replay-btn{display:flex;align-items:center;gap:7px;width:100%;background:none;border:1.5px solid var(--border);border-radius:10px;padding:9px 14px;font-size:13px;font-weight:700;color:var(--gray);cursor:pointer;transition:border-color .2s,color .2s;}
+.tour-replay-btn:hover{border-color:var(--primary);color:var(--primary);}
 </style>
 </head>
 <body>
@@ -553,6 +575,7 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
         <span style="font-size:13px;font-weight:700;color:var(--gray);white-space:nowrap;">💱 Moneda</span>
         <select class="currency-sel" onchange="setCurrency(this.value)" style="flex:1;font-size:13px;font-weight:600;border:1.5px solid var(--border);border-radius:10px;padding:8px 10px;background:#fff;color:var(--gray-dark);cursor:pointer;"></select>
       </div>
+      <button class="tour-replay-btn" onclick="startTour()">🗺️ Ver tour de la aplicación</button>
       <button class="btn btn-primary" style="justify-content:center;" onclick="openCambiarPass()">🔑 Cambiar contraseña</button>
       <button class="btn btn-ghost" style="justify-content:center;" onclick="doSignOut()">Cerrar sesión</button>
     </div>
@@ -743,6 +766,7 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
     <span style="font-size:20px;">💱</span>
     <select class="currency-sel" onchange="setCurrency(this.value)" style="flex:1;font-size:14px;font-weight:600;border:1.5px solid var(--border);border-radius:10px;padding:10px 12px;background:#fff;color:var(--gray-dark);cursor:pointer;"></select>
   </div>
+  <button class="sheet-item" onclick="closeMoreSheet();startTour()"><span class="si-icon">🗺️</span>Ver tour de la aplicación</button>
   <button class="sheet-item" onclick="closeMoreSheet();openCambiarPass()"><span class="si-icon">🔑</span>Cambiar contraseña</button>
 <button class="sheet-item danger" onclick="closeMoreSheet();doSignOut()"><span class="si-icon">🚪</span>Cerrar sesión</button>
   <div style="height:8px;"></div>
@@ -1415,6 +1439,7 @@ _sb.auth.onAuthStateChange(async function(event,session){
     await loadData(user.id,isAdmin);
     renderScreen(ST.screen);
     populateCurrencySels();
+    if(!localStorage.getItem('mf_tour_done')){startTour();}
   } else {
     document.getElementById('auth-overlay').style.display='flex';
     ST.movements=[];ST.goals=[];ST.pagos=[];ST.compras=[];ST.profiles=[];ST.isAdmin=false;
@@ -1738,6 +1763,150 @@ async function submitCambiarPass(){
   var res=await _sb.auth.updateUser({password:newPass});
   if(res.error){errEl.textContent=res.error.message;errEl.style.display='block';}
   else{sucEl.style.display='block';document.getElementById('cp-new').value='';document.getElementById('cp-confirm').value='';}
+}
+
+// ===== TOUR =====
+var TOUR_STEPS=[
+  {
+    title:'¡Bienvenido a Mis Finanzas! 👋',
+    body:'Esta es una guía rápida para que conozcas todo lo que puedes hacer aquí. Te mostramos cada sección en menos de un minuto. Puedes saltar el tour cuando quieras.',
+    target:null,pos:'center'
+  },
+  {
+    title:'📊 Panel principal',
+    body:'Aquí ves el resumen del mes en tiempo real: tu saldo disponible, ingresos, gastos y ahorro. También aparecen alertas inteligentes con recomendaciones personalizadas según cómo vas con tus finanzas.',
+    target:'[data-screen="panel"]',pos:'auto'
+  },
+  {
+    title:'📋 Movimientos',
+    body:'Registra cada ingreso, gasto o ahorro. Filtra por tipo, busca por categoría y lleva un historial completo. Desde aquí tienes el control total de tu flujo de dinero.',
+    target:'[data-screen="movimientos"]',pos:'auto'
+  },
+  {
+    title:'+ Agregar movimiento',
+    body:'Este botón central te permite registrar un nuevo movimiento rápidamente desde cualquier pantalla. Puedes elegir categoría, monto, fecha y tipo de transacción.',
+    target:'.fab',pos:'top'
+  },
+  {
+    title:'💳 Presupuesto',
+    body:'Define tus ingresos fijos mensuales (salario, arriendos, etc.) y tus gastos obligatorios (servicios, cuotas, suscripciones). Esto te da una base real sobre cuánto dinero tienes disponible cada mes.',
+    target:'[data-screen="presupuesto"]',pos:'auto'
+  },
+  {
+    title:'🛒 Planeador de compras',
+    body:'¿Tienes algo en mente para comprar? Agrégalo aquí con precio estimado, prioridad y categoría. Planea tus compras antes de hacerlas y evita gastos impulsivos.',
+    target:'[data-screen="compras"]',pos:'auto'
+  },
+  {
+    title:'📊 Indicadores',
+    body:'Analiza tu comportamiento financiero con un calendario estilo Google donde ves movimientos por día, una gráfica anual de ingresos vs gastos y el desglose por categorías del mes.',
+    target:'[data-screen="reportes"]',pos:'auto'
+  },
+  {
+    title:'🎯 Ahorro Programado',
+    body:'Crea metas de ahorro con nombre, monto objetivo y fecha límite. Lleva el seguimiento de cuánto has logrado ahorrar en cada meta y visualiza tu progreso.',
+    target:'[data-screen="metas"]',pos:'auto'
+  },
+  {
+    title:'💱 Selector de moneda',
+    body:'Elige entre 10 monedas: COP, USD, EUR, MXN, BRL, ARS, CLP, PEN, GBP y CAD. Toda la aplicación se adapta al formato correcto de cada país. Tu preferencia se guarda automáticamente.',
+    target:'.currency-sel',pos:'top'
+  },
+  {
+    title:'¡Todo listo! 🎉',
+    body:'Ya conoces Mis Finanzas. Empieza registrando tus primeros movimientos y define tu presupuesto mensual. Recuerda que puedes volver a ver este tour desde el menú lateral cuando quieras.',
+    target:null,pos:'center'
+  }
+];
+
+var _tourIdx=0;
+var _tourActive=false;
+
+function startTour(){
+  _tourIdx=0;_tourActive=true;
+  var ov=document.getElementById('tour-overlay');
+  if(!ov){
+    ov=document.createElement('div');ov.id='tour-overlay';
+    ov.innerHTML='<div id="tour-backdrop"></div><div id="tour-spotlight"></div><div id="tour-bubble"></div>';
+    document.body.appendChild(ov);
+  }
+  ov.classList.add('active');
+  renderTourStep();
+}
+
+function endTour(){
+  _tourActive=false;
+  localStorage.setItem('mf_tour_done','1');
+  var ov=document.getElementById('tour-overlay');
+  if(ov){ov.classList.remove('active');ov.style.display='none';}
+}
+
+function renderTourStep(){
+  var step=TOUR_STEPS[_tourIdx];
+  var total=TOUR_STEPS.length;
+  var bubble=document.getElementById('tour-bubble');
+  var spotlight=document.getElementById('tour-spotlight');
+  var ov=document.getElementById('tour-overlay');
+  if(!bubble||!spotlight||!ov)return;
+  ov.style.display='';
+
+  // Dots
+  var dots='';for(var i=0;i<total;i++){dots+='<div class="tb-dot'+(i===_tourIdx?' active':'')+'"></div>';}
+
+  // Buttons
+  var prevBtn=_tourIdx>0?'<button class="tb-prev" onclick="tourPrev()">← Anterior</button>':'';
+  var isLast=_tourIdx===total-1;
+  var nextLabel=isLast?'¡Listo! 🎉':'Siguiente →';
+  var skipBtn=!isLast?'<button class="tb-skip" onclick="endTour()">Saltar</button>':'';
+
+  bubble.innerHTML=
+    '<div class="tb-step">Paso '+(_tourIdx+1)+' de '+total+'</div>'+
+    '<div class="tb-title">'+step.title+'</div>'+
+    '<div class="tb-body">'+step.body+'</div>'+
+    '<div class="tb-footer">'+
+      '<div class="tb-dots">'+dots+'</div>'+
+      '<div class="tb-actions">'+skipBtn+prevBtn+'<button class="tb-next" onclick="tourNext()">'+nextLabel+'</button></div>'+
+    '</div>';
+
+  if(!step.target||step.pos==='center'){
+    // Centered modal — no spotlight
+    spotlight.style.display='none';
+    bubble.style.cssText='position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);max-width:360px;min-width:280px;background:#fff;border-radius:20px;padding:28px 28px 22px;box-shadow:0 8px 40px rgba(15,23,42,.22);z-index:9002;';
+  } else {
+    spotlight.style.display='';
+    var el=document.querySelector(step.target);
+    if(!el){spotlight.style.display='none';bubble.style.cssText='position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);max-width:360px;min-width:280px;background:#fff;border-radius:20px;padding:28px 28px 22px;box-shadow:0 8px 40px rgba(15,23,42,.22);z-index:9002;';renderBubblePos(bubble,null,step.pos);return;}
+    var r=el.getBoundingClientRect();
+    var pad=8;
+    spotlight.style.cssText='position:fixed;left:'+(r.left-pad)+'px;top:'+(r.top-pad)+'px;width:'+(r.width+pad*2)+'px;height:'+(r.height+pad*2)+'px;border-radius:14px;box-shadow:0 0 0 9999px rgba(15,23,42,.55);z-index:9001;transition:all .35s cubic-bezier(.4,0,.2,1);pointer-events:none;';
+    renderBubblePos(bubble,r,step.pos);
+  }
+}
+
+function renderBubblePos(bubble,r,pos){
+  var bw=320,bh=220,gap=14,vp=window.innerWidth,vh=window.innerHeight;
+  var left,top,transform='';
+  if(!r||pos==='center'){
+    left=Math.round((vp-bw)/2);top=Math.round((vh-bh)/2);
+  } else if(pos==='top'||(r.top>bh+gap*2&&pos!=='bottom')){
+    left=Math.min(Math.max(r.left+r.width/2-bw/2,10),vp-bw-10);
+    top=r.top-bh-gap;
+    if(top<10){top=r.bottom+gap;}
+  } else {
+    left=Math.min(Math.max(r.left+r.width/2-bw/2,10),vp-bw-10);
+    top=r.bottom+gap;
+    if(top+bh>vh-10){top=r.top-bh-gap;}
+  }
+  bubble.style.cssText='position:fixed;left:'+left+'px;top:'+top+'px;max-width:'+bw+'px;min-width:260px;background:#fff;border-radius:20px;padding:24px 26px 20px;box-shadow:0 8px 40px rgba(15,23,42,.18),0 2px 10px rgba(15,23,42,.10);z-index:9002;transition:all .35s cubic-bezier(.4,0,.2,1);';
+}
+
+function tourNext(){
+  if(_tourIdx>=TOUR_STEPS.length-1){endTour();return;}
+  _tourIdx++;renderTourStep();
+}
+function tourPrev(){
+  if(_tourIdx<=0)return;
+  _tourIdx--;renderTourStep();
 }
 </script>
 </body>
