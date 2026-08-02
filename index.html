@@ -1771,14 +1771,9 @@ function buildCatChips(preselected){
   });
   html+='<button type="button" class="cat-chip chip-otra" id="chip-otra" onclick="toggleOtraChip()">✏️ Otra...</button>';
   container.innerHTML=html;
-  // Si la categoría preseleccionada es personalizada (no está en CAT_LIST), agregar su chip
+  // Si la categoría preseleccionada es personalizada (no está en CAT_LIST), agregar su chip con editar/eliminar
   if(preselected&&!CAT_LIST.find(function(c){return c.v===preselected;})){
-    var btn=document.createElement('button');
-    btn.type='button';btn.className='cat-chip selected';
-    btn.dataset.cat=preselected;
-    btn.innerHTML='✏️ '+preselected+' <span style="margin-left:4px;font-size:11px;opacity:.7;">(personalizada)</span>';
-    btn.onclick=function(){toggleCat(this);};
-    container.insertBefore(btn,document.getElementById('chip-otra'));
+    renderCustomChip(preselected,true);
   }
   var row=document.getElementById('cat-custom-row');
   if(row)row.style.display='none';
@@ -1807,25 +1802,51 @@ function toggleOtraChip(){
   if(!visible)document.getElementById('m-cat-custom').focus();
 }
 
+function renderCustomChip(val,selected){
+  var container=document.getElementById('cat-chips-container');
+  if(!container)return;
+  var wrap=document.createElement('span');
+  wrap.className='cat-chip selected custom-editable-chip';
+  wrap.dataset.cat=val;
+  wrap.style.cssText='display:inline-flex;align-items:center;gap:6px;padding:7px 10px 7px 13px;';
+  wrap.innerHTML=
+    '<span style="font-size:12.5px;font-weight:600;">✏️ '+val+'</span>'+
+    '<button type="button" title="Editar nombre" onclick="editCustomCat(this.parentNode)" style="background:#EFF6FF;border:none;border-radius:6px;padding:2px 6px;font-size:11px;cursor:pointer;color:#1E40AF;font-weight:700;">Editar</button>'+
+    '<button type="button" title="Eliminar" onclick="removeCustomCat(this.parentNode)" style="background:#FEF2F2;border:none;border-radius:6px;padding:2px 6px;font-size:11px;cursor:pointer;color:#DC2626;font-weight:700;">✕</button>';
+  container.insertBefore(wrap,document.getElementById('chip-otra'));
+}
+function editCustomCat(chip){
+  var oldVal=chip.dataset.cat;
+  var newVal=window.prompt('Editar categoría:',oldVal);
+  if(!newVal||!newVal.trim()||newVal.trim()===oldVal)return;
+  newVal=newVal.trim();
+  // Actualizar en _selectedCats
+  var idx=_selectedCats.indexOf(oldVal);
+  if(idx>=0)_selectedCats[idx]=newVal;
+  // Re-renderizar el chip
+  chip.dataset.cat=newVal;
+  chip.querySelector('span').textContent='✏️ '+newVal;
+  updateCatCountLabel();
+}
+function removeCustomCat(chip){
+  var val=chip.dataset.cat;
+  var idx=_selectedCats.indexOf(val);
+  if(idx>=0)_selectedCats.splice(idx,1);
+  chip.remove();
+  updateCatCountLabel();
+  updateCatSplitInfo();
+}
 function addCustomCat(){
   var inp=document.getElementById('m-cat-custom');
   var val=inp.value.trim();
   if(!val)return;
-  // Si ya existe el chip, simplemente seleccionarlo
-  var existing=document.querySelector('.cat-chip[data-cat="'+val.replace(/"/g,'&quot;')+'"]');
+  var existing=document.querySelector('[data-cat="'+val.replace(/"/g,'&quot;')+'"]');
   if(existing){
     if(_selectedCats.indexOf(val)<0){_selectedCats.push(val);existing.classList.add('selected');}
     inp.value='';updateCatCountLabel();updateCatSplitInfo();return;
   }
   _selectedCats.push(val);
-  var container=document.getElementById('cat-chips-container');
-  var btn=document.createElement('button');
-  btn.type='button';
-  btn.className='cat-chip selected';
-  btn.dataset.cat=val;
-  btn.textContent='✏️ '+val;
-  btn.onclick=function(){toggleCat(this);};
-  container.insertBefore(btn,document.getElementById('chip-otra'));
+  renderCustomChip(val,true);
   inp.value='';
   updateCatCountLabel();
   updateCatSplitInfo();
