@@ -515,12 +515,40 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
     </div>
     <div class="form-group"><label>Nombre de la meta</label><input id="mt-nombre" type="text" placeholder="Ej: Vacaciones, Carro..."/></div>
     <div class="modal-row">
-      <div class="form-group"><label>Meta total</label><input id="mt-meta" type="text" inputmode="numeric" placeholder="0" oninput="numFmt(this)"/></div>
-      <div class="form-group"><label>Ya ahorrado</label><input id="mt-ahorrado" type="text" inputmode="numeric" placeholder="0" oninput="numFmt(this)"/></div>
+      <div class="form-group"><label>Meta total</label><input id="mt-meta" type="text" inputmode="numeric" placeholder="0" oninput="numFmt(this);calcMetaPreview()"/></div>
+      <div class="form-group"><label>Ya ahorrado</label><input id="mt-ahorrado" type="text" inputmode="numeric" placeholder="0" oninput="numFmt(this);calcMetaPreview()"/></div>
+    </div>
+    <!-- Alternativa: poner cuota mensual y calcular total -->
+    <div class="form-group" style="margin-bottom:6px;">
+      <label style="display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--gray-light);font-weight:600;cursor:pointer;">
+        <input type="checkbox" id="mt-usar-cuota" onchange="toggleMetaCuotaMode(this.checked)" style="accent-color:var(--primary);width:15px;height:15px;cursor:pointer;"/>
+        Prefiero ingresar cuánto puedo ahorrar por mes
+      </label>
+    </div>
+    <div id="mt-cuota-row" style="display:none;">
+      <div class="form-group"><label>¿Cuánto puedes ahorrar por mes?</label><input id="mt-cuota-input" type="text" inputmode="numeric" placeholder="0" oninput="numFmt(this);calcMetaDesdeCuota()"/></div>
     </div>
     <div class="modal-row">
-      <div class="form-group"><label>¿Desde cuándo inicia?</label><input id="mt-inicio" type="date"/></div>
-      <div class="form-group"><label>¿Cuándo finaliza?</label><input id="mt-fin" type="date"/></div>
+      <div class="form-group"><label>¿Desde cuándo inicia?</label><input id="mt-inicio" type="date" oninput="calcMetaPreview()"/></div>
+      <div class="form-group"><label>¿Cuándo finaliza?</label><input id="mt-fin" type="date" oninput="calcMetaPreview()"/></div>
+    </div>
+    <!-- Preview calculado -->
+    <div id="mt-preview" style="display:none;background:linear-gradient(135deg,#EFF6FF,#F0FDF4);border:1.5px solid #BFDBFE;border-radius:14px;padding:14px 16px;margin-bottom:4px;">
+      <div style="font-size:11px;font-weight:800;color:var(--primary);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Plan de ahorro calculado</div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <div style="flex:1;min-width:100px;background:#fff;border-radius:10px;padding:10px 14px;text-align:center;">
+          <div id="mt-prev-mes" style="font-size:18px;font-weight:900;color:var(--primary);">—</div>
+          <div style="font-size:11px;color:var(--gray-light);font-weight:600;margin-top:2px;">por mes</div>
+        </div>
+        <div style="flex:1;min-width:100px;background:#fff;border-radius:10px;padding:10px 14px;text-align:center;">
+          <div id="mt-prev-dia" style="font-size:18px;font-weight:900;color:#16A34A;">—</div>
+          <div style="font-size:11px;color:var(--gray-light);font-weight:600;margin-top:2px;">por día</div>
+        </div>
+        <div style="flex:1;min-width:100px;background:#fff;border-radius:10px;padding:10px 14px;text-align:center;">
+          <div id="mt-prev-dias" style="font-size:18px;font-weight:900;color:#D97706;">—</div>
+          <div style="font-size:11px;color:var(--gray-light);font-weight:600;margin-top:2px;">días restantes</div>
+        </div>
+      </div>
     </div>
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeMetaModal()">Cancelar</button>
@@ -2367,6 +2395,54 @@ async function deleteCompra(id){
 
 // METAS
 var _editingMetaId=null;
+function _resetMetaPreview(){
+  document.getElementById('mt-usar-cuota').checked=false;
+  document.getElementById('mt-cuota-row').style.display='none';
+  document.getElementById('mt-cuota-input').value='';
+  document.getElementById('mt-preview').style.display='none';
+}
+function toggleMetaCuotaMode(on){
+  document.getElementById('mt-cuota-row').style.display=on?'block':'none';
+  if(!on){document.getElementById('mt-cuota-input').value='';calcMetaPreview();}
+  else{calcMetaDesdeCuota();}
+}
+function calcMetaPreview(){
+  var meta=numVal('mt-meta');
+  var ahorrado=numVal('mt-ahorrado');
+  var fin=document.getElementById('mt-fin').value;
+  var inicio=document.getElementById('mt-inicio').value||new Date().toISOString().slice(0,10);
+  var prev=document.getElementById('mt-preview');
+  if(!meta||meta<=0||!fin){prev.style.display='none';return;}
+  var falta=Math.max(0,meta-ahorrado);
+  var hoy=new Date(inicio+'T12:00:00');
+  var finD=new Date(fin+'T12:00:00');
+  var dias=Math.max(1,Math.round((finD-hoy)/(1000*60*60*24)));
+  var meses=Math.max(0.5,dias/30.44);
+  var porMes=Math.ceil(falta/meses);
+  var porDia=Math.ceil(falta/dias);
+  document.getElementById('mt-prev-mes').textContent=fmt(porMes);
+  document.getElementById('mt-prev-dia').textContent=fmt(porDia);
+  document.getElementById('mt-prev-dias').textContent=dias;
+  prev.style.display='block';
+}
+function calcMetaDesdeCuota(){
+  var cuota=numVal('mt-cuota-input');
+  var fin=document.getElementById('mt-fin').value;
+  var inicio=document.getElementById('mt-inicio').value||new Date().toISOString().slice(0,10);
+  var prev=document.getElementById('mt-preview');
+  if(!cuota||cuota<=0||!fin){prev.style.display='none';return;}
+  var hoy=new Date(inicio+'T12:00:00');
+  var finD=new Date(fin+'T12:00:00');
+  var dias=Math.max(1,Math.round((finD-hoy)/(1000*60*60*24)));
+  var meses=Math.max(0.5,dias/30.44);
+  var totalCalc=Math.ceil(cuota*meses);
+  setNumInput('mt-meta',totalCalc);
+  var porDia=Math.ceil(totalCalc/dias);
+  document.getElementById('mt-prev-mes').textContent=fmt(cuota);
+  document.getElementById('mt-prev-dia').textContent=fmt(porDia);
+  document.getElementById('mt-prev-dias').textContent=dias;
+  prev.style.display='block';
+}
 function openMetaModal(id){
   _editingMetaId=id||null;
   var today=new Date().toISOString().slice(0,10);
@@ -2378,7 +2454,9 @@ function openMetaModal(id){
     document.getElementById('mt-fin').value='';
     document.getElementById('modal-meta-title').textContent='Nueva meta';
   }
+  _resetMetaPreview();
   document.getElementById('modal-meta').style.display='flex';
+  setTimeout(calcMetaPreview,50);
 }
 function closeMetaModal(){document.getElementById('modal-meta').style.display='none';_editingMetaId=null;}
 async function submitMeta(){
