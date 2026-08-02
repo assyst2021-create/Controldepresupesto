@@ -286,6 +286,10 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
   .gcal-chip{display:none;}
   .gcal-more{font-size:10px;}
 }
+/* ===== PRESET RANGE CHIPS ===== */
+.panel-preset{padding:7px 14px;border-radius:20px;border:1.5px solid var(--border);font-size:12.5px;font-weight:700;cursor:pointer;background:#F8FAFC;color:var(--gray);transition:background .15s,border-color .15s,color .15s;}
+.panel-preset:hover{border-color:var(--primary);color:var(--primary);}
+.panel-preset.active{background:var(--primary);border-color:var(--primary);color:#fff;}
 /* ===== CATEGORY CHIPS ===== */
 .cat-chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px;}
 .cat-chip{display:inline-flex;align-items:center;gap:5px;padding:7px 13px;border-radius:20px;border:1.5px solid var(--border);font-size:12.5px;font-weight:600;cursor:pointer;background:#F8FAFC;color:var(--gray);transition:background .15s,border-color .15s,color .15s;user-select:none;}
@@ -585,8 +589,29 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
         <button class="btn btn-primary" onclick="openModal()">+ Movimiento</button>
       </div>
       <div class="main-body">
+        <!-- Selector de rango -->
+        <div class="card" style="padding:14px 16px;margin-bottom:14px;">
+          <div style="display:flex;gap:7px;flex-wrap:wrap;" id="panel-presets">
+            <button class="panel-preset active" data-preset="mes" onclick="setPanelPreset('mes')">Este mes</button>
+            <button class="panel-preset" data-preset="30d" onclick="setPanelPreset('30d')">30 días</button>
+            <button class="panel-preset" data-preset="3m" onclick="setPanelPreset('3m')">3 meses</button>
+            <button class="panel-preset" data-preset="year" onclick="setPanelPreset('year')">Este año</button>
+            <button class="panel-preset" data-preset="custom" onclick="setPanelPreset('custom')">📅 Personalizado</button>
+          </div>
+          <div id="panel-custom-row" style="display:none;margin-top:12px;display:none;gap:10px;align-items:center;flex-wrap:wrap;">
+            <div style="display:flex;align-items:center;gap:6px;flex:1;min-width:140px;">
+              <label style="font-size:12px;font-weight:700;color:var(--gray);white-space:nowrap;">Desde</label>
+              <input type="date" id="panel-from" style="flex:1;font-size:13px;border:1.5px solid var(--border);border-radius:10px;padding:8px 10px;" onchange="applyCustomRange()"/>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;flex:1;min-width:140px;">
+              <label style="font-size:12px;font-weight:700;color:var(--gray);white-space:nowrap;">Hasta</label>
+              <input type="date" id="panel-to" style="flex:1;font-size:13px;border:1.5px solid var(--border);border-radius:10px;padding:8px 10px;" onchange="applyCustomRange()"/>
+            </div>
+          </div>
+        </div>
+        <!-- Hero balance -->
         <div class="balance-hero">
-          <div class="hero-label">Balance del mes actual</div>
+          <div class="hero-label" id="hero-range-label">Este mes</div>
           <div class="hero-amount" id="hero-balance">$0</div>
           <div class="hero-stats">
             <div class="hero-stat"><div class="hs-label">Ingresos</div><div class="hs-val inc" id="hero-income">$0</div></div>
@@ -600,7 +625,7 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
         </div>
         <div class="section-head">Alertas y recomendaciones</div>
         <div id="alerts-container" style="margin-bottom:20px;"></div>
-        <div class="section-head">Movimientos recientes</div>
+        <div class="section-head" id="panel-movs-label">Movimientos del período</div>
         <div class="card" id="recent-movs-card"></div>
       </div>
     </div>
@@ -683,7 +708,27 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
     <div id="screen-reportes" class="screen" style="display:none;">
       <div class="main-header"><h2>Indicadores</h2></div>
       <div class="main-body">
-        <!-- Resumen mensual -->
+        <!-- Selector de rango indicadores -->
+        <div class="card" style="padding:14px 16px;margin-bottom:14px;">
+          <div style="display:flex;gap:7px;flex-wrap:wrap;" id="rep-presets">
+            <button class="panel-preset rep-preset active" data-preset="mes" onclick="setRepPreset('mes')">Este mes</button>
+            <button class="panel-preset rep-preset" data-preset="3m" onclick="setRepPreset('3m')">3 meses</button>
+            <button class="panel-preset rep-preset" data-preset="6m" onclick="setRepPreset('6m')">6 meses</button>
+            <button class="panel-preset rep-preset" data-preset="year" onclick="setRepPreset('year')">Este año</button>
+            <button class="panel-preset rep-preset" data-preset="custom" onclick="setRepPreset('custom')">📅 Personalizado</button>
+          </div>
+          <div id="rep-custom-row" style="display:none;margin-top:12px;gap:10px;align-items:center;flex-wrap:wrap;">
+            <div style="display:flex;align-items:center;gap:6px;flex:1;min-width:140px;">
+              <label style="font-size:12px;font-weight:700;color:var(--gray);white-space:nowrap;">Desde</label>
+              <input type="date" id="rep-from" style="flex:1;font-size:13px;border:1.5px solid var(--border);border-radius:10px;padding:8px 10px;" onchange="applyRepRange()"/>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;flex:1;min-width:140px;">
+              <label style="font-size:12px;font-weight:700;color:var(--gray);white-space:nowrap;">Hasta</label>
+              <input type="date" id="rep-to" style="flex:1;font-size:13px;border:1.5px solid var(--border);border-radius:10px;padding:8px 10px;" onchange="applyRepRange()"/>
+            </div>
+          </div>
+        </div>
+        <!-- Resumen del período -->
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;">
           <div class="card stat-card"><div class="sc-label">Ingresos</div><div class="sc-val" style="color:var(--income);font-size:22px;" id="rep-income">$0</div></div>
           <div class="card stat-card"><div class="sc-label">Gastos</div><div class="sc-val" style="color:var(--expense);font-size:22px;" id="rep-expense">$0</div></div>
@@ -928,25 +973,47 @@ function renderScreen(screen){
 
 // RENDER PANEL
 function renderPanel(){
-  var m=ST.MONTHLY_DATA[new Date().getMonth()]||{i:0,e:0,s:0};
-  var balance=m.i-m.e-m.s;
-  document.getElementById('hero-balance').textContent=fmt(balance);
-  document.getElementById('hero-income').textContent=fmt(m.i);
-  document.getElementById('hero-expense').textContent=fmt(m.e);
-  document.getElementById('hero-savings').textContent=fmt(m.s);
+  // Inicializar rango por defecto si no está seteado
+  if(!_panelFrom){
+    var now=new Date();
+    _panelFrom=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-01';
+    _panelTo=now.toISOString().slice(0,10);
+  }
+  var movs=panelRangeMovs();
+  var totI=movs.filter(function(x){return x.type==='income';}).reduce(function(a,x){return a+x.amount;},0);
+  var totE=movs.filter(function(x){return x.type==='expense';}).reduce(function(a,x){return a+x.amount;},0);
+  var totS=movs.filter(function(x){return x.type==='savings';}).reduce(function(a,x){return a+x.amount;},0);
+  var balance=totI-totE-totS;
+
+  var lbl=document.getElementById('hero-range-label');
+  if(lbl)lbl.textContent=panelRangeLabel();
+  var balEl=document.getElementById('hero-balance');
+  balEl.textContent=fmt(Math.abs(balance));
+  balEl.style.color=balance<0?'#FCA5A5':'#fff';
+  if(balance<0)balEl.textContent='- '+fmt(Math.abs(balance));
+  document.getElementById('hero-income').textContent=fmt(totI);
+  document.getElementById('hero-expense').textContent=fmt(totE);
+  document.getElementById('hero-savings').textContent=fmt(totS);
+
   var ae=ST.MONTHLY_DATA.reduce(function(a,x){return a+(x?x.e:0);},0);
   var as_=ST.MONTHLY_DATA.reduce(function(a,x){return a+(x?x.s:0);},0);
   document.getElementById('annual-expense').textContent=fmt(ae);
   document.getElementById('annual-savings').textContent=fmt(as_);
-  document.getElementById('annual-year').textContent='Año '+ST.year;
-  renderAlerts(m,balance);
-  var now=new Date(),cy=now.getFullYear(),cm=now.getMonth();
-  var recent=ST.movements.filter(function(mv){var d=new Date(mv.date+'T12:00:00');return d.getFullYear()===cy&&d.getMonth()===cm;}).slice(0,5);
+  document.getElementById('annual-year').textContent='Año '+new Date().getFullYear();
+
+  // Alertas basadas en el rango seleccionado
+  renderAlerts({i:totI,e:totE,s:totS},balance);
+
+  // Lista de movimientos del período
+  var label=document.getElementById('panel-movs-label');
+  var sorted=movs.slice().sort(function(a,b){return b.date.localeCompare(a.date);});
+  var show=sorted.slice(0,15);
   var card=document.getElementById('recent-movs-card');
-  if(!recent.length){card.innerHTML='<div class="empty-state"><div class="e-icon">📭</div><p>Sin movimientos este mes</p></div>';return;}
-  card.innerHTML=recent.map(function(mv){
+  if(label)label.textContent='Movimientos del período ('+movs.length+')';
+  if(!show.length){card.innerHTML='<div class="empty-state"><div class="e-icon">📭</div><p>Sin movimientos en este período</p></div>';return;}
+  card.innerHTML=show.map(function(mv){
     return '<div class="mov-row"><div class="mov-icon-wrap '+cls(mv.type)+'">'+mv.icon+'</div><div style="flex:1;min-width:0;"><div class="mov-desc">'+mv.description+'</div><div class="mov-cat">'+mv.category+' · '+mv.date+'</div></div><div class="mov-amount '+cls(mv.type)+'">'+sign(mv.type)+fmt(mv.amount)+'</div></div>';
-  }).join('');
+  }).join('')+(movs.length>15?'<div style="text-align:center;padding:12px;font-size:12.5px;color:var(--gray-light);">+' +(movs.length-15)+' más — ve a Movimientos para ver todos</div>':'');
 }
 
 function renderAlerts(m,balance){
@@ -1360,20 +1427,29 @@ function renderReportes(){
     if(!lbl)return; // pantalla no visible aún
     lbl.textContent=MONTHS_FULL[ST.month]+' '+ST.year;
 
-    var movsMonth=ST.movements.filter(function(mv){
-      var d=new Date(mv.date+'T12:00:00');
-      return d.getMonth()===ST.month&&d.getFullYear()===ST.year;
-    });
-    var mi=movsMonth.filter(function(m){return m.type==='income';}).reduce(function(a,m){return a+m.amount;},0);
-    var me=movsMonth.filter(function(m){return m.type==='expense';}).reduce(function(a,m){return a+m.amount;},0);
-    var ms=movsMonth.filter(function(m){return m.type==='savings';}).reduce(function(a,m){return a+m.amount;},0);
+    // Inicializar rango si no está seteado
+    if(!_repFrom){
+      var _n=new Date();
+      _repFrom=_n.getFullYear()+'-'+String(_n.getMonth()+1).padStart(2,'0')+'-01';
+      _repTo=_n.toISOString().slice(0,10);
+    }
+    var movsRange=repRangeMovs();
+    var mi=movsRange.filter(function(m){return m.type==='income';}).reduce(function(a,m){return a+m.amount;},0);
+    var me=movsRange.filter(function(m){return m.type==='expense';}).reduce(function(a,m){return a+m.amount;},0);
+    var ms=movsRange.filter(function(m){return m.type==='savings';}).reduce(function(a,m){return a+m.amount;},0);
     document.getElementById('rep-income').textContent=fmt(mi);
     document.getElementById('rep-expense').textContent=fmt(me);
     document.getElementById('rep-savings').textContent=fmt(ms);
     var bal=mi-me-ms;
     var balEl=document.getElementById('rep-balance');
-    balEl.textContent=fmt(bal);
+    balEl.textContent=fmt(Math.abs(bal));
+    if(bal<0)balEl.textContent='- '+fmt(Math.abs(bal));
     balEl.style.color=bal>=0?'var(--income)':'var(--expense)';
+    // Para el calendario se sigue usando movsMonth (no cambia con el rango)
+    var movsMonth=ST.movements.filter(function(mv){
+      var d=new Date(mv.date+'T12:00:00');
+      return d.getMonth()===ST.month&&d.getFullYear()===ST.year;
+    });
 
     // Gráfica anual SVG interactiva
     var annData=Array(12).fill(null).map(function(){return{i:0,e:0,s:0};});
@@ -1396,9 +1472,9 @@ function renderReportes(){
       calBody.innerHTML=_calView==='mes'?renderCalMonth(dayMap):renderCalWeek();
     }
 
-    // Categorías
+    // Categorías — usa el mismo rango seleccionado
     var catMap={};
-    movsMonth.filter(function(mv){return mv.type==='expense';})
+    movsRange.filter(function(mv){return mv.type==='expense';})
       .forEach(function(mv){catMap[mv.category||'Otro']=(catMap[mv.category||'Otro']||0)+mv.amount;});
     var total=Object.values(catMap).reduce(function(a,v){return a+v;},0);
     var bars=Object.keys(catMap).sort(function(a,b){return catMap[b]-catMap[a];}).slice(0,8);
@@ -2087,6 +2163,98 @@ async function submitCambiarPass(){
   else{sucEl.style.display='block';document.getElementById('cp-new').value='';document.getElementById('cp-confirm').value='';}
 }
 
+// ===== RANGO DE FECHAS PANEL =====
+var _panelFrom=null,_panelTo=null,_panelPreset='mes';
+function panelRangeMovs(){
+  return ST.movements.filter(function(mv){
+    if(!_panelFrom&&!_panelTo)return true;
+    var d=mv.date;
+    return(!_panelFrom||d>=_panelFrom)&&(!_panelTo||d<=_panelTo);
+  });
+}
+function setPanelPreset(preset){
+  _panelPreset=preset;
+  var now=new Date(),today=now.toISOString().slice(0,10);
+  var row=document.getElementById('panel-custom-row');
+  if(preset==='mes'){
+    _panelFrom=now.getFullYear()+'-'+(String(now.getMonth()+1).padStart(2,'0'))+'-01';
+    _panelTo=today;
+    if(row)row.style.display='none';
+  } else if(preset==='30d'){
+    var d=new Date(now);d.setDate(d.getDate()-29);
+    _panelFrom=d.toISOString().slice(0,10);_panelTo=today;
+    if(row)row.style.display='none';
+  } else if(preset==='3m'){
+    var d=new Date(now);d.setMonth(d.getMonth()-3);
+    _panelFrom=d.toISOString().slice(0,10);_panelTo=today;
+    if(row)row.style.display='none';
+  } else if(preset==='year'){
+    _panelFrom=now.getFullYear()+'-01-01';_panelTo=today;
+    if(row)row.style.display='none';
+  } else if(preset==='custom'){
+    if(row){row.style.display='flex';}
+    var pf=document.getElementById('panel-from');var pt=document.getElementById('panel-to');
+    if(pf&&!pf.value)pf.value=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-01';
+    if(pt&&!pt.value)pt.value=today;
+    _panelFrom=(pf&&pf.value)||null;_panelTo=(pt&&pt.value)||null;
+  }
+  document.querySelectorAll('.panel-preset').forEach(function(b){b.classList.toggle('active',b.dataset.preset===preset);});
+  renderPanel();
+}
+function applyCustomRange(){
+  var pf=document.getElementById('panel-from');var pt=document.getElementById('panel-to');
+  _panelFrom=pf&&pf.value?pf.value:null;
+  _panelTo=pt&&pt.value?pt.value:null;
+  renderPanel();
+}
+function panelRangeLabel(){
+  var LABELS={'mes':'Este mes','30d':'Últimos 30 días','3m':'Últimos 3 meses','year':'Este año'};
+  if(_panelPreset!=='custom')return LABELS[_panelPreset]||'Período';
+  if(_panelFrom&&_panelTo)return fmtDateShort(_panelFrom)+' → '+fmtDateShort(_panelTo);
+  if(_panelFrom)return 'Desde '+fmtDateShort(_panelFrom);
+  if(_panelTo)return 'Hasta '+fmtDateShort(_panelTo);
+  return 'Rango personalizado';
+}
+
+// ===== RANGO DE FECHAS INDICADORES =====
+var _repFrom=null,_repTo=null,_repPreset='mes';
+function repRangeMovs(){
+  return ST.movements.filter(function(mv){
+    if(!_repFrom&&!_repTo)return true;
+    var d=mv.date;
+    return(!_repFrom||d>=_repFrom)&&(!_repTo||d<=_repTo);
+  });
+}
+function setRepPreset(preset){
+  _repPreset=preset;
+  var now=new Date(),today=now.toISOString().slice(0,10);
+  var row=document.getElementById('rep-custom-row');
+  if(preset==='mes'){
+    _repFrom=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-01';
+    _repTo=today;if(row)row.style.display='none';
+  } else if(preset==='3m'){
+    var d=new Date(now);d.setMonth(d.getMonth()-3);
+    _repFrom=d.toISOString().slice(0,10);_repTo=today;if(row)row.style.display='none';
+  } else if(preset==='6m'){
+    var d=new Date(now);d.setMonth(d.getMonth()-6);
+    _repFrom=d.toISOString().slice(0,10);_repTo=today;if(row)row.style.display='none';
+  } else if(preset==='year'){
+    _repFrom=now.getFullYear()+'-01-01';_repTo=today;if(row)row.style.display='none';
+  } else if(preset==='custom'){
+    if(row)row.style.display='flex';
+    var pf=document.getElementById('rep-from');var pt=document.getElementById('rep-to');
+    if(pf&&!pf.value)pf.value=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-01';
+    if(pt&&!pt.value)pt.value=today;
+    _repFrom=(pf&&pf.value)||null;_repTo=(pt&&pt.value)||null;
+  }
+  document.querySelectorAll('.rep-preset').forEach(function(b){b.classList.toggle('active',b.dataset.preset===preset);});
+  scheduleRenderReportes();
+}
+function applyRepRange(){
+  var pf=document.getElementById('rep-from');var pt=document.getElementById('rep-to');
+  _repFrom=pf&&pf.value?pf.value:null;_repTo=pt&&pt.value?pt.value:null;
+  scheduleRenderReportes();
+}
 // ===== GRÁFICA SVG INTERACTIVA =====
 function niceMax(n){
   if(n<=0)return 100;
