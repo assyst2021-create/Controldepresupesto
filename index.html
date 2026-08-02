@@ -290,13 +290,17 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
 .panel-preset{padding:7px 14px;border-radius:20px;border:1.5px solid var(--border);font-size:12.5px;font-weight:700;cursor:pointer;background:#F8FAFC;color:var(--gray);transition:background .15s,border-color .15s,color .15s;}
 .panel-preset:hover{border-color:var(--primary);color:var(--primary);}
 .panel-preset.active{background:var(--primary);border-color:var(--primary);color:#fff;}
-/* ===== CATEGORY CHIPS ===== */
-.cat-chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px;}
-.cat-chip{display:inline-flex;align-items:center;gap:5px;padding:7px 13px;border-radius:20px;border:1.5px solid var(--border);font-size:12.5px;font-weight:600;cursor:pointer;background:#F8FAFC;color:var(--gray);transition:background .15s,border-color .15s,color .15s;user-select:none;}
-.cat-chip:hover{border-color:var(--primary);color:var(--primary);}
-.cat-chip.selected{background:var(--primary);border-color:var(--primary);color:#fff;}
-.cat-chip.chip-otra{border-style:dashed;}
-.cat-chip.chip-otra.selected{border-style:solid;}
+/* ===== CATEGORY LIST ===== */
+.cat-list{display:flex;flex-direction:column;gap:0;border:1.5px solid var(--border);border-radius:14px;overflow:hidden;max-height:220px;overflow-y:auto;}
+.cat-list-item{display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;background:#fff;border-bottom:1px solid var(--border);transition:background .12s;user-select:none;font-size:13.5px;color:var(--gray-dark);}
+.cat-list-item:last-child{border-bottom:none;}
+.cat-list-item:hover{background:#F0F7FF;}
+.cat-list-item.selected{background:#EFF6FF;}
+.cat-list-item .cat-check{width:18px;height:18px;border-radius:5px;border:2px solid #CBD5E1;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:background .12s,border-color .12s;}
+.cat-list-item.selected .cat-check{background:var(--primary);border-color:var(--primary);}
+.cat-list-item .cat-check::after{content:'';display:none;width:5px;height:9px;border:2px solid #fff;border-top:none;border-left:none;transform:rotate(45deg);margin-top:-2px;}
+.cat-list-item.selected .cat-check::after{display:block;}
+.cat-chips-wrap{margin-top:4px;}
 /* ===== TOUR ===== */
 #tour-overlay{position:fixed;inset:0;z-index:9000;pointer-events:none;}
 #tour-overlay.active{pointer-events:all;}
@@ -1823,27 +1827,30 @@ function buildCatChips(preselected){
   _selectedCats=preselected?[preselected]:[];
   var container=document.getElementById('cat-chips-container');
   if(!container)return;
-  var html='';
+  var html='<div class="cat-list">';
   getCatList().forEach(function(c){
     var sel=_selectedCats.indexOf(c.v)>=0?' selected':'';
-    html+='<button type="button" class="cat-chip'+sel+'" data-cat="'+c.v.replace(/"/g,'&quot;')+'" onclick="toggleCat(this)">'+c.e+' '+c.v+'</button>';
+    html+='<div class="cat-list-item'+sel+'" data-cat="'+esc(c.v)+'" onclick="toggleCat(this)"><div class="cat-check"></div><span>'+esc(c.e)+'</span><span>'+esc(c.v)+'</span></div>';
   });
+  html+='</div>';
   container.innerHTML=html;
-  // Si la categoría preseleccionada es personalizada (no está en la lista), mostrar su chip
   if(preselected&&!getCatList().find(function(c){return c.v===preselected;})){
-    renderCustomChip(preselected,true);
+    var extra='<div class="cat-list-item selected" data-cat="'+esc(preselected)+'" onclick="toggleCat(this)"><div class="cat-check"></div><span>🏷️</span><span>'+esc(preselected)+'</span></div>';
+    var list=container.querySelector('.cat-list');
+    if(list)list.insertAdjacentHTML('beforeend',extra);
+    if(_selectedCats.indexOf(preselected)<0)_selectedCats.push(preselected);
   }
   updateCatCountLabel();
 }
 
-function toggleCat(btn){
-  var cat=typeof btn==='string'?btn:(btn&&btn.dataset?btn.dataset.cat:btn);
+function toggleCat(item){
+  var cat=typeof item==='string'?item:(item&&item.dataset?item.dataset.cat:null);
   if(!cat)return;
   var idx=_selectedCats.indexOf(cat);
   if(idx>=0){_selectedCats.splice(idx,1);}
   else{_selectedCats.push(cat);}
-  var chip=document.querySelector('.cat-chip[data-cat="'+cat.replace(/"/g,'&quot;')+'"]');
-  if(chip){chip.classList.toggle('selected',_selectedCats.indexOf(cat)>=0);}
+  var el=document.querySelector('.cat-list-item[data-cat="'+esc(cat)+'"]');
+  if(el){el.classList.toggle('selected',_selectedCats.indexOf(cat)>=0);}
   updateCatCountLabel();
   updateCatSplitInfo();
 }
@@ -1889,8 +1896,8 @@ function closeCatManager(){
       var cur=_selectedCats.slice();
       buildCatChips(null);
       cur.forEach(function(c){
-        var chip=document.querySelector('[data-cat="'+c.replace(/"/g,'&quot;')+'"]');
-        if(chip){chip.classList.add('selected');}
+        var item=document.querySelector('.cat-list-item[data-cat="'+esc(c)+'"]');
+        if(item){item.classList.add('selected');}
         if(_selectedCats.indexOf(c)<0)_selectedCats.push(c);
       });
       updateCatCountLabel();
@@ -2184,22 +2191,23 @@ function getCompraCatList(){return CAT_COMPRAS_DEFAULT.concat(_customCats.map(fu
 function buildCompraCatChips(preselected){
   _selectedCompraCat=preselected||null;
   var wrap=document.getElementById('c-cat-chips');if(!wrap)return;
-  var html='';
+  var html='<div class="cat-list">';
   getCompraCatList().forEach(function(c){
-    var sel=_selectedCompraCat===c.v;
-    html+='<button type="button" class="cat-chip'+(sel?' selected':'')+'" data-ccat="'+c.v+'" onclick="toggleCompraCat(this)">'+c.e+' '+c.v+'</button>';
+    var sel=_selectedCompraCat===c.v?' selected':'';
+    html+='<div class="cat-list-item'+sel+'" data-ccat="'+esc(c.v)+'" onclick="toggleCompraCat(this)"><div class="cat-check"></div><span>'+esc(c.e)+'</span><span>'+esc(c.v)+'</span></div>';
   });
+  html+='</div>';
   wrap.innerHTML=html;
 }
-function toggleCompraCat(btn){
-  var val=btn.dataset.ccat;
+function toggleCompraCat(item){
+  var val=item.dataset.ccat;
   if(_selectedCompraCat===val){
     _selectedCompraCat=null;
-    btn.classList.remove('selected');
+    item.classList.remove('selected');
   } else {
     _selectedCompraCat=val;
-    document.querySelectorAll('#c-cat-chips .cat-chip').forEach(function(b){b.classList.remove('selected');});
-    btn.classList.add('selected');
+    document.querySelectorAll('#c-cat-chips .cat-list-item').forEach(function(b){b.classList.remove('selected');});
+    item.classList.add('selected');
   }
 }
 
