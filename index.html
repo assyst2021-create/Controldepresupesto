@@ -959,6 +959,7 @@ var CURRENCIES={
   CAD:{sym:'$',  locale:'en-CA',decimals:2, label:'Dólar canadiense (CAD)'},
 };
 var _currency=localStorage.getItem('mf_currency')||'COP';
+function esc(s){if(!s)return '';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 function fmt(n){
   if(!n||isNaN(n)){var c=CURRENCIES[_currency];return (c?c.sym:'$')+'0';}
   var cur=CURRENCIES[_currency]||CURRENCIES.COP;
@@ -1183,7 +1184,7 @@ function renderMovimientos(){
   var card=document.getElementById('mov-list-card');
   if(!list.length){card.innerHTML='<div class="empty-state"><div class="e-icon">📭</div><p>Sin movimientos</p></div>';return;}
   card.innerHTML=list.map(function(mv){
-    return '<div class="mov-row"><div class="mov-icon-wrap '+cls(mv.type)+'">'+mv.icon+'</div><div style="flex:1;min-width:0;"><div class="mov-desc">'+mv.description+'</div><div class="mov-cat">'+mv.category+' · '+mv.date+'</div></div><div class="mov-amount '+cls(mv.type)+'">'+sign(mv.type)+fmt(mv.amount)+'</div><div style="display:flex;gap:6px;"><button class="icon-btn edit" onclick="editMovement(\''+mv.id+'\')">✏️</button><button class="icon-btn del" onclick="deleteMovement(\''+mv.id+'\')">🗑️</button></div></div>';
+    return '<div class="mov-row"><div class="mov-icon-wrap '+cls(mv.type)+'">'+esc(mv.icon)+'</div><div style="flex:1;min-width:0;"><div class="mov-desc">'+esc(mv.description)+'</div><div class="mov-cat">'+esc(mv.category)+' · '+esc(mv.date)+'</div></div><div class="mov-amount '+cls(mv.type)+'">'+sign(mv.type)+fmt(mv.amount)+'</div><div style="display:flex;gap:6px;"><button class="icon-btn edit" onclick="editMovement(\''+mv.id+'\')">✏️</button><button class="icon-btn del" onclick="deleteMovement(\''+mv.id+'\')">🗑️</button></div></div>';
   }).join('');
 }
 
@@ -1235,8 +1236,8 @@ function renderPresupuesto(){
     return '<div class="pago-item">'+
       '<div class="pago-icon-wrap" style="background:'+bg+';font-size:18px;">'+ico+'</div>'+
       '<div style="flex:1;min-width:0;">'+
-        '<div class="pago-name">'+p.nombre+'</div>'+
-        (det?'<div class="pago-detail">'+det+'</div>':'')+
+        '<div class="pago-name">'+esc(p.nombre)+'</div>'+
+        (det?'<div class="pago-detail">'+esc(det)+'</div>':'')+
       '</div>'+
       '<div class="pago-amount" style="color:'+color+';">'+fmt(p.monto)+'</div>'+
       '<button class="icon-btn edit" onclick="editPago(\''+p.id+'\')">✏️</button>'+
@@ -1264,9 +1265,10 @@ function renderCompras(){
   var card=document.getElementById('compras-card');
   if(!ST.compras.length){card.innerHTML='<div class="empty-state"><div class="e-icon">🛒</div><p>Tu lista de compras está vacía</p></div>';return;}
   card.innerHTML=ST.compras.map(function(c){
-    var urlLink=c.url?'<a href="'+c.url+'" target="_blank" style="color:var(--blue-mid);font-size:12px;font-weight:600;text-decoration:none;">Ver</a>':'';
-    var cat=c.categoria?'<span>'+c.categoria+'</span>':'';
-    return '<div class="compra-item"><div class="check-circle'+(c.comprado?' done':'')+'" onclick="toggleCompra(\''+c.id+'\')">'+(c.comprado?'<span style="color:#fff;font-size:13px;font-weight:700;">✓</span>':'')+'</div><div style="flex:1;min-width:0;"><div class="ci-name'+(c.comprado?' done':'')+'">'+c.nombre+'</div><div class="ci-meta"><span class="tag tag-'+(c.prioridad||'media')+'">'+(c.prioridad||'media')+'</span>'+cat+urlLink+'</div></div><div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">'+(c.precio_estimado>0?'<span style="font-size:14px;font-weight:700;">'+fmt(c.precio_estimado)+'</span>':'')+'<button class="icon-btn edit" onclick="editCompra(\''+c.id+'\')">✏️</button><button class="icon-btn del" onclick="deleteCompra(\''+c.id+'\')">🗑️</button></div></div>';
+    var safeUrl=c.url&&(c.url.startsWith('https://')||c.url.startsWith('http://'))?c.url:null;
+    var urlLink=safeUrl?'<a href="'+esc(safeUrl)+'" target="_blank" rel="noopener noreferrer" style="color:var(--blue-mid);font-size:12px;font-weight:600;text-decoration:none;">Ver</a>':'';
+    var cat=c.categoria?'<span>'+esc(c.categoria)+'</span>':'';
+    return '<div class="compra-item"><div class="check-circle'+(c.comprado?' done':'')+'" onclick="toggleCompra(\''+c.id+'\')">'+(c.comprado?'<span style="color:#fff;font-size:13px;font-weight:700;">✓</span>':'')+'</div><div style="flex:1;min-width:0;"><div class="ci-name'+(c.comprado?' done':'')+'">'+esc(c.nombre)+'</div><div class="ci-meta"><span class="tag tag-'+(c.prioridad||'media')+'">'+(c.prioridad||'media')+'</span>'+cat+urlLink+'</div></div><div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">'+(c.precio_estimado>0?'<span style="font-size:14px;font-weight:700;">'+fmt(c.precio_estimado)+'</span>':'')+'<button class="icon-btn edit" onclick="editCompra(\''+c.id+'\')">✏️</button><button class="icon-btn del" onclick="deleteCompra(\''+c.id+'\')">🗑️</button></div></div>';
   }).join('');
 }
 
@@ -1600,7 +1602,7 @@ function renderMetas(){
     return '<div class="card meta-card">'+
       // Header
       '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;">'+
-        '<div class="meta-name" style="margin:0;font-size:17px;">'+g.nombre+'</div>'+
+        '<div class="meta-name" style="margin:0;font-size:17px;">'+esc(g.nombre)+'</div>'+
         '<div style="display:flex;align-items:center;gap:5px;background:'+sem.bg+';border-radius:20px;padding:5px 12px;flex-shrink:0;">'+
           '<div style="width:9px;height:9px;border-radius:50%;background:'+sem.dot+';"></div>'+
           '<span style="font-size:11.5px;font-weight:700;color:'+sem.tc+';">'+sem.label+'</span>'+
@@ -1709,7 +1711,7 @@ function renderUsuarios(){
     var badge=isAdm?'<span class="badge badge-admin">Admin</span>':activo?'<span class="badge badge-active">Activo</span>':'<span class="badge badge-inactive">Inactivo</span>';
     var toggle=isAdm?'':activo?'<button class="toggle-btn deactivate" onclick="toggleActivo(\''+p.id+'\',true)">Desactivar</button>':'<button class="toggle-btn activate" onclick="toggleActivo(\''+p.id+'\',false)">Activar</button>';
     var editBtn='<button class="icon-btn edit" style="margin-left:6px;" onclick="openEditarUsuario(\''+p.id+'\')">✏️</button>';
-    return '<div class="user-item"><div class="user-av" style="background:'+(activo?'#EFF6FF':'#F1F5F9')+';">👤</div><div style="flex:1;min-width:0;"><div class="u-name">'+(p.nombre||'Sin nombre')+'</div><div class="u-email">'+(p.email||'')+(p.created_at?' · desde '+p.created_at.slice(0,10):'')+'</div></div>'+badge+toggle+editBtn+'</div>';
+    return '<div class="user-item"><div class="user-av" style="background:'+(activo?'#EFF6FF':'#F1F5F9')+';">👤</div><div style="flex:1;min-width:0;"><div class="u-name">'+esc(p.nombre||'Sin nombre')+'</div><div class="u-email">'+esc(p.email||'')+(p.created_at?' · desde '+p.created_at.slice(0,10):'')+'</div></div>'+badge+toggle+editBtn+'</div>';
   }).join('');
 }
 
