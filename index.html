@@ -398,12 +398,10 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
     </div>
     <div class="form-group"><label>Nombre</label><input id="p-nombre" type="text" placeholder="Ej: Arriendo, Netflix..."/></div>
     <div class="modal-row">
-      <div class="form-group"><label>Monto (COP $)</label><input id="p-monto" type="number" placeholder="0" min="0"/></div>
-      <div class="form-group"><label>Día de cobro</label><input id="p-dia" type="number" placeholder="Ej: 15" min="1" max="31"/></div>
+      <div class="form-group"><label>Monto</label><input id="p-monto" type="number" placeholder="0" min="0"/></div>
+      <div class="form-group"><label>Fecha de cobro</label><input id="p-dia" type="date"/></div>
     </div>
-    <div class="form-group"><label>Entidad / Empresa</label><input id="p-entidad" type="text" placeholder="Ej: Bancolombia, Claro..."/></div>
-    <div class="form-group"><label>Link de pago (opcional)</label><input id="p-url" type="url" placeholder="https://..."/></div>
-    <div class="form-group"><label>Icono (emoji)</label><input id="p-icono" type="text" placeholder="💳" maxlength="4"/></div>
+    <div class="form-group"><label>Entidad bancaria / Empresa</label><input id="p-entidad" type="text" placeholder="Ej: Bancolombia, Claro, Seguros..."/></div>
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closePagoModal()">Cancelar</button>
       <button class="btn btn-primary" onclick="submitPago()">Guardar</button>
@@ -1783,7 +1781,15 @@ async function deleteMovement(id){
 var _editingPagoId=null,_pagoTipo='gasto';
 function openPagoModal(id){
   _editingPagoId=id||null;
-  if(!id){_pagoTipo='gasto';document.getElementById('p-nombre').value='';document.getElementById('p-monto').value='';document.getElementById('p-dia').value='';document.getElementById('p-entidad').value='';document.getElementById('p-url').value='';document.getElementById('p-icono').value='💳';document.getElementById('modal-pago-title').textContent='Nuevo pago fijo';setPagoTipo('gasto');}
+  if(!id){
+    _pagoTipo='gasto';
+    document.getElementById('p-nombre').value='';
+    document.getElementById('p-monto').value='';
+    document.getElementById('p-dia').value='';
+    document.getElementById('p-entidad').value='';
+    document.getElementById('modal-pago-title').textContent='Nuevo pago fijo';
+    setPagoTipo('gasto');
+  }
   document.getElementById('modal-pago').style.display='flex';
 }
 function closePagoModal(){document.getElementById('modal-pago').style.display='none';_editingPagoId=null;}
@@ -1791,12 +1797,14 @@ function setPagoTipo(t){_pagoTipo=t;document.getElementById('ptt-g').className='
 async function submitPago(){
   var nombre=document.getElementById('p-nombre').value.trim();
   var monto=parseFloat(document.getElementById('p-monto').value);
-  var dia=parseInt(document.getElementById('p-dia').value)||null;
+  var fecha=document.getElementById('p-dia').value||null;
   var entidad=document.getElementById('p-entidad').value.trim()||null;
-  var url=document.getElementById('p-url').value.trim()||null;
-  var icono=document.getElementById('p-icono').value.trim()||(_pagoTipo==='gasto'?'💳':'💵');
-  if(!nombre){alert('Escribe un nombre.');return;}if(!monto||monto<=0){alert('Ingresa un monto válido.');return;}
-  var record={user_id:ST.userId,nombre,monto,tipo:_pagoTipo,dia_cobro:dia,entidad,url_pago:url,icono,activo:true};
+  if(!nombre){alert('Escribe un nombre.');return;}
+  if(!monto||monto<=0){alert('Ingresa un monto válido.');return;}
+  // dia_cobro guarda el día del mes de la fecha seleccionada (1-31)
+  var diaCobro=fecha?new Date(fecha+'T12:00:00').getDate():null;
+  var icono=_pagoTipo==='gasto'?'💳':'💵';
+  var record={user_id:ST.userId,nombre:nombre,monto:monto,tipo:_pagoTipo,dia_cobro:diaCobro,entidad:entidad,url_pago:fecha,icono:icono,activo:true};
   if(_editingPagoId){
     var res=await _sb.from('pagos_fijos').update(record).eq('id',_editingPagoId).select();
     if(!res.error&&res.data){ST.pagos=ST.pagos.map(function(p){return p.id===_editingPagoId?res.data[0]:p;});closePagoModal();renderPresupuesto();}
@@ -1809,10 +1817,12 @@ function editPago(id){
   var p=ST.pagos.find(function(x){return x.id===id;});if(!p)return;
   _editingPagoId=id;
   document.getElementById('modal-pago-title').textContent='Editar pago fijo';
-  document.getElementById('p-nombre').value=p.nombre;document.getElementById('p-monto').value=p.monto;
-  document.getElementById('p-dia').value=p.dia_cobro||'';document.getElementById('p-entidad').value=p.entidad||'';
-  document.getElementById('p-url').value=p.url_pago||'';document.getElementById('p-icono').value=p.icono||'💳';
-  setPagoTipo(p.tipo);document.getElementById('modal-pago').style.display='flex';
+  document.getElementById('p-nombre').value=p.nombre;
+  document.getElementById('p-monto').value=p.monto;
+  document.getElementById('p-dia').value=p.url_pago||'';
+  document.getElementById('p-entidad').value=p.entidad||'';
+  setPagoTipo(p.tipo);
+  document.getElementById('modal-pago').style.display='flex';
 }
 async function deletePago(id){
   if(!confirm('¿Eliminar este pago fijo?'))return;
