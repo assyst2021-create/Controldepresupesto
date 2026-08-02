@@ -426,7 +426,13 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
       <div class="form-group"><label>Precio estimado (COP $)</label><input id="c-precio" type="number" placeholder="0" min="0"/></div>
       <div class="form-group"><label>Prioridad</label><select id="c-prioridad"><option value="alta">Alta</option><option value="media" selected>Media</option><option value="baja">Baja</option></select></div>
     </div>
-    <div class="form-group"><label>Categoría</label><input id="c-cat" type="text" placeholder="Ej: Ropa, Tecnología..."/></div>
+    <div class="form-group">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+        <label style="margin:0;">Categoría</label>
+        <button type="button" onclick="openCatManager('compra')" style="background:none;border:none;color:var(--primary);font-size:12px;font-weight:700;cursor:pointer;padding:0;">⚙️ Gestionar</button>
+      </div>
+      <div id="c-cat-chips" class="cat-chips-wrap"></div>
+    </div>
     <div class="form-group"><label>Link para comprar (opcional)</label><input id="c-url" type="url" placeholder="https://..."/></div>
     <div class="form-group"><label>Notas</label><textarea id="c-notas" rows="2" placeholder="Notas adicionales..."></textarea></div>
     <div class="modal-actions">
@@ -2130,39 +2136,91 @@ async function deletePago(id){
   ST.pagos=ST.pagos.filter(function(p){return p.id!==id;});renderPresupuesto();
 }
 
+// COMPRAS — categorías
+var CAT_COMPRAS_DEFAULT=[
+  {v:'Ropa',e:'👕'},{v:'Tecnología',e:'💻'},{v:'Hogar',e:'🏠'},
+  {v:'Calzado',e:'👟'},{v:'Alimentos',e:'🛒'},{v:'Salud',e:'💊'},
+  {v:'Belleza',e:'💄'},{v:'Deportes',e:'⚽'},{v:'Juguetes',e:'🧸'},
+  {v:'Libros',e:'📚'},{v:'Electrodomésticos',e:'🔌'},{v:'Otro',e:'🏷️'}
+];
+var _selectedCompraCat=null;
+function getCompraCatList(){return CAT_COMPRAS_DEFAULT.concat(_customCats.map(function(c){return {v:c.v,e:c.e||'🏷️',custom:true};}));}
+function buildCompraCatChips(preselected){
+  _selectedCompraCat=preselected||null;
+  var wrap=document.getElementById('c-cat-chips');if(!wrap)return;
+  var html='';
+  getCompraCatList().forEach(function(c){
+    var sel=_selectedCompraCat===c.v;
+    html+='<button type="button" class="cat-chip'+(sel?' selected':'')+'" data-ccat="'+c.v+'" onclick="toggleCompraCat(this)">'+c.e+' '+c.v+'</button>';
+  });
+  wrap.innerHTML=html;
+}
+function toggleCompraCat(btn){
+  var val=btn.dataset.ccat;
+  if(_selectedCompraCat===val){
+    _selectedCompraCat=null;
+    btn.classList.remove('selected');
+  } else {
+    _selectedCompraCat=val;
+    document.querySelectorAll('#c-cat-chips .cat-chip').forEach(function(b){b.classList.remove('selected');});
+    btn.classList.add('selected');
+  }
+}
+
 // COMPRAS
 var _editingCompraId=null;
+var _savingCompra=false;
 function openCompraModal(id){
   _editingCompraId=id||null;
-  if(!id){document.getElementById('c-nombre').value='';document.getElementById('c-precio').value='';document.getElementById('c-prioridad').value='media';document.getElementById('c-cat').value='';document.getElementById('c-url').value='';document.getElementById('c-notas').value='';document.getElementById('modal-compra-title').textContent='Nueva compra';}
+  if(!id){
+    document.getElementById('c-nombre').value='';
+    document.getElementById('c-precio').value='';
+    document.getElementById('c-prioridad').value='media';
+    document.getElementById('c-url').value='';
+    document.getElementById('c-notas').value='';
+    document.getElementById('modal-compra-title').textContent='Nueva compra';
+    buildCompraCatChips(null);
+  }
   document.getElementById('modal-compra').style.display='flex';
 }
-function closeCompraModal(){document.getElementById('modal-compra').style.display='none';_editingCompraId=null;}
+function closeCompraModal(){document.getElementById('modal-compra').style.display='none';_editingCompraId=null;_selectedCompraCat=null;}
 async function submitCompra(){
+  if(_savingCompra)return;
+  _savingCompra=true;
+  var btn=document.querySelector('#modal-compra .btn-primary');
+  if(btn){btn.disabled=true;btn.textContent='Guardando...';}
   var nombre=document.getElementById('c-nombre').value.trim();
   var precio=parseFloat(document.getElementById('c-precio').value)||null;
   var prioridad=document.getElementById('c-prioridad').value;
-  var categoria=document.getElementById('c-cat').value.trim()||null;
+  var categoria=_selectedCompraCat||null;
   var url=document.getElementById('c-url').value.trim()||null;
   var notas=document.getElementById('c-notas').value.trim()||null;
-  if(!nombre){alert('Escribe el nombre del artículo.');return;}
+  if(!nombre){alert('Escribe el nombre del artículo.');_savingCompra=false;if(btn){btn.disabled=false;btn.textContent='Guardar';}return;}
   var record={user_id:ST.userId,nombre,precio_estimado:precio,prioridad,categoria,url,notas,comprado:false};
-  if(_editingCompraId){
-    var orig=ST.compras.find(function(c){return c.id===_editingCompraId;});
-    if(orig)record.comprado=orig.comprado;
-    var res=await _sb.from('items_compras').update(record).eq('id',_editingCompraId).select();
-    if(!res.error&&res.data){ST.compras=ST.compras.map(function(c){return c.id===_editingCompraId?res.data[0]:c;});closeCompraModal();renderCompras();}
-  } else {
-    var res=await _sb.from('items_compras').insert(record).select();
-    if(!res.error&&res.data){ST.compras=res.data.concat(ST.compras);closeCompraModal();renderCompras();}
+  try{
+    if(_editingCompraId){
+      var orig=ST.compras.find(function(c){return c.id===_editingCompraId;});
+      if(orig)record.comprado=orig.comprado;
+      var res=await _sb.from('items_compras').update(record).eq('id',_editingCompraId).select();
+      if(!res.error&&res.data){ST.compras=ST.compras.map(function(c){return c.id===_editingCompraId?res.data[0]:c;});closeCompraModal();renderCompras();}
+    } else {
+      var res=await _sb.from('items_compras').insert(record).select();
+      if(!res.error&&res.data){ST.compras=res.data.concat(ST.compras);closeCompraModal();renderCompras();}
+    }
+  }finally{
+    _savingCompra=false;
+    if(btn){btn.disabled=false;btn.textContent='Guardar';}
   }
 }
 function editCompra(id){
   var c=ST.compras.find(function(x){return x.id===id;});if(!c)return;
   _editingCompraId=id;document.getElementById('modal-compra-title').textContent='Editar compra';
-  document.getElementById('c-nombre').value=c.nombre;document.getElementById('c-precio').value=c.precio_estimado||'';
-  document.getElementById('c-prioridad').value=c.prioridad||'media';document.getElementById('c-cat').value=c.categoria||'';
-  document.getElementById('c-url').value=c.url||'';document.getElementById('c-notas').value=c.notas||'';
+  document.getElementById('c-nombre').value=c.nombre;
+  document.getElementById('c-precio').value=c.precio_estimado||'';
+  document.getElementById('c-prioridad').value=c.prioridad||'media';
+  document.getElementById('c-url').value=c.url||'';
+  document.getElementById('c-notas').value=c.notas||'';
+  buildCompraCatChips(c.categoria||null);
   document.getElementById('modal-compra').style.display='flex';
 }
 async function toggleCompra(id){
