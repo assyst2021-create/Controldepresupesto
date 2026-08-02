@@ -571,10 +571,10 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
     <div id="cm-error" class="auth-error"></div>
     <!-- Lista predeterminadas -->
     <div style="font-size:11px;font-weight:800;color:var(--gray-light);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">Predeterminadas</div>
-    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:18px;" id="cm-default-list"></div>
+    <div id="cm-default-list" class="cat-list" style="max-height:180px;margin-bottom:18px;"></div>
     <!-- Lista personalizadas -->
     <div style="font-size:11px;font-weight:800;color:var(--primary);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">Mis categorías personalizadas</div>
-    <div id="cm-custom-list" style="display:flex;flex-direction:column;gap:8px;"></div>
+    <div id="cm-custom-list" class="cat-list" style="max-height:180px;"></div>
     <div id="cm-empty" style="font-size:13px;color:var(--gray-light);text-align:center;padding:16px;display:none;">Aún no has creado categorías personalizadas.</div>
     <div class="modal-actions" style="margin-top:18px;">
       <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="closeCatManager()">Listo</button>
@@ -1957,7 +1957,7 @@ function openCatManager(ctx){
   var defEl=document.getElementById('cm-default-list');
   if(defEl){
     defEl.innerHTML=srcList.map(function(c){
-      return '<span style="display:inline-flex;align-items:center;gap:4px;background:#F1F5F9;border-radius:20px;padding:5px 12px;font-size:12px;font-weight:600;color:var(--gray);">'+c.e+' '+c.v+'</span>';
+      return '<div class="cat-list-item" style="cursor:default;"><div class="cat-check" style="border-color:#E2E8F0;background:#F1F5F9;"></div><span>'+esc(c.e)+'</span><span style="color:var(--gray);">'+esc(c.v)+'</span></div>';
     }).join('');
   }
   renderCmCustomList();
@@ -1994,11 +1994,12 @@ function renderCmCustomList(){
   if(!_customCats.length){el.innerHTML='';if(empty)empty.style.display='block';return;}
   if(empty)empty.style.display='none';
   el.innerHTML=_customCats.map(function(c,i){
-    return '<div style="display:flex;align-items:center;gap:10px;background:#F8FAFC;border:1.5px solid var(--border);border-radius:12px;padding:10px 14px;">'+
-      '<span style="font-size:20px;width:30px;text-align:center;">'+c.e+'</span>'+
-      '<span style="flex:1;font-size:14px;font-weight:600;color:var(--gray-dark);">'+c.v+'</span>'+
-      '<button onclick="editCatManager('+i+')" style="background:#EFF6FF;border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;color:#1E40AF;cursor:pointer;">✏️ Editar</button>'+
-      '<button onclick="deleteCatManager('+i+')" style="background:#FEF2F2;border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;color:#DC2626;cursor:pointer;">🗑️</button>'+
+    return '<div class="cat-list-item" style="cursor:default;">'+
+      '<div class="cat-check" style="border-color:#E2E8F0;background:#F1F5F9;"></div>'+
+      '<span>'+esc(c.e)+'</span>'+
+      '<span style="flex:1;color:var(--gray-dark);">'+esc(c.v)+'</span>'+
+      '<button onclick="editCatManager('+i+')" style="background:#EFF6FF;border:none;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700;color:#1E40AF;cursor:pointer;flex-shrink:0;">✏️</button>'+
+      '<button onclick="deleteCatManager('+i+')" style="background:#FEF2F2;border:none;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700;color:#DC2626;cursor:pointer;flex-shrink:0;">🗑️</button>'+
     '</div>';
   }).join('');
 }
