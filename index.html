@@ -549,7 +549,11 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
       </div>
     </div>
     <div class="sidebar-footer">
-<button class="btn btn-primary" style="justify-content:center;" onclick="openCambiarPass()">🔑 Cambiar contraseña</button>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-size:13px;font-weight:700;color:var(--gray);white-space:nowrap;">💱 Moneda</span>
+        <select class="currency-sel" onchange="setCurrency(this.value)" style="flex:1;font-size:13px;font-weight:600;border:1.5px solid var(--border);border-radius:10px;padding:8px 10px;background:#fff;color:var(--gray-dark);cursor:pointer;"></select>
+      </div>
+      <button class="btn btn-primary" style="justify-content:center;" onclick="openCambiarPass()">🔑 Cambiar contraseña</button>
       <button class="btn btn-ghost" style="justify-content:center;" onclick="doSignOut()">Cerrar sesión</button>
     </div>
   </div>
@@ -735,6 +739,10 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
   </div>
   <div class="sheet-divider"></div>
   <div class="sheet-section">Cuenta</div>
+  <div style="display:flex;align-items:center;gap:10px;padding:10px 20px;">
+    <span style="font-size:20px;">💱</span>
+    <select class="currency-sel" onchange="setCurrency(this.value)" style="flex:1;font-size:14px;font-weight:600;border:1.5px solid var(--border);border-radius:10px;padding:10px 12px;background:#fff;color:var(--gray-dark);cursor:pointer;"></select>
+  </div>
   <button class="sheet-item" onclick="closeMoreSheet();openCambiarPass()"><span class="si-icon">🔑</span>Cambiar contraseña</button>
 <button class="sheet-item danger" onclick="closeMoreSheet();doSignOut()"><span class="si-icon">🚪</span>Cerrar sesión</button>
   <div style="height:8px;"></div>
@@ -807,7 +815,39 @@ var CAT_ICONS={'Alimentación':'🍽️','Transporte':'🚗','Vivienda':'🏠','
 var MONTHS_SHORT=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
 var MONTHS_FULL=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 
-function fmt(n){if(!n||isNaN(n))return '$0';return '$'+Math.round(n).toLocaleString('es-CO');}
+var CURRENCIES={
+  COP:{sym:'$',  locale:'es-CO',decimals:0, label:'Peso colombiano (COP)'},
+  USD:{sym:'$',  locale:'en-US',decimals:2, label:'Dólar estadounidense (USD)'},
+  EUR:{sym:'€',  locale:'de-DE',decimals:2, label:'Euro (EUR)'},
+  MXN:{sym:'$',  locale:'es-MX',decimals:2, label:'Peso mexicano (MXN)'},
+  BRL:{sym:'R$', locale:'pt-BR',decimals:2, label:'Real brasileño (BRL)'},
+  ARS:{sym:'$',  locale:'es-AR',decimals:0, label:'Peso argentino (ARS)'},
+  CLP:{sym:'$',  locale:'es-CL',decimals:0, label:'Peso chileno (CLP)'},
+  PEN:{sym:'S/', locale:'es-PE',decimals:2, label:'Sol peruano (PEN)'},
+  GBP:{sym:'£',  locale:'en-GB',decimals:2, label:'Libra esterlina (GBP)'},
+  CAD:{sym:'$',  locale:'en-CA',decimals:2, label:'Dólar canadiense (CAD)'},
+};
+var _currency=localStorage.getItem('mf_currency')||'COP';
+function fmt(n){
+  if(!n||isNaN(n)){var c=CURRENCIES[_currency];return (c?c.sym:'$')+'0';}
+  var cur=CURRENCIES[_currency]||CURRENCIES.COP;
+  var abs=Math.abs(n);
+  var formatted=abs.toLocaleString(cur.locale,{minimumFractionDigits:cur.decimals,maximumFractionDigits:cur.decimals});
+  return cur.sym+formatted;
+}
+function populateCurrencySels(){
+  var opts=Object.keys(CURRENCIES).map(function(k){
+    return '<option value="'+k+'"'+(k===_currency?' selected':'')+'>'+CURRENCIES[k].label+'</option>';
+  }).join('');
+  document.querySelectorAll('.currency-sel').forEach(function(s){s.innerHTML=opts;});
+}
+function setCurrency(code){
+  if(!CURRENCIES[code])return;
+  _currency=code;
+  localStorage.setItem('mf_currency',code);
+  renderScreen(ST.screen);
+  document.querySelectorAll('.currency-sel').forEach(function(s){s.value=code;});
+}
 function cls(t){return t==='income'?'inc':t==='savings'?'sav':'exp';}
 function sign(t){return t==='expense'?'-':'+';}
 
@@ -1374,6 +1414,7 @@ _sb.auth.onAuthStateChange(async function(event,session){
     document.getElementById('auth-overlay').style.display='none';
     await loadData(user.id,isAdmin);
     renderScreen(ST.screen);
+    populateCurrencySels();
   } else {
     document.getElementById('auth-overlay').style.display='flex';
     ST.movements=[];ST.goals=[];ST.pagos=[];ST.compras=[];ST.profiles=[];ST.isAdmin=false;
