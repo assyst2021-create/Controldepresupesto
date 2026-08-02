@@ -1114,14 +1114,6 @@ function renderAlerts(m,balance){
       alerts.push({cls:'warn',icon:'🔍',title:'Gasto alto en '+cat,msg:'Llevas '+fmt(curCatMap[cat])+' este mes, casi el doble de tu promedio habitual ('+fmt(Math.round(avg))+')'});
   });
 
-  // ── 7. Pagos próximos ──
-  ST.pagos.filter(function(p){return p.tipo==='gasto'&&p.dia_cobro;}).forEach(function(p){
-    var d=parseInt(p.dia_cobro);
-    if(d>=today&&d<=today+5)
-      alerts.push({cls:'warn',icon:'📅',title:'Pago próximo: '+p.nombre,msg:'Vence el día '+d+' · '+fmt(p.monto)+(p.entidad?' · '+p.entidad:'')});
-    else if(d<today&&today-d<=2)
-      alerts.push({cls:'danger',icon:'🔔',title:'Pago vencido: '+p.nombre,msg:'Debió pagarse el día '+d+' · '+fmt(p.monto)});
-  });
 
   // ── 8. Proyección de ahorro hacia metas ──
   if(ST.goals&&ST.goals.length&&m.s>0){
