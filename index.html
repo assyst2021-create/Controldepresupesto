@@ -379,10 +379,6 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
         </div>
       </label>
       <div class="cat-chips" id="cat-chips-container"></div>
-      <div style="margin-top:8px;display:flex;gap:8px;align-items:center;" id="cat-custom-row" style="display:none;">
-        <input id="m-cat-custom" type="text" placeholder="Escribe la categoría y presiona Enter" style="flex:1;"/>
-        <button type="button" onclick="addCustomCat()" style="background:var(--primary);color:#fff;border:none;border-radius:10px;padding:10px 14px;font-size:13px;font-weight:700;cursor:pointer;">+ Añadir</button>
-      </div>
       <div id="cat-split-info" style="display:none;margin-top:10px;font-size:13px;font-weight:700;color:var(--primary);background:#EFF6FF;border-radius:12px;padding:10px 14px;text-align:center;"></div>
     </div>
     <div class="modal-actions">
@@ -1813,14 +1809,11 @@ function buildCatChips(preselected){
     var sel=_selectedCats.indexOf(c.v)>=0?' selected':'';
     html+='<button type="button" class="cat-chip'+sel+'" data-cat="'+c.v.replace(/"/g,'&quot;')+'" onclick="toggleCat(this)">'+c.e+' '+c.v+'</button>';
   });
-  html+='<button type="button" class="cat-chip chip-otra" id="chip-otra" onclick="toggleOtraChip()">✏️ Otra...</button>';
   container.innerHTML=html;
-  // Si la categoría preseleccionada es personalizada (no está en CAT_LIST), agregar su chip con editar/eliminar
-  if(preselected&&!CAT_LIST.find(function(c){return c.v===preselected;})){
+  // Si la categoría preseleccionada es personalizada (no está en la lista), mostrar su chip
+  if(preselected&&!getCatList().find(function(c){return c.v===preselected;})){
     renderCustomChip(preselected,true);
   }
-  var row=document.getElementById('cat-custom-row');
-  if(row)row.style.display='none';
   updateCatCountLabel();
 }
 
