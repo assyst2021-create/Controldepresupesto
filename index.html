@@ -599,7 +599,7 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
     <div class="sidebar-footer">
       <div style="display:flex;align-items:center;gap:8px;">
         <span style="font-size:13px;font-weight:700;color:var(--gray);white-space:nowrap;">💱 Moneda</span>
-        <select class="currency-sel" onchange="setCurrency(this.value)" style="flex:1;font-size:13px;font-weight:600;border:1.5px solid var(--border);border-radius:10px;padding:8px 10px;background:#fff;color:var(--gray-dark);cursor:pointer;"></select>
+        <select id="sidebar-currency" class="currency-sel" onchange="setCurrency(this.value)" style="flex:1;font-size:13px;font-weight:600;border:1.5px solid var(--border);border-radius:10px;padding:8px 10px;background:#fff;color:var(--gray-dark);cursor:pointer;"></select>
       </div>
       <button class="tour-replay-btn" onclick="startTour()">🗺️ Ver tour de la aplicación</button>
       <button class="btn btn-primary" style="justify-content:center;" onclick="openCambiarPass()">🔑 Cambiar contraseña</button>
@@ -612,7 +612,7 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
     <div id="screen-panel" class="screen">
       <div class="main-header">
         <h2>Panel</h2>
-        <button class="btn btn-primary" onclick="openModal()">+ Movimiento</button>
+        <button id="btn-add-mov" class="btn btn-primary" onclick="openModal()">+ Movimiento</button>
       </div>
       <div class="main-body">
         <!-- Selector de rango -->
@@ -2542,42 +2542,42 @@ var TOUR_STEPS=[
   {
     title:'📊 Panel principal',
     body:'Aquí ves el resumen del mes en tiempo real: tu saldo disponible, ingresos, gastos y ahorro. También aparecen alertas inteligentes con recomendaciones personalizadas según cómo vas con tus finanzas.',
-    target:'[data-screen="panel"]',pos:'auto'
+    target:'[data-screen="panel"]',pos:'auto',nav:'panel'
   },
   {
     title:'📋 Movimientos',
     body:'Registra cada ingreso, gasto o ahorro. Filtra por tipo, busca por categoría y lleva un historial completo. Desde aquí tienes el control total de tu flujo de dinero.',
-    target:'[data-screen="movimientos"]',pos:'auto'
+    target:'[data-screen="movimientos"]',pos:'auto',nav:'panel'
   },
   {
     title:'+ Agregar movimiento',
-    body:'Este botón central te permite registrar un nuevo movimiento rápidamente desde cualquier pantalla. Puedes elegir categoría, monto, fecha y tipo de transacción.',
-    target:'.fab',pos:'top'
+    body:'Este botón te permite registrar un nuevo movimiento rápidamente. Puedes elegir categoría, monto, fecha y tipo de transacción.',
+    target:'#btn-add-mov',pos:'auto',nav:'panel'
   },
   {
     title:'💳 Presupuesto',
     body:'Define tus ingresos fijos mensuales (salario, arriendos, etc.) y tus gastos obligatorios (servicios, cuotas, suscripciones). Esto te da una base real sobre cuánto dinero tienes disponible cada mes.',
-    target:'[data-screen="presupuesto"]',pos:'auto'
+    target:'[data-screen="presupuesto"]',pos:'auto',nav:'panel'
   },
   {
     title:'🛒 Planeador de compras',
     body:'¿Tienes algo en mente para comprar? Agrégalo aquí con precio estimado, prioridad y categoría. Planea tus compras antes de hacerlas y evita gastos impulsivos.',
-    target:'[data-screen="compras"]',pos:'auto'
-  },
-  {
-    title:'📊 Indicadores',
-    body:'Analiza tu comportamiento financiero con un calendario estilo Google donde ves movimientos por día, una gráfica anual de ingresos vs gastos y el desglose por categorías del mes.',
-    target:'[data-screen="reportes"]',pos:'auto'
+    target:'[data-screen="compras"]',pos:'auto',nav:'panel'
   },
   {
     title:'🎯 Ahorro Programado',
     body:'Crea metas de ahorro con nombre, monto objetivo y fecha límite. Lleva el seguimiento de cuánto has logrado ahorrar en cada meta y visualiza tu progreso.',
-    target:'[data-screen="metas"]',pos:'auto'
+    target:'[data-screen="metas"]',pos:'auto',nav:'panel'
+  },
+  {
+    title:'📊 Indicadores',
+    body:'Analiza tu comportamiento financiero con un calendario estilo Google donde ves movimientos por día, una gráfica anual de ingresos vs gastos y el desglose por categorías del mes.',
+    target:'[data-screen="reportes"]',pos:'auto',nav:'panel'
   },
   {
     title:'💱 Selector de moneda',
     body:'Elige entre 10 monedas: COP, USD, EUR, MXN, BRL, ARS, CLP, PEN, GBP y CAD. Toda la aplicación se adapta al formato correcto de cada país. Tu preferencia se guarda automáticamente.',
-    target:'.currency-sel',pos:'top'
+    target:'#sidebar-currency',pos:'auto',nav:'panel'
   },
   {
     title:'¡Todo listo! 🎉',
@@ -2631,6 +2631,9 @@ function renderTourStep(){
       '<div class="tb-dots">'+dots+'</div>'+
       '<div class="tb-actions">'+skipBtn+prevBtn+'<button class="tb-next" onclick="tourNext()">'+nextLabel+'</button></div>'+
     '</div>';
+
+  // Navegar a la pantalla que corresponde al paso (sin cerrar el tour)
+  if(step.nav&&ST.screen!==step.nav){ST.screen=step.nav;renderScreen(step.nav);}
 
   // Burbuja SIEMPRE centrada en pantalla
   bubble.style.cssText='position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(360px,calc(100vw - 32px));background:#fff;border-radius:22px;padding:28px 28px 22px;box-shadow:0 12px 48px rgba(15,23,42,.25),0 2px 12px rgba(15,23,42,.12);z-index:9002;';
