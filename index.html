@@ -396,12 +396,14 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
       <button class="mtt" id="ptt-g" onclick="setPagoTipo('gasto')">Gasto fijo</button>
       <button class="mtt" id="ptt-i" onclick="setPagoTipo('ingreso')">Ingreso fijo</button>
     </div>
-    <div class="form-group"><label>Nombre</label><input id="p-nombre" type="text" placeholder="Ej: Arriendo, Netflix..."/></div>
+    <div class="form-group"><label>Nombre</label><input id="p-nombre" type="text" placeholder="Ej: Arriendo, Netflix, Salario..."/></div>
     <div class="modal-row">
-      <div class="form-group"><label>Monto</label><input id="p-monto" type="number" placeholder="0" min="0"/></div>
-      <div class="form-group"><label>Fecha de cobro</label><input id="p-dia" type="date"/></div>
+      <div class="form-group"><label>Monto mensual</label><input id="p-monto" type="number" placeholder="0" min="0"/></div>
+      <div class="form-group"><label>¿Qué día del mes?</label>
+        <select id="p-dia"><option value="">Sin día específico</option></select>
+      </div>
     </div>
-    <div class="form-group"><label>Entidad bancaria / Empresa</label><input id="p-entidad" type="text" placeholder="Ej: Bancolombia, Claro, Seguros..."/></div>
+    <div class="form-group"><label>Entidad bancaria / Empresa</label><input id="p-entidad" type="text" placeholder="Ej: Bancolombia, Claro, Empresa..."/></div>
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closePagoModal()">Cancelar</button>
       <button class="btn btn-primary" onclick="submitPago()">Guardar</button>
@@ -623,17 +625,41 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
     <!-- PRESUPUESTO -->
     <div id="screen-presupuesto" class="screen" style="display:none;">
       <div class="main-header">
-        <h2>Presupuesto</h2>
+        <h2>Presupuesto mensual</h2>
         <button class="btn btn-primary" onclick="openPagoModal()">+ Agregar</button>
       </div>
       <div class="main-body">
-        <div class="budget-grid">
-          <div class="card budget-card"><div class="bc-label">Ingresos fijos / mes</div><div class="bc-val" style="color:var(--income)" id="fixed-income-total">$0</div><div class="bc-sub" id="fixed-income-count">0 fuentes</div></div>
-          <div class="card budget-card"><div class="bc-label">Gastos fijos / mes</div><div class="bc-val" style="color:var(--expense)" id="fixed-expense-total">$0</div><div class="bc-sub" id="fixed-expense-count">0 obligaciones</div></div>
+        <!-- Hero dinero libre -->
+        <div class="card" id="budget-hero" style="padding:24px;margin-bottom:16px;background:linear-gradient(135deg,#1E3A8A 0%,#1E40AF 60%,#2563EB 100%);border:none;">
+          <div style="font-size:13px;font-weight:700;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">Dinero libre al mes</div>
+          <div id="budget-libre" style="font-size:36px;font-weight:800;color:#fff;margin-bottom:16px;">$0</div>
+          <div style="background:rgba(255,255,255,.18);border-radius:20px;height:8px;margin-bottom:10px;overflow:hidden;">
+            <div id="budget-bar" style="height:100%;border-radius:20px;background:#4ADE80;transition:width .5s;width:0%;"></div>
+          </div>
+          <div id="budget-bar-label" style="font-size:12px;color:rgba(255,255,255,.8);font-weight:600;"></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px;">
+            <div style="background:rgba(255,255,255,.12);border-radius:14px;padding:14px;">
+              <div style="font-size:11px;color:rgba(255,255,255,.65);font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">Ingresos fijos</div>
+              <div id="fixed-income-total" style="font-size:20px;font-weight:800;color:#4ADE80;">$0</div>
+              <div id="fixed-income-count" style="font-size:11px;color:rgba(255,255,255,.55);margin-top:2px;">0 fuentes</div>
+            </div>
+            <div style="background:rgba(255,255,255,.12);border-radius:14px;padding:14px;">
+              <div style="font-size:11px;color:rgba(255,255,255,.65);font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">Gastos fijos</div>
+              <div id="fixed-expense-total" style="font-size:20px;font-weight:800;color:#F87171;">$0</div>
+              <div id="fixed-expense-count" style="font-size:11px;color:rgba(255,255,255,.55);margin-top:2px;">0 obligaciones</div>
+            </div>
+          </div>
         </div>
-        <div class="section-head">Gastos obligatorios</div>
+        <!-- Listas -->
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+          <div class="section-head" style="margin:0;">Gastos obligatorios</div>
+          <button class="btn btn-ghost" style="padding:6px 12px;font-size:12px;" onclick="openPagoModalTipo('gasto')">+ Gasto</button>
+        </div>
         <div class="card" style="margin-bottom:20px;overflow:hidden;" id="gastos-fijos-card"></div>
-        <div class="section-head">Ingresos fijos</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+          <div class="section-head" style="margin:0;">Ingresos fijos</div>
+          <button class="btn btn-ghost" style="padding:6px 12px;font-size:12px;" onclick="openPagoModalTipo('ingreso')">+ Ingreso</button>
+        </div>
         <div class="card" style="overflow:hidden;" id="ingresos-fijos-card"></div>
       </div>
     </div>
@@ -1082,19 +1108,56 @@ function renderPresupuesto(){
   var ingresos=ST.pagos.filter(function(p){return p.tipo==='ingreso';});
   var totalG=gastos.reduce(function(a,p){return a+parseFloat(p.monto||0);},0);
   var totalI=ingresos.reduce(function(a,p){return a+parseFloat(p.monto||0);},0);
+  var libre=totalI-totalG;
+  var pctComprometido=totalI>0?Math.min(100,Math.round(totalG/totalI*100)):0;
+
+  // Hero
+  var libreEl=document.getElementById('budget-libre');
+  if(libreEl){
+    libreEl.textContent=fmt(Math.abs(libre));
+    libreEl.style.color=libre>=0?'#fff':'#FCA5A5';
+    if(libre<0){libreEl.textContent='- '+fmt(Math.abs(libre));}
+  }
+  var bar=document.getElementById('budget-bar');
+  if(bar){
+    bar.style.width=pctComprometido+'%';
+    bar.style.background=pctComprometido>=90?'#F87171':pctComprometido>=70?'#FCD34D':'#4ADE80';
+  }
+  var barLbl=document.getElementById('budget-bar-label');
+  if(barLbl){
+    if(totalI===0){barLbl.textContent='Agrega tus ingresos fijos para ver el análisis';}
+    else if(libre<0){barLbl.textContent='⚠️ Los gastos fijos superan tus ingresos en '+fmt(Math.abs(libre));}
+    else{barLbl.textContent=pctComprometido+'% de tus ingresos comprometido en gastos fijos · '+fmt(libre)+' libre';}
+  }
   document.getElementById('fixed-income-total').textContent=fmt(totalI);
-  document.getElementById('fixed-income-count').textContent=ingresos.length+' fuentes';
+  document.getElementById('fixed-income-count').textContent=ingresos.length+(ingresos.length===1?' fuente':' fuentes');
   document.getElementById('fixed-expense-total').textContent=fmt(totalG);
-  document.getElementById('fixed-expense-count').textContent=gastos.length+' obligaciones';
+  document.getElementById('fixed-expense-count').textContent=gastos.length+(gastos.length===1?' obligación':' obligaciones');
+
   function pagoHTML(p,tipo){
-    var urlBtn=p.url_pago?'<a href="'+p.url_pago+'" target="_blank" style="color:var(--blue-mid);font-size:12px;font-weight:600;text-decoration:none;">Pagar</a>':'';
-    var det=(p.entidad||'')+(p.dia_cobro?' · Día '+p.dia_cobro:'');
-    return '<div class="pago-item"><div class="pago-icon-wrap" style="background:'+(tipo==='gasto'?'#FFF5F5':'#F0FDF4')+'">'+(p.icono||'💳')+'</div><div style="flex:1;min-width:0;"><div class="pago-name">'+p.nombre+'</div><div class="pago-detail">'+det+'</div></div>'+urlBtn+'<div class="pago-amount" style="color:'+(tipo==='gasto'?'var(--expense)':'var(--income)')+'">'+fmt(p.monto)+'</div><button class="icon-btn edit" onclick="editPago(\''+p.id+'\')">✏️</button><button class="icon-btn del" onclick="deletePago(\''+p.id+'\')">🗑️</button></div>';
+    var color=tipo==='gasto'?'var(--expense)':'var(--income)';
+    var bg=tipo==='gasto'?'#FFF5F5':'#F0FDF4';
+    var ico=tipo==='gasto'?'💳':'💵';
+    var det='';
+    if(p.entidad)det+=p.entidad;
+    if(p.dia_cobro)det+=(det?' · ':'')+'Cada mes, día '+p.dia_cobro;
+    return '<div class="pago-item">'+
+      '<div class="pago-icon-wrap" style="background:'+bg+';font-size:18px;">'+ico+'</div>'+
+      '<div style="flex:1;min-width:0;">'+
+        '<div class="pago-name">'+p.nombre+'</div>'+
+        (det?'<div class="pago-detail">'+det+'</div>':'')+
+      '</div>'+
+      '<div class="pago-amount" style="color:'+color+';">'+fmt(p.monto)+'</div>'+
+      '<button class="icon-btn edit" onclick="editPago(\''+p.id+'\')">✏️</button>'+
+      '<button class="icon-btn del" onclick="deletePago(\''+p.id+'\')">🗑️</button>'+
+    '</div>';
   }
   var gc=document.getElementById('gastos-fijos-card');
-  gc.innerHTML=gastos.length?gastos.map(function(p){return pagoHTML(p,'gasto');}).join(''):'<div class="empty-state"><div class="e-icon">💳</div><p>Sin gastos fijos registrados</p></div>';
+  gc.innerHTML=gastos.length?gastos.map(function(p){return pagoHTML(p,'gasto');}).join(''):
+    '<div class="empty-state"><div class="e-icon">💳</div><p>Sin gastos fijos aún</p></div>';
   var ic=document.getElementById('ingresos-fijos-card');
-  ic.innerHTML=ingresos.length?ingresos.map(function(p){return pagoHTML(p,'ingreso');}).join(''):'<div class="empty-state"><div class="e-icon">💵</div><p>Sin ingresos fijos registrados</p></div>';
+  ic.innerHTML=ingresos.length?ingresos.map(function(p){return pagoHTML(p,'ingreso');}).join(''):
+    '<div class="empty-state"><div class="e-icon">💵</div><p>Sin ingresos fijos aún</p></div>';
 }
 
 // RENDER COMPRAS
@@ -1779,16 +1842,23 @@ async function deleteMovement(id){
 
 // PAGOS FIJOS
 var _editingPagoId=null,_pagoTipo='gasto';
+function buildDiaSelect(selectedVal){
+  var sel=document.getElementById('p-dia');
+  if(!sel)return;
+  var opts='<option value="">Sin día específico</option>';
+  for(var d=1;d<=31;d++){opts+='<option value="'+d+'"'+(selectedVal==d?' selected':'')+'>Día '+d+' de cada mes</option>';}
+  sel.innerHTML=opts;
+}
+function openPagoModalTipo(tipo){_pagoTipo=tipo||'gasto';openPagoModal();}
 function openPagoModal(id){
   _editingPagoId=id||null;
   if(!id){
-    _pagoTipo='gasto';
     document.getElementById('p-nombre').value='';
     document.getElementById('p-monto').value='';
-    document.getElementById('p-dia').value='';
     document.getElementById('p-entidad').value='';
     document.getElementById('modal-pago-title').textContent='Nuevo pago fijo';
-    setPagoTipo('gasto');
+    setPagoTipo(_pagoTipo||'gasto');
+    buildDiaSelect('');
   }
   document.getElementById('modal-pago').style.display='flex';
 }
@@ -1797,14 +1867,12 @@ function setPagoTipo(t){_pagoTipo=t;document.getElementById('ptt-g').className='
 async function submitPago(){
   var nombre=document.getElementById('p-nombre').value.trim();
   var monto=parseFloat(document.getElementById('p-monto').value);
-  var fecha=document.getElementById('p-dia').value||null;
+  var dia=parseInt(document.getElementById('p-dia').value)||null;
   var entidad=document.getElementById('p-entidad').value.trim()||null;
   if(!nombre){alert('Escribe un nombre.');return;}
   if(!monto||monto<=0){alert('Ingresa un monto válido.');return;}
-  // dia_cobro guarda el día del mes de la fecha seleccionada (1-31)
-  var diaCobro=fecha?new Date(fecha+'T12:00:00').getDate():null;
   var icono=_pagoTipo==='gasto'?'💳':'💵';
-  var record={user_id:ST.userId,nombre:nombre,monto:monto,tipo:_pagoTipo,dia_cobro:diaCobro,entidad:entidad,url_pago:fecha,icono:icono,activo:true};
+  var record={user_id:ST.userId,nombre:nombre,monto:monto,tipo:_pagoTipo,dia_cobro:dia,entidad:entidad,url_pago:null,icono:icono,activo:true};
   if(_editingPagoId){
     var res=await _sb.from('pagos_fijos').update(record).eq('id',_editingPagoId).select();
     if(!res.error&&res.data){ST.pagos=ST.pagos.map(function(p){return p.id===_editingPagoId?res.data[0]:p;});closePagoModal();renderPresupuesto();}
@@ -1819,8 +1887,8 @@ function editPago(id){
   document.getElementById('modal-pago-title').textContent='Editar pago fijo';
   document.getElementById('p-nombre').value=p.nombre;
   document.getElementById('p-monto').value=p.monto;
-  document.getElementById('p-dia').value=p.url_pago||'';
   document.getElementById('p-entidad').value=p.entidad||'';
+  buildDiaSelect(p.dia_cobro||'');
   setPagoTipo(p.tipo);
   document.getElementById('modal-pago').style.display='flex';
 }
