@@ -442,12 +442,12 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
     </div>
     <div class="form-group"><label>Nombre de la meta</label><input id="mt-nombre" type="text" placeholder="Ej: Vacaciones, Carro..."/></div>
     <div class="modal-row">
-      <div class="form-group"><label>Meta total (COP $)</label><input id="mt-meta" type="number" placeholder="0" min="0"/></div>
-      <div class="form-group"><label>Ahorrado (COP $)</label><input id="mt-ahorrado" type="number" placeholder="0" min="0"/></div>
+      <div class="form-group"><label>Meta total</label><input id="mt-meta" type="number" placeholder="0" min="0"/></div>
+      <div class="form-group"><label>Ya ahorrado</label><input id="mt-ahorrado" type="number" placeholder="0" min="0"/></div>
     </div>
     <div class="modal-row">
-      <div class="form-group"><label>Plazo estimado</label><input id="mt-plazo" type="text" placeholder="Ej: Dic 2025"/></div>
-      <div class="form-group"><label>Icono (emoji)</label><input id="mt-icono" type="text" placeholder="🎯" maxlength="4"/></div>
+      <div class="form-group"><label>¿Desde cuándo inicia?</label><input id="mt-inicio" type="date"/></div>
+      <div class="form-group"><label>¿Cuándo finaliza?</label><input id="mt-fin" type="date"/></div>
     </div>
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeMetaModal()">Cancelar</button>
@@ -1367,12 +1367,49 @@ function repSelectMonth(i){
 }
 
 // RENDER METAS
+function metaSemaforo(pct){
+  if(pct>=75)return{dot:'#16A34A',label:'En buen camino',bg:'#F0FDF4',tc:'#15803D'};
+  if(pct>=33)return{dot:'#D97706',label:'En progreso',bg:'#FFFBEB',tc:'#B45309'};
+  return{dot:'#DC2626',label:'Recién iniciada',bg:'#FEF2F2',tc:'#B91C1C'};
+}
+function fmtDateShort(d){
+  if(!d)return null;
+  var p=d.split('-');if(p.length<3)return d;
+  var months=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  return p[2]+' '+months[parseInt(p[1])-1]+' '+p[0];
+}
 function renderMetas(){
   var el=document.getElementById('metas-container');
   if(!ST.goals.length){el.innerHTML='<div class="card empty-state" style="padding:44px 20px;"><div class="e-icon">🎯</div><p>Crea tu primera meta de ahorro</p></div>';return;}
   el.innerHTML=ST.goals.map(function(g){
     var pct=g.meta>0?Math.min(100,Math.round(g.ahorrado/g.meta*100)):0;
-    return '<div class="card meta-card"><div class="meta-name">'+(g.icono||'🎯')+' '+g.nombre+'</div><div class="meta-track"><div class="meta-fill" style="width:'+pct+'%"></div></div><div class="meta-nums"><span style="font-weight:700;">'+fmt(g.ahorrado)+'</span><span style="color:var(--gray-light);">de '+fmt(g.meta)+'</span></div><div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;"><span style="font-size:13px;color:var(--gray-light);">'+pct+'% · '+(g.plazo||'Sin fecha')+'</span><div style="display:flex;gap:6px;"><button class="icon-btn edit" onclick="editMeta(\''+g.id+'\')">✏️</button><button class="icon-btn del" onclick="deleteMeta(\''+g.id+'\')">🗑️</button></div></div></div>';
+    var sem=metaSemaforo(pct);
+    var inicio=fmtDateShort(g.icono);
+    var fin=fmtDateShort(g.plazo);
+    var fechas=inicio&&fin?inicio+' → '+fin:inicio?'Desde '+inicio:fin?'Hasta '+fin:'Sin fechas';
+    var fillColor=pct>=75?'#16A34A':pct>=33?'#D97706':'#DC2626';
+    return '<div class="card meta-card">'+
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">'+
+        '<div class="meta-name" style="margin:0;">'+g.nombre+'</div>'+
+        '<div style="display:flex;align-items:center;gap:6px;background:'+sem.bg+';border-radius:20px;padding:5px 12px;">'+
+          '<div style="width:10px;height:10px;border-radius:50%;background:'+sem.dot+';flex-shrink:0;"></div>'+
+          '<span style="font-size:12px;font-weight:700;color:'+sem.tc+';">'+sem.label+'</span>'+
+        '</div>'+
+      '</div>'+
+      '<div class="meta-track"><div class="meta-fill" style="width:'+pct+'%;background:'+fillColor+';"></div></div>'+
+      '<div class="meta-nums" style="margin-top:8px;">'+
+        '<span style="font-weight:700;">'+fmt(g.ahorrado)+'</span>'+
+        '<span style="color:var(--gray-light);">de '+fmt(g.meta)+'</span>'+
+        '<span style="font-weight:800;color:'+sem.dot+';">'+pct+'%</span>'+
+      '</div>'+
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;">'+
+        '<span style="font-size:12.5px;color:var(--gray-light);">📅 '+fechas+'</span>'+
+        '<div style="display:flex;gap:6px;">'+
+          '<button class="icon-btn edit" onclick="editMeta(\''+g.id+'\')">✏️</button>'+
+          '<button class="icon-btn del" onclick="deleteMeta(\''+g.id+'\')">🗑️</button>'+
+        '</div>'+
+      '</div>'+
+    '</div>';
   }).join('');
 }
 
@@ -1724,7 +1761,15 @@ async function deleteCompra(id){
 var _editingMetaId=null;
 function openMetaModal(id){
   _editingMetaId=id||null;
-  if(!id){document.getElementById('mt-nombre').value='';document.getElementById('mt-meta').value='';document.getElementById('mt-ahorrado').value='0';document.getElementById('mt-plazo').value='';document.getElementById('mt-icono').value='🎯';document.getElementById('modal-meta-title').textContent='Nueva meta';}
+  var today=new Date().toISOString().slice(0,10);
+  if(!id){
+    document.getElementById('mt-nombre').value='';
+    document.getElementById('mt-meta').value='';
+    document.getElementById('mt-ahorrado').value='0';
+    document.getElementById('mt-inicio').value=today;
+    document.getElementById('mt-fin').value='';
+    document.getElementById('modal-meta-title').textContent='Nueva meta';
+  }
   document.getElementById('modal-meta').style.display='flex';
 }
 function closeMetaModal(){document.getElementById('modal-meta').style.display='none';_editingMetaId=null;}
@@ -1732,10 +1777,11 @@ async function submitMeta(){
   var nombre=document.getElementById('mt-nombre').value.trim();
   var meta=parseFloat(document.getElementById('mt-meta').value)||0;
   var ahorrado=parseFloat(document.getElementById('mt-ahorrado').value)||0;
-  var plazo=document.getElementById('mt-plazo').value.trim()||null;
-  var icono=document.getElementById('mt-icono').value.trim()||'🎯';
-  if(!nombre){alert('Escribe un nombre para la meta.');return;}if(meta<=0){alert('Ingresa el monto de la meta.');return;}
-  var record={user_id:ST.userId,nombre,meta,ahorrado,plazo,icono};
+  var inicio=document.getElementById('mt-inicio').value||null;
+  var fin=document.getElementById('mt-fin').value||null;
+  if(!nombre){alert('Escribe un nombre para la meta.');return;}
+  if(meta<=0){alert('Ingresa el monto de la meta.');return;}
+  var record={user_id:ST.userId,nombre:nombre,meta:meta,ahorrado:ahorrado,plazo:fin,icono:inicio};
   if(_editingMetaId){
     var res=await _sb.from('metas').update(record).eq('id',_editingMetaId).select();
     if(!res.error&&res.data){ST.goals=ST.goals.map(function(g){return g.id===_editingMetaId?res.data[0]:g;});closeMetaModal();renderMetas();}
@@ -1746,10 +1792,14 @@ async function submitMeta(){
 }
 function editMeta(id){
   var g=ST.goals.find(function(x){return x.id===id;});if(!g)return;
-  _editingMetaId=id;document.getElementById('modal-meta-title').textContent='Editar meta';
-  document.getElementById('mt-nombre').value=g.nombre;document.getElementById('mt-meta').value=g.meta;
-  document.getElementById('mt-ahorrado').value=g.ahorrado;document.getElementById('mt-plazo').value=g.plazo||'';
-  document.getElementById('mt-icono').value=g.icono||'🎯';document.getElementById('modal-meta').style.display='flex';
+  _editingMetaId=id;
+  document.getElementById('modal-meta-title').textContent='Editar meta';
+  document.getElementById('mt-nombre').value=g.nombre;
+  document.getElementById('mt-meta').value=g.meta;
+  document.getElementById('mt-ahorrado').value=g.ahorrado;
+  document.getElementById('mt-inicio').value=g.icono||'';
+  document.getElementById('mt-fin').value=g.plazo||'';
+  document.getElementById('modal-meta').style.display='flex';
 }
 async function deleteMeta(id){
   if(!confirm('¿Eliminar esta meta?'))return;
