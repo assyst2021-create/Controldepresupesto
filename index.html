@@ -1361,7 +1361,7 @@ function repSelectMonth(i){
 
 // RENDER METAS
 function metaSemaforo(pct){
-  if(pct>=75)return{dot:'#16A34A',label:'En buen camino',bg:'#F0FDF4',tc:'#15803D'};
+  if(pct>=75)return{dot:'#16A34A',label:'¡Vas muy bien!',bg:'#F0FDF4',tc:'#15803D'};
   if(pct>=33)return{dot:'#D97706',label:'En progreso',bg:'#FFFBEB',tc:'#B45309'};
   return{dot:'#DC2626',label:'Recién iniciada',bg:'#FEF2F2',tc:'#B91C1C'};
 }
@@ -1371,39 +1371,155 @@ function fmtDateShort(d){
   var months=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
   return p[2]+' '+months[parseInt(p[1])-1]+' '+p[0];
 }
+function metaCalc(g){
+  var hoy=new Date();hoy.setHours(12,0,0,0);
+  var falta=Math.max(0,(g.meta||0)-(g.ahorrado||0));
+  var fin=g.plazo?new Date(g.plazo+'T12:00:00'):null;
+  var diasRestantes=fin?Math.max(0,Math.round((fin-hoy)/(1000*60*60*24))):null;
+  var mesesRestantes=diasRestantes!==null?Math.max(0.5,diasRestantes/30.44):null;
+  var cuotaMes=mesesRestantes?Math.ceil(falta/mesesRestantes):null;
+  var cuotaDia=diasRestantes>0?Math.ceil(falta/diasRestantes):null;
+  var proyeccion=null;
+  if(g.icono){
+    var inicio=new Date(g.icono+'T12:00:00');
+    var diasTranscurridos=Math.max(1,Math.round((hoy-inicio)/(1000*60*60*24)));
+    var ritmo=(g.ahorrado||0)/diasTranscurridos;
+    if(ritmo>0&&falta>0){
+      var diasPara=Math.ceil(falta/ritmo);
+      var fechaProyectada=new Date(hoy.getTime()+diasPara*86400000);
+      proyeccion=fechaProyectada.toLocaleDateString('es-CO',{day:'numeric',month:'short',year:'numeric'});
+    }
+  }
+  return{falta:falta,diasRestantes:diasRestantes,cuotaMes:cuotaMes,cuotaDia:cuotaDia,proyeccion:proyeccion};
+}
 function renderMetas(){
   var el=document.getElementById('metas-container');
-  if(!ST.goals.length){el.innerHTML='<div class="card empty-state" style="padding:44px 20px;"><div class="e-icon">🎯</div><p>Crea tu primera meta de ahorro</p></div>';return;}
+  if(!ST.goals.length){
+    el.innerHTML='<div class="card" style="padding:44px 20px;text-align:center;">'+
+      '<div style="font-size:48px;margin-bottom:12px;">🎯</div>'+
+      '<div style="font-size:16px;font-weight:700;color:var(--gray-dark);margin-bottom:8px;">Sin metas de ahorro aún</div>'+
+      '<p style="font-size:13.5px;color:var(--gray-light);line-height:1.6;max-width:280px;margin:0 auto 20px;">Define un objetivo, pon una fecha límite y la app te dice cuánto necesitas guardar cada mes para lograrlo.</p>'+
+      '<button class="btn btn-primary" onclick="openMetaModal()" style="margin:0 auto;">+ Crear mi primera meta</button>'+
+    '</div>';
+    return;
+  }
   el.innerHTML=ST.goals.map(function(g){
-    var pct=g.meta>0?Math.min(100,Math.round(g.ahorrado/g.meta*100)):0;
+    var pct=g.meta>0?Math.min(100,Math.round((g.ahorrado||0)/g.meta*100)):0;
     var sem=metaSemaforo(pct);
+    var fillColor=pct>=75?'#16A34A':pct>=33?'#D97706':'#DC2626';
+    var calc=metaCalc(g);
     var inicio=fmtDateShort(g.icono);
     var fin=fmtDateShort(g.plazo);
-    var fechas=inicio&&fin?inicio+' → '+fin:inicio?'Desde '+inicio:fin?'Hasta '+fin:'Sin fechas';
-    var fillColor=pct>=75?'#16A34A':pct>=33?'#D97706':'#DC2626';
+
+    var cuotaHtml='';
+    if(calc.falta<=0){
+      cuotaHtml='<div style="background:#F0FDF4;border-radius:12px;padding:12px 16px;margin:14px 0;display:flex;align-items:center;gap:10px;">'+
+        '<span style="font-size:24px;">🎉</span>'+
+        '<span style="font-size:14px;font-weight:700;color:#15803D;">¡Meta cumplida! Felicitaciones.</span>'+
+      '</div>';
+    } else if(calc.cuotaMes){
+      var urgencia=calc.diasRestantes!==null&&calc.diasRestantes<30?'#FEF2F2':'#EFF6FF';
+      var urgenciaT=calc.diasRestantes!==null&&calc.diasRestantes<30?'#B91C1C':'#1E40AF';
+      cuotaHtml='<div style="background:'+urgencia+';border-radius:12px;padding:12px 16px;margin:14px 0;">'+
+        '<div style="font-size:11px;font-weight:700;color:'+urgenciaT+';text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">Para llegar a tiempo necesitas guardar</div>'+
+        '<div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;">'+
+          '<span style="font-size:22px;font-weight:800;color:'+urgenciaT+';">'+fmt(calc.cuotaMes)+'</span>'+
+          '<span style="font-size:13px;color:'+urgenciaT+';font-weight:600;">por mes</span>'+
+          (calc.cuotaDia?'<span style="font-size:12px;color:var(--gray-light);">('+fmt(calc.cuotaDia)+'/día)</span>':'') +
+        '</div>'+
+        (calc.diasRestantes!==null?'<div style="font-size:12px;color:'+urgenciaT+';margin-top:4px;font-weight:600;">⏳ '+calc.diasRestantes+' días restantes para la meta</div>':'')+
+      '</div>';
+    } else if(g.plazo){
+      cuotaHtml='<div style="background:#FEF2F2;border-radius:12px;padding:10px 14px;margin:12px 0;font-size:13px;font-weight:600;color:#B91C1C;">⚠️ La fecha límite ya pasó. Actualiza la meta.</div>';
+    }
+
+    var proyHtml=calc.proyeccion&&calc.falta>0?
+      '<div style="font-size:12px;color:var(--gray-light);margin-top:2px;">📈 A tu ritmo actual lo logras el <b style="color:var(--gray-dark);">'+calc.proyeccion+'</b></div>':'';
+
     return '<div class="card meta-card">'+
-      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">'+
-        '<div class="meta-name" style="margin:0;">'+g.nombre+'</div>'+
-        '<div style="display:flex;align-items:center;gap:6px;background:'+sem.bg+';border-radius:20px;padding:5px 12px;">'+
-          '<div style="width:10px;height:10px;border-radius:50%;background:'+sem.dot+';flex-shrink:0;"></div>'+
-          '<span style="font-size:12px;font-weight:700;color:'+sem.tc+';">'+sem.label+'</span>'+
+      // Header
+      '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;">'+
+        '<div class="meta-name" style="margin:0;font-size:17px;">'+g.nombre+'</div>'+
+        '<div style="display:flex;align-items:center;gap:5px;background:'+sem.bg+';border-radius:20px;padding:5px 12px;flex-shrink:0;">'+
+          '<div style="width:9px;height:9px;border-radius:50%;background:'+sem.dot+';"></div>'+
+          '<span style="font-size:11.5px;font-weight:700;color:'+sem.tc+';">'+sem.label+'</span>'+
         '</div>'+
       '</div>'+
-      '<div class="meta-track"><div class="meta-fill" style="width:'+pct+'%;background:'+fillColor+';"></div></div>'+
-      '<div class="meta-nums" style="margin-top:8px;">'+
-        '<span style="font-weight:700;">'+fmt(g.ahorrado)+'</span>'+
-        '<span style="color:var(--gray-light);">de '+fmt(g.meta)+'</span>'+
-        '<span style="font-weight:800;color:'+sem.dot+';">'+pct+'%</span>'+
+      // Cuota mensual calculada
+      cuotaHtml+
+      // Barra de progreso
+      '<div style="margin-bottom:8px;">'+
+        '<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px;">'+
+          '<span style="font-weight:700;font-size:14px;">'+fmt(g.ahorrado||0)+'</span>'+
+          '<span style="color:var(--gray-light);">Meta: '+fmt(g.meta)+'</span>'+
+        '</div>'+
+        '<div class="meta-track" style="height:11px;"><div class="meta-fill" style="width:'+pct+'%;background:'+fillColor+';"></div></div>'+
+        '<div style="display:flex;justify-content:space-between;margin-top:5px;">'+
+          '<span style="font-size:12px;color:'+fillColor+';font-weight:800;">'+pct+'% logrado</span>'+
+          '<span style="font-size:12px;color:var(--gray-light);">Falta '+fmt(calc.falta)+'</span>'+
+        '</div>'+
       '</div>'+
-      '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;">'+
-        '<span style="font-size:12.5px;color:var(--gray-light);">📅 '+fechas+'</span>'+
-        '<div style="display:flex;gap:6px;">'+
+      proyHtml+
+      // Fechas + acciones
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;flex-wrap:wrap;gap:8px;">'+
+        '<span style="font-size:12px;color:var(--gray-light);">'+(inicio&&fin?'📅 '+inicio+' → '+fin:fin?'📅 Hasta '+fin:inicio?'📅 Desde '+inicio:'Sin fechas')+'</span>'+
+        '<div style="display:flex;gap:8px;align-items:center;">'+
           '<button class="icon-btn edit" onclick="editMeta(\''+g.id+'\')">✏️</button>'+
           '<button class="icon-btn del" onclick="deleteMeta(\''+g.id+'\')">🗑️</button>'+
+          (calc.falta>0?'<button onclick="openAbono(\''+g.id+'\')" style="background:var(--primary);color:#fff;border:none;border-radius:10px;padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;">💰 Agregar abono</button>':'')+
         '</div>'+
       '</div>'+
     '</div>';
   }).join('');
+}
+
+// Modal abono
+var _abonoId=null;
+function openAbono(id){
+  _abonoId=id;
+  var g=ST.goals.find(function(x){return x.id===id;});
+  if(!g)return;
+  var calc=metaCalc(g);
+  var existing=document.getElementById('modal-abono');
+  if(existing)existing.remove();
+  var m=document.createElement('div');
+  m.id='modal-abono';
+  m.className='modal-overlay';
+  m.style.display='flex';
+  m.onclick=function(e){if(e.target===m)closeAbono();};
+  m.innerHTML=
+    '<div class="modal-box" style="max-width:380px;">'+
+    '<div class="modal-header"><h3>💰 Agregar abono</h3><button class="modal-close" onclick="closeAbono()">&#x2715;</button></div>'+
+    '<div style="background:#EFF6FF;border-radius:12px;padding:14px 16px;margin-bottom:16px;">'+
+      '<div style="font-size:13px;font-weight:700;color:#1E40AF;margin-bottom:4px;">Meta: '+g.nombre+'</div>'+
+      '<div style="font-size:12px;color:#3B82F6;">Ya llevas <b>'+fmt(g.ahorrado||0)+'</b> de <b>'+fmt(g.meta)+'</b> ('+Math.round((g.ahorrado||0)/g.meta*100)+'%)</div>'+
+      (calc.cuotaMes?'<div style="font-size:12px;color:#3B82F6;margin-top:4px;">Cuota mensual sugerida: <b>'+fmt(calc.cuotaMes)+'</b></div>':'')+
+    '</div>'+
+    '<div class="form-group"><label>¿Cuánto vas a abonar?</label><input id="abono-monto" type="number" placeholder="0" min="0" style="font-size:18px;font-weight:700;"/></div>'+
+    '<div id="abono-error" class="auth-error"></div>'+
+    '<div class="modal-actions">'+
+      '<button class="btn btn-ghost" onclick="closeAbono()">Cancelar</button>'+
+      '<button class="btn btn-primary" onclick="submitAbono()">Guardar abono</button>'+
+    '</div>'+
+    '</div>';
+  document.body.appendChild(m);
+  setTimeout(function(){document.getElementById('abono-monto').focus();},100);
+}
+function closeAbono(){var m=document.getElementById('modal-abono');if(m)m.remove();_abonoId=null;}
+async function submitAbono(){
+  var monto=parseFloat(document.getElementById('abono-monto').value)||0;
+  var err=document.getElementById('abono-error');
+  if(monto<=0){err.textContent='Ingresa un monto válido.';err.style.display='block';return;}
+  var g=ST.goals.find(function(x){return x.id===_abonoId;});
+  if(!g)return;
+  var nuevoAhorrado=(g.ahorrado||0)+monto;
+  var res=await _sb.from('metas').update({ahorrado:nuevoAhorrado}).eq('id',_abonoId).select();
+  if(res.error){err.textContent='Error al guardar.';err.style.display='block';return;}
+  ST.goals=ST.goals.map(function(x){return x.id===_abonoId?Object.assign({},x,{ahorrado:nuevoAhorrado}):x;});
+  // Registrar también en movimientos
+  await _sb.from('movimientos').insert({user_id:ST.userId,tipo:'savings',descripcion:'Abono meta: '+g.nombre,monto:monto,categoria:'Ahorro meta',fecha:new Date().toISOString().slice(0,10),icono:'🎯'});
+  closeAbono();
+  renderMetas();
 }
 
 // RENDER USUARIOS
