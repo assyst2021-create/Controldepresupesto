@@ -1771,6 +1771,15 @@ function buildCatChips(preselected){
   });
   html+='<button type="button" class="cat-chip chip-otra" id="chip-otra" onclick="toggleOtraChip()">✏️ Otra...</button>';
   container.innerHTML=html;
+  // Si la categoría preseleccionada es personalizada (no está en CAT_LIST), agregar su chip
+  if(preselected&&!CAT_LIST.find(function(c){return c.v===preselected;})){
+    var btn=document.createElement('button');
+    btn.type='button';btn.className='cat-chip selected';
+    btn.dataset.cat=preselected;
+    btn.innerHTML='✏️ '+preselected+' <span style="margin-left:4px;font-size:11px;opacity:.7;">(personalizada)</span>';
+    btn.onclick=function(){toggleCat(this);};
+    container.insertBefore(btn,document.getElementById('chip-otra'));
+  }
   var row=document.getElementById('cat-custom-row');
   if(row)row.style.display='none';
   updateCatCountLabel();
