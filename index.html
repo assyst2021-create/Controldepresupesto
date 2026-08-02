@@ -299,6 +299,35 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
 .cat-list-item .cat-check{width:20px;height:20px;border-radius:5px;border:2px solid #CBD5E1;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:background .12s,border-color .12s;font-size:14px;font-weight:900;color:transparent;line-height:1;}
 .cat-list-item.selected .cat-check{background:#fff;border-color:#1a1a1a;color:#000;}
 .cat-chips-wrap{margin-top:4px;}
+/* ===== TAREAS ===== */
+.tarea-filter{padding:7px 16px;border-radius:20px;border:1.5px solid var(--border);background:#fff;font-size:12.5px;font-weight:600;color:var(--gray);cursor:pointer;transition:all .15s;}
+.tarea-filter.active{background:var(--primary);border-color:var(--primary);color:#fff;}
+.tarea-card{background:#fff;border-radius:16px;border:1.5px solid var(--border);padding:16px 18px;display:flex;flex-direction:column;gap:10px;position:relative;overflow:hidden;transition:box-shadow .15s;}
+.tarea-card:hover{box-shadow:0 4px 20px rgba(15,23,42,.09);}
+.tarea-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:5px;border-radius:16px 0 0 16px;}
+.tarea-card.pri-alta::before{background:#EF4444;}
+.tarea-card.pri-media::before{background:#F59E0B;}
+.tarea-card.pri-baja::before{background:#22C55E;}
+.tarea-card.done{opacity:.55;}
+.tarea-card .tc-header{display:flex;align-items:flex-start;gap:12px;}
+.tarea-card .tc-check{width:22px;height:22px;border-radius:50%;border:2.5px solid #CBD5E1;flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;margin-top:1px;}
+.tarea-card .tc-check.done{background:var(--primary);border-color:var(--primary);color:#fff;font-size:13px;font-weight:900;}
+.tarea-card .tc-title{font-size:15px;font-weight:700;color:var(--gray-dark);line-height:1.35;flex:1;}
+.tarea-card.done .tc-title{text-decoration:line-through;color:var(--gray-light);}
+.tarea-card .tc-desc{font-size:13px;color:var(--gray);line-height:1.5;padding-left:34px;}
+.tarea-card .tc-footer{display:flex;align-items:center;gap:10px;padding-left:34px;flex-wrap:wrap;}
+.tarea-badge{padding:3px 10px;border-radius:20px;font-size:11.5px;font-weight:700;}
+.tb-alta{background:#FEF2F2;color:#DC2626;}
+.tb-media{background:#FFFBEB;color:#D97706;}
+.tb-baja{background:#F0FDF4;color:#16A34A;}
+.tb-pendiente{background:#F1F5F9;color:#64748B;}
+.tb-progreso{background:#EFF6FF;color:#2563EB;}
+.tb-completada{background:#F0FDF4;color:#16A34A;}
+.tarea-fecha{font-size:12px;color:var(--gray-light);font-weight:600;}
+.tarea-fecha.vencida{color:#EF4444;}
+.tarea-stat-card{background:#fff;border:1.5px solid var(--border);border-radius:14px;padding:14px 18px;flex:1;min-width:100px;text-align:center;}
+.tarea-stat-card .ts-num{font-size:24px;font-weight:900;color:var(--gray-dark);}
+.tarea-stat-card .ts-lbl{font-size:11.5px;color:var(--gray-light);font-weight:600;margin-top:2px;}
 /* ===== TOUR ===== */
 #tour-overlay{position:fixed;inset:0;z-index:9000;pointer-events:none;}
 #tour-overlay.active{pointer-events:all;}
@@ -412,6 +441,39 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closePagoModal()">Cancelar</button>
       <button class="btn btn-primary" onclick="submitPago()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL TAREA -->
+<div id="modal-tarea" class="modal-overlay" onclick="if(event.target===this)closeTareaModal()">
+  <div class="modal-box" style="max-width:440px;">
+    <div class="modal-header">
+      <h3 id="modal-tarea-title">Nueva tarea</h3>
+      <button class="modal-close" onclick="closeTareaModal()">&#x2715;</button>
+    </div>
+    <div class="form-group"><label>Título de la tarea</label><input id="t-titulo" type="text" placeholder="¿Qué necesitas hacer?"/></div>
+    <div class="form-group"><label>Descripción (opcional)</label><textarea id="t-desc" rows="2" placeholder="Detalles adicionales..."></textarea></div>
+    <div class="modal-row">
+      <div class="form-group"><label>Fecha límite</label><input id="t-fecha" type="date"/></div>
+      <div class="form-group"><label>Prioridad</label>
+        <select id="t-prioridad">
+          <option value="alta">🔴 Alta</option>
+          <option value="media" selected>🟡 Media</option>
+          <option value="baja">🟢 Baja</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group"><label>Estado</label>
+      <select id="t-estado">
+        <option value="pendiente">⏳ Pendiente</option>
+        <option value="en_progreso">🔄 En progreso</option>
+        <option value="completada">✅ Completada</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeTareaModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="submitTarea()">Guardar</button>
     </div>
   </div>
 </div>
@@ -598,6 +660,7 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
       <button class="nav-btn" data-screen="compras" onclick="navigate('compras')"><span class="n-icon">🛒</span> Compras</button>
       <div class="nav-section">Análisis</div>
       <button class="nav-btn" data-screen="metas" onclick="navigate('metas')"><span class="n-icon">🎯</span> Ahorro Programado</button>
+      <button class="nav-btn" data-screen="tareas" onclick="navigate('tareas')"><span class="n-icon">✅</span> Gestión de Tareas</button>
       <button class="nav-btn" data-screen="reportes" onclick="navigate('reportes')"><span class="n-icon">📊</span> Indicadores</button>
       <div id="admin-nav-section" style="display:none;">
         <div class="nav-section">Administración</div>
@@ -830,6 +893,24 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
       </div>
     </div>
 
+    <!-- TAREAS -->
+    <div id="screen-tareas" class="screen" style="display:none;">
+      <div class="main-header">
+        <h2>Gestión de Tareas</h2>
+        <button class="btn btn-primary" onclick="openTareaModal()">+ Nueva tarea</button>
+      </div>
+      <div class="main-body">
+        <div id="tareas-stats" style="display:flex;gap:12px;margin-bottom:18px;flex-wrap:wrap;"></div>
+        <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;" id="tareas-filters">
+          <button class="tarea-filter active" data-tf="todas" onclick="setTareaFilter('todas')">Todas</button>
+          <button class="tarea-filter" data-tf="pendiente" onclick="setTareaFilter('pendiente')">Pendientes</button>
+          <button class="tarea-filter" data-tf="en_progreso" onclick="setTareaFilter('en_progreso')">En progreso</button>
+          <button class="tarea-filter" data-tf="completada" onclick="setTareaFilter('completada')">Completadas</button>
+        </div>
+        <div id="tareas-list" style="display:flex;flex-direction:column;gap:12px;"></div>
+      </div>
+    </div>
+
     <!-- USUARIOS -->
     <div id="screen-usuarios" class="screen" style="display:none;">
       <div class="main-header">
@@ -864,6 +945,7 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
   <button class="sheet-item" onclick="sheetNav('presupuesto')"><span class="si-icon">💳</span>Presupuesto</button>
   <button class="sheet-item" onclick="sheetNav('compras')"><span class="si-icon">🛒</span>Compras</button>
   <button class="sheet-item" onclick="sheetNav('metas')"><span class="si-icon">🎯</span>Ahorro Programado</button>
+  <button class="sheet-item" onclick="sheetNav('tareas')"><span class="si-icon">✅</span>Gestión de Tareas</button>
   <div id="sheet-admin-item" style="display:none;">
     <div class="sheet-divider"></div>
     <div class="sheet-section">Administración</div>
@@ -940,7 +1022,7 @@ var _sbCreate = window.supabase.createClient(
 var ST = {
   screen:'panel', month:new Date().getMonth(), year:new Date().getFullYear(),
   movements:[], goals:[], pagos:[], compras:[], profiles:[],
-  movFilter:'all', isAdmin:false, userId:null, userName:'',
+  movFilter:'all', isAdmin:false, userId:null, userName:'', tareas:[],
   MONTHLY_DATA:Array(12).fill(null).map(function(){return{i:0,e:0,s:0};}),
 };
 
@@ -1003,6 +1085,7 @@ function renderScreen(screen){
   else if(screen==='compras')renderCompras();
   else if(screen==='reportes')renderReportes();
   else if(screen==='metas')renderMetas();
+  else if(screen==='tareas')renderTareas();
   else if(screen==='usuarios'&&ST.isAdmin)renderUsuarios();
 }
 
@@ -1774,16 +1857,18 @@ _sb.auth.onAuthStateChange(async function(event,session){
 });
 
 async function loadData(uid,isAdmin){
-  var [movRes,goalRes,pagosRes,comprasRes]=await Promise.all([
+  var [movRes,goalRes,pagosRes,comprasRes,tareasRes]=await Promise.all([
     _sb.from('movimientos').select('*').eq('user_id',uid).order('created_at',{ascending:false}),
     _sb.from('metas').select('*').eq('user_id',uid).order('created_at',{ascending:false}),
     _sb.from('pagos_fijos').select('*').eq('user_id',uid).eq('activo',true).order('tipo').order('nombre'),
-    _sb.from('items_compras').select('*').eq('user_id',uid).order('comprado').order('created_at',{ascending:false})
+    _sb.from('items_compras').select('*').eq('user_id',uid).order('comprado').order('created_at',{ascending:false}),
+    _sb.from('tareas').select('*').eq('user_id',uid).order('created_at',{ascending:false})
   ]);
   ST.movements=(movRes.data||[]).map(function(r){return{id:r.id,type:r.tipo,description:r.descripcion,amount:parseFloat(r.monto),category:r.categoria,date:r.fecha,icon:r.icono||'💰',createdAt:r.created_at};});
   ST.goals=goalRes.data||[];
   ST.pagos=pagosRes.data||[];
   ST.compras=comprasRes.data||[];
+  ST.tareas=tareasRes.data||[];
   recomputeAnnual(ST.movements);
   if(isAdmin){
     var pr=await _sb.from('profiles').select('*').order('created_at',{ascending:false});
@@ -2632,6 +2717,155 @@ function renderAnnualSVG(annData){
 
   svg.innerHTML=out;
 }
+// ===== TAREAS =====
+var _tareaFilter='todas';
+var _editingTareaId=null;
+var _savingTarea=false;
+
+function setTareaFilter(f){
+  _tareaFilter=f;
+  document.querySelectorAll('.tarea-filter').forEach(function(b){b.classList.toggle('active',b.dataset.tf===f);});
+  renderTareas();
+}
+
+function renderTareas(){
+  var all=ST.tareas||[];
+  var today=new Date().toISOString().slice(0,10);
+
+  // Stats
+  var total=all.length;
+  var pend=all.filter(function(t){return t.estado==='pendiente';}).length;
+  var prog=all.filter(function(t){return t.estado==='en_progreso';}).length;
+  var comp=all.filter(function(t){return t.estado==='completada';}).length;
+  var pct=total>0?Math.round(comp/total*100):0;
+  var statsEl=document.getElementById('tareas-stats');
+  if(statsEl){
+    statsEl.innerHTML=
+      '<div class="tarea-stat-card"><div class="ts-num">'+total+'</div><div class="ts-lbl">Total</div></div>'+
+      '<div class="tarea-stat-card"><div class="ts-num" style="color:#F59E0B;">'+pend+'</div><div class="ts-lbl">Pendientes</div></div>'+
+      '<div class="tarea-stat-card"><div class="ts-num" style="color:#2563EB;">'+prog+'</div><div class="ts-lbl">En progreso</div></div>'+
+      '<div class="tarea-stat-card"><div class="ts-num" style="color:#16A34A;">'+comp+'</div><div class="ts-lbl">'+pct+'% completado</div></div>';
+  }
+
+  // Filtro
+  var lista=_tareaFilter==='todas'?all:all.filter(function(t){return t.estado===_tareaFilter;});
+  var el=document.getElementById('tareas-list');
+  if(!el)return;
+  if(!lista.length){
+    el.innerHTML='<div class="card" style="padding:44px 20px;text-align:center;">'+
+      '<div style="font-size:48px;margin-bottom:12px;">✅</div>'+
+      '<div style="font-size:16px;font-weight:700;color:var(--gray-dark);margin-bottom:8px;">'+(_tareaFilter==='todas'?'Sin tareas aún':'Sin tareas en esta categoría')+'</div>'+
+      '<p style="font-size:13.5px;color:var(--gray-light);max-width:260px;margin:0 auto 20px;">Organiza tu día a día con tareas, prioridades y fechas límite.</p>'+
+      '<button class="btn btn-primary" onclick="openTareaModal()" style="margin:0 auto;">+ Crear primera tarea</button>'+
+    '</div>';
+    return;
+  }
+
+  // Ordenar: primero pendientes/en_progreso, luego completadas; dentro de cada grupo por prioridad
+  var orden={alta:0,media:1,baja:2};
+  lista=lista.slice().sort(function(a,b){
+    if(a.estado==='completada'&&b.estado!=='completada')return 1;
+    if(b.estado==='completada'&&a.estado!=='completada')return -1;
+    return (orden[a.prioridad]||1)-(orden[b.prioridad]||1);
+  });
+
+  el.innerHTML=lista.map(function(t){
+    var done=t.estado==='completada';
+    var vencida=t.fecha_limite&&t.fecha_limite<today&&!done;
+    var fechaLbl=t.fecha_limite?'<span class="tarea-fecha'+(vencida?' vencida':'')+'">📅 '+(vencida?'Venció: ':'')+t.fecha_limite+'</span>':'';
+    var estadoLbl=t.estado==='pendiente'?'<span class="tarea-badge tb-pendiente">⏳ Pendiente</span>':
+                  t.estado==='en_progreso'?'<span class="tarea-badge tb-progreso">🔄 En progreso</span>':
+                  '<span class="tarea-badge tb-completada">✅ Completada</span>';
+    var priLbl=t.prioridad==='alta'?'<span class="tarea-badge tb-alta">🔴 Alta</span>':
+               t.prioridad==='baja'?'<span class="tarea-badge tb-baja">🟢 Baja</span>':
+               '<span class="tarea-badge tb-media">🟡 Media</span>';
+    return '<div class="tarea-card pri-'+esc(t.prioridad||'media')+(done?' done':'')+'">'+
+      '<div class="tc-header">'+
+        '<div class="tc-check'+(done?' done':'')+'" onclick="cycleEstado(\''+t.id+'\',\''+t.estado+'\')">'+(done?'✓':'')+'</div>'+
+        '<div class="tc-title">'+esc(t.titulo)+'</div>'+
+        '<div style="display:flex;gap:6px;flex-shrink:0;">'+
+          '<button class="icon-btn edit" onclick="editTarea(\''+t.id+'\')">✏️</button>'+
+          '<button class="icon-btn del" onclick="deleteTarea(\''+t.id+'\')">🗑️</button>'+
+        '</div>'+
+      '</div>'+
+      (t.descripcion?'<div class="tc-desc">'+esc(t.descripcion)+'</div>':'')+
+      '<div class="tc-footer">'+estadoLbl+priLbl+fechaLbl+'</div>'+
+    '</div>';
+  }).join('');
+}
+
+async function cycleEstado(id,estadoActual){
+  var siguiente=estadoActual==='pendiente'?'en_progreso':estadoActual==='en_progreso'?'completada':'pendiente';
+  var res=await _sb.from('tareas').update({estado:siguiente}).eq('id',id).select();
+  if(!res.error&&res.data){
+    ST.tareas=ST.tareas.map(function(t){return t.id===id?res.data[0]:t;});
+    renderTareas();
+  }
+}
+
+function openTareaModal(id){
+  _editingTareaId=id||null;
+  document.getElementById('modal-tarea-title').textContent=id?'Editar tarea':'Nueva tarea';
+  if(!id){
+    document.getElementById('t-titulo').value='';
+    document.getElementById('t-desc').value='';
+    document.getElementById('t-fecha').value='';
+    document.getElementById('t-prioridad').value='media';
+    document.getElementById('t-estado').value='pendiente';
+  }
+  document.getElementById('modal-tarea').style.display='flex';
+  setTimeout(function(){document.getElementById('t-titulo').focus();},80);
+}
+function closeTareaModal(){document.getElementById('modal-tarea').style.display='none';_editingTareaId=null;}
+
+async function submitTarea(){
+  if(_savingTarea)return;
+  var titulo=document.getElementById('t-titulo').value.trim();
+  if(!titulo){alert('Escribe el título de la tarea.');return;}
+  _savingTarea=true;
+  var btn=document.querySelector('#modal-tarea .btn-primary');
+  if(btn){btn.disabled=true;btn.textContent='Guardando...';}
+  var record={
+    user_id:ST.userId,
+    titulo:titulo,
+    descripcion:document.getElementById('t-desc').value.trim()||null,
+    fecha_limite:document.getElementById('t-fecha').value||null,
+    prioridad:document.getElementById('t-prioridad').value,
+    estado:document.getElementById('t-estado').value
+  };
+  try{
+    if(_editingTareaId){
+      var res=await _sb.from('tareas').update(record).eq('id',_editingTareaId).select();
+      if(!res.error&&res.data){ST.tareas=ST.tareas.map(function(t){return t.id===_editingTareaId?res.data[0]:t;});closeTareaModal();renderTareas();}
+    } else {
+      var res=await _sb.from('tareas').insert(record).select();
+      if(!res.error&&res.data){ST.tareas=res.data.concat(ST.tareas);closeTareaModal();renderTareas();}
+    }
+  }finally{
+    _savingTarea=false;
+    if(btn){btn.disabled=false;btn.textContent='Guardar';}
+  }
+}
+
+function editTarea(id){
+  var t=ST.tareas.find(function(x){return x.id===id;});if(!t)return;
+  _editingTareaId=id;
+  document.getElementById('modal-tarea-title').textContent='Editar tarea';
+  document.getElementById('t-titulo').value=t.titulo;
+  document.getElementById('t-desc').value=t.descripcion||'';
+  document.getElementById('t-fecha').value=t.fecha_limite||'';
+  document.getElementById('t-prioridad').value=t.prioridad||'media';
+  document.getElementById('t-estado').value=t.estado||'pendiente';
+  document.getElementById('modal-tarea').style.display='flex';
+}
+
+async function deleteTarea(id){
+  if(!confirm('¿Eliminar esta tarea?'))return;
+  await _sb.from('tareas').delete().eq('id',id);
+  ST.tareas=ST.tareas.filter(function(t){return t.id!==id;});
+  renderTareas();
+}
+
 // ===== TOUR =====
 var TOUR_STEPS=[
   {
