@@ -304,14 +304,14 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
 #tour-bubble .tb-title{font-size:17px;font-weight:800;color:var(--gray-dark);margin-bottom:10px;line-height:1.3;}
 #tour-bubble .tb-body{font-size:13.5px;color:var(--gray);line-height:1.65;text-align:justify;}
 #tour-bubble .tb-arrow{position:absolute;width:14px;height:14px;background:#fff;transform:rotate(45deg);}
-#tour-bubble .tb-footer{display:flex;align-items:center;justify-content:space-between;margin-top:18px;gap:10px;}
-#tour-bubble .tb-dots{display:flex;gap:5px;}
+#tour-bubble .tb-footer{display:flex;flex-direction:column;align-items:center;margin-top:20px;gap:14px;}
+#tour-bubble .tb-dots{display:flex;gap:6px;justify-content:center;}
 #tour-bubble .tb-dot{width:7px;height:7px;border-radius:50%;background:var(--border);}
-#tour-bubble .tb-dot.active{background:var(--primary);width:18px;border-radius:4px;}
-#tour-bubble .tb-actions{display:flex;gap:8px;}
-#tour-bubble .tb-skip{font-size:12px;font-weight:700;color:var(--gray-light);background:none;border:none;cursor:pointer;padding:6px 4px;}
-#tour-bubble .tb-prev{font-size:13px;font-weight:700;color:var(--primary);background:#EFF6FF;border:none;border-radius:10px;padding:9px 16px;cursor:pointer;}
-#tour-bubble .tb-next{font-size:13px;font-weight:700;color:#fff;background:var(--primary);border:none;border-radius:10px;padding:9px 18px;cursor:pointer;}
+#tour-bubble .tb-dot.active{background:var(--primary);width:20px;border-radius:4px;}
+#tour-bubble .tb-actions{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;}
+#tour-bubble .tb-skip{font-size:12px;font-weight:700;color:var(--gray-light);background:none;border:none;cursor:pointer;padding:8px 6px;white-space:nowrap;}
+#tour-bubble .tb-prev{font-size:13px;font-weight:700;color:var(--primary);background:#EFF6FF;border:none;border-radius:10px;padding:10px 18px;cursor:pointer;white-space:nowrap;}
+#tour-bubble .tb-next{font-size:13px;font-weight:700;color:#fff;background:var(--primary);border:none;border-radius:10px;padding:10px 20px;cursor:pointer;white-space:nowrap;}
 #tour-bubble .tb-next:hover{background:#1D4ED8;}
 .tour-replay-btn{display:flex;align-items:center;gap:7px;width:100%;background:none;border:1.5px solid var(--border);border-radius:10px;padding:9px 14px;font-size:13px;font-weight:700;color:var(--gray);cursor:pointer;transition:border-color .2s,color .2s;}
 .tour-replay-btn:hover{border-color:var(--primary);color:var(--primary);}
