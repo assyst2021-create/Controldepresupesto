@@ -1767,7 +1767,7 @@ function buildCatChips(preselected){
   var html='';
   CAT_LIST.forEach(function(c){
     var sel=_selectedCats.indexOf(c.v)>=0?' selected':'';
-    html+='<button type="button" class="cat-chip'+sel+'" onclick="toggleCat(\''+c.v+'\')">'+c.e+' '+c.v+'</button>';
+    html+='<button type="button" class="cat-chip'+sel+'" data-cat="'+c.v.replace(/"/g,'&quot;')+'" onclick="toggleCat(this)">'+c.e+' '+c.v+'</button>';
   });
   html+='<button type="button" class="cat-chip chip-otra" id="chip-otra" onclick="toggleOtraChip()">✏️ Otra...</button>';
   container.innerHTML=html;
@@ -1776,11 +1776,13 @@ function buildCatChips(preselected){
   updateCatCountLabel();
 }
 
-function toggleCat(cat){
+function toggleCat(btn){
+  var cat=typeof btn==='string'?btn:(btn&&btn.dataset?btn.dataset.cat:btn);
+  if(!cat)return;
   var idx=_selectedCats.indexOf(cat);
   if(idx>=0){_selectedCats.splice(idx,1);}
   else{_selectedCats.push(cat);}
-  var chip=document.querySelector('.cat-chip[onclick*="\''+cat+'\'"]');
+  var chip=document.querySelector('.cat-chip[data-cat="'+cat.replace(/"/g,'&quot;')+'"]');
   if(chip){chip.classList.toggle('selected',_selectedCats.indexOf(cat)>=0);}
   updateCatCountLabel();
   updateCatSplitInfo();
@@ -1800,16 +1802,21 @@ function addCustomCat(){
   var inp=document.getElementById('m-cat-custom');
   var val=inp.value.trim();
   if(!val)return;
-  if(_selectedCats.indexOf(val)<0){
-    _selectedCats.push(val);
-    var container=document.getElementById('cat-chips-container');
-    var btn=document.createElement('button');
-    btn.type='button';
-    btn.className='cat-chip selected';
-    btn.textContent='✏️ '+val;
-    btn.setAttribute('onclick','toggleCat(\''+val.replace(/'/g,"\\'").replace(/\\/g,'\\\\')+'\')');
-    container.insertBefore(btn,document.getElementById('chip-otra'));
+  // Si ya existe el chip, simplemente seleccionarlo
+  var existing=document.querySelector('.cat-chip[data-cat="'+val.replace(/"/g,'&quot;')+'"]');
+  if(existing){
+    if(_selectedCats.indexOf(val)<0){_selectedCats.push(val);existing.classList.add('selected');}
+    inp.value='';updateCatCountLabel();updateCatSplitInfo();return;
   }
+  _selectedCats.push(val);
+  var container=document.getElementById('cat-chips-container');
+  var btn=document.createElement('button');
+  btn.type='button';
+  btn.className='cat-chip selected';
+  btn.dataset.cat=val;
+  btn.textContent='✏️ '+val;
+  btn.onclick=function(){toggleCat(this);};
+  container.insertBefore(btn,document.getElementById('chip-otra'));
   inp.value='';
   updateCatCountLabel();
   updateCatSplitInfo();
