@@ -1667,20 +1667,35 @@ function openAbono(id){
   setTimeout(function(){document.getElementById('abono-monto').focus();},100);
 }
 function closeAbono(){var m=document.getElementById('modal-abono');if(m)m.remove();_abonoId=null;}
+var _savingAbono=false;
 async function submitAbono(){
+  if(_savingAbono)return;
   var monto=parseFloat(document.getElementById('abono-monto').value)||0;
   var err=document.getElementById('abono-error');
   if(monto<=0){err.textContent='Ingresa un monto válido.';err.style.display='block';return;}
   var g=ST.goals.find(function(x){return x.id===_abonoId;});
   if(!g)return;
-  var nuevoAhorrado=(g.ahorrado||0)+monto;
-  var res=await _sb.from('metas').update({ahorrado:nuevoAhorrado}).eq('id',_abonoId).select();
-  if(res.error){err.textContent='Error al guardar.';err.style.display='block';return;}
-  ST.goals=ST.goals.map(function(x){return x.id===_abonoId?Object.assign({},x,{ahorrado:nuevoAhorrado}):x;});
-  // Registrar también en movimientos
-  await _sb.from('movimientos').insert({user_id:ST.userId,tipo:'savings',descripcion:'Abono meta: '+g.nombre,monto:monto,categoria:'Ahorro meta',fecha:new Date().toISOString().slice(0,10),icono:'🎯'});
-  closeAbono();
-  renderMetas();
+  _savingAbono=true;
+  var btn=document.querySelector('#modal-abono .btn-primary');
+  if(btn){btn.disabled=true;btn.textContent='Guardando...';}
+  try{
+    var nuevoAhorrado=(g.ahorrado||0)+monto;
+    var res=await _sb.from('metas').update({ahorrado:nuevoAhorrado}).eq('id',_abonoId).select();
+    if(res.error){err.textContent='Error al guardar.';err.style.display='block';return;}
+    ST.goals=ST.goals.map(function(x){return x.id===_abonoId?Object.assign({},x,{ahorrado:nuevoAhorrado}):x;});
+    var fecha=new Date().toISOString().slice(0,10);
+    var movRes=await _sb.from('movimientos').insert({user_id:ST.userId,tipo:'savings',descripcion:'Abono meta: '+g.nombre,monto:monto,categoria:'Ahorro meta',fecha:fecha,icono:'🎯'}).select();
+    if(!movRes.error&&movRes.data&&movRes.data[0]){
+      var r=movRes.data[0];
+      ST.movements.unshift({id:r.id,type:r.tipo,description:r.descripcion,amount:parseFloat(r.monto),category:r.categoria,date:r.fecha,icon:r.icono||'🎯'});
+      recomputeAnnual(ST.movements);
+    }
+    closeAbono();
+    renderMetas();
+  }finally{
+    _savingAbono=false;
+    if(btn){btn.disabled=false;btn.textContent='Abonar';}
+  }
 }
 
 // RENDER USUARIOS
@@ -1700,8 +1715,11 @@ function renderUsuarios(){
 
 function recomputeAnnual(movs){
   var md=Array(12).fill(null).map(function(){return{i:0,e:0,s:0};});
+  var curYear=ST.year||new Date().getFullYear();
   movs.forEach(function(m){
-    var d=new Date(m.date+'T12:00:00'),mo=d.getMonth();
+    var d=new Date(m.date+'T12:00:00');
+    if(d.getFullYear()!==curYear)return;
+    var mo=d.getMonth();
     if(m.type==='income')md[mo].i+=m.amount;
     else if(m.type==='expense')md[mo].e+=m.amount;
     else if(m.type==='savings')md[mo].s+=m.amount;
@@ -1839,12 +1857,14 @@ function toggleOtraChip(){
 }
 
 // ===== GESTOR DE CATEGORÍAS =====
-function openCatManager(){
+var _catManagerCtx='mov';
+function openCatManager(ctx){
+  _catManagerCtx=ctx||'mov';
   loadCustomCats();
-  // Lista predeterminadas (solo chips de color)
+  var srcList=_catManagerCtx==='compra'?CAT_COMPRAS_DEFAULT:CAT_LIST_DEFAULT;
   var defEl=document.getElementById('cm-default-list');
   if(defEl){
-    defEl.innerHTML=CAT_LIST_DEFAULT.map(function(c){
+    defEl.innerHTML=srcList.map(function(c){
       return '<span style="display:inline-flex;align-items:center;gap:4px;background:#F1F5F9;border-radius:20px;padding:5px 12px;font-size:12px;font-weight:600;color:var(--gray);">'+c.e+' '+c.v+'</span>';
     }).join('');
   }
@@ -1856,17 +1876,23 @@ function openCatManager(){
 }
 function closeCatManager(){
   document.getElementById('modal-cat-manager').style.display='none';
-  // Refrescar chips si el modal de movimiento está abierto
-  var movModal=document.getElementById('modal-overlay');
-  if(movModal&&movModal.style.display==='flex'){
-    var cur=_selectedCats.slice();
-    buildCatChips(null);
-    cur.forEach(function(c){
-      var chip=document.querySelector('[data-cat="'+c.replace(/"/g,'&quot;')+'"]');
-      if(chip){chip.classList.add('selected');}
-      if(_selectedCats.indexOf(c)<0)_selectedCats.push(c);
-    });
-    updateCatCountLabel();
+  if(_catManagerCtx==='compra'){
+    var compraModal=document.getElementById('modal-compra');
+    if(compraModal&&compraModal.style.display==='flex'){
+      buildCompraCatChips(_selectedCompraCat);
+    }
+  } else {
+    var movModal=document.getElementById('modal-overlay');
+    if(movModal&&movModal.style.display==='flex'){
+      var cur=_selectedCats.slice();
+      buildCatChips(null);
+      cur.forEach(function(c){
+        var chip=document.querySelector('[data-cat="'+c.replace(/"/g,'&quot;')+'"]');
+        if(chip){chip.classList.add('selected');}
+        if(_selectedCats.indexOf(c)<0)_selectedCats.push(c);
+      });
+      updateCatCountLabel();
+    }
   }
 }
 function renderCmCustomList(){
@@ -2016,40 +2042,48 @@ function setModalType(t){
   document.getElementById('mtt-i').className='mtt'+(t==='income'?' active-i':'');
   document.getElementById('mtt-s').className='mtt'+(t==='savings'?' active-s':'');
 }
+var _savingMov=false;
 async function submitMovement(){
+  if(_savingMov)return;
   var desc=document.getElementById('m-desc').value.trim();
   var amt=parseFloat(document.getElementById('m-amount').value);
   var date=document.getElementById('m-date').value;
   if(!desc){alert('Escribe una descripción.');return;}
   if(!amt||amt<=0){alert('Ingresa un monto válido.');return;}
   if(!date){alert('Selecciona una fecha.');return;}
+  _savingMov=true;
+  var btn=document.querySelector('#modal-overlay .btn-primary');
+  if(btn){btn.disabled=true;btn.textContent='Guardando...';}
   var cats=_selectedCats.length>0?_selectedCats:['Otro'];
   var perCat=amt/cats.length;
-
-  if(_editingId){
-    // Edición: actualiza sólo la primera categoría (registro existente)
-    var cat=cats[0];
-    var icon=CAT_ICONS[cat]||'💰';
-    var record={user_id:ST.userId,tipo:_modalType,descripcion:desc,monto:perCat,categoria:cat,fecha:date,icono:icon};
-    var res=await _sb.from('movimientos').update(record).eq('id',_editingId).select();
-    if(!res.error&&res.data){
-      ST.movements=ST.movements.map(function(m){
-        return m.id===_editingId?{id:res.data[0].id,type:res.data[0].tipo,description:res.data[0].descripcion,amount:parseFloat(res.data[0].monto),category:res.data[0].categoria,date:res.data[0].fecha,icon:res.data[0].icono||'💰'}:m;
+  try{
+    if(_editingId){
+      var cat=cats[0];
+      var icon=CAT_ICONS[cat]||'💰';
+      var record={user_id:ST.userId,tipo:_modalType,descripcion:desc,monto:perCat,categoria:cat,fecha:date,icono:icon};
+      var res=await _sb.from('movimientos').update(record).eq('id',_editingId).select();
+      if(!res.error&&res.data){
+        ST.movements=ST.movements.map(function(m){
+          return m.id===_editingId?{id:res.data[0].id,type:res.data[0].tipo,description:res.data[0].descripcion,amount:parseFloat(res.data[0].monto),category:res.data[0].categoria,date:res.data[0].fecha,icon:res.data[0].icono||'💰'}:m;
+        });
+        recomputeAnnual(ST.movements);closeModal();renderScreen(ST.screen);
+      }
+    } else {
+      var records=cats.map(function(cat){
+        return {user_id:ST.userId,tipo:_modalType,descripcion:desc+(cats.length>1?' ('+cat+')':''),monto:perCat,categoria:cat,fecha:date,icono:CAT_ICONS[cat]||'💰'};
       });
-      recomputeAnnual(ST.movements);closeModal();renderScreen(ST.screen);
+      var res=await _sb.from('movimientos').insert(records).select();
+      if(!res.error&&res.data){
+        res.data.forEach(function(r){
+          ST.movements.unshift({id:r.id,type:r.tipo,description:r.descripcion,amount:parseFloat(r.monto),category:r.categoria,date:r.fecha,icon:r.icono||'💰'});
+        });
+        recomputeAnnual(ST.movements);closeModal();renderScreen(ST.screen);
+      }
     }
-  } else {
-    // Inserción: un registro por cada categoría seleccionada
-    var records=cats.map(function(cat){
-      return {user_id:ST.userId,tipo:_modalType,descripcion:desc+(cats.length>1?' ('+cat+')':''),monto:perCat,categoria:cat,fecha:date,icono:CAT_ICONS[cat]||'💰'};
-    });
-    var res=await _sb.from('movimientos').insert(records).select();
-    if(!res.error&&res.data){
-      res.data.forEach(function(r){
-        ST.movements.unshift({id:r.id,type:r.tipo,description:r.descripcion,amount:parseFloat(r.monto),category:r.categoria,date:r.fecha,icon:r.icono||'💰'});
-      });
-      recomputeAnnual(ST.movements);closeModal();renderScreen(ST.screen);
-    }
+  }finally{
+    _savingMov=false;
+    var btn=document.querySelector('#modal-overlay .btn-primary');
+    if(btn){btn.disabled=false;btn.textContent='Guardar';}
   }
 }
 function editMovement(id){
@@ -2094,15 +2128,15 @@ function setPagoTipo(t){_pagoTipo=t;document.getElementById('ptt-g').className='
 var _savingPago=false;
 async function submitPago(){
   if(_savingPago)return;
-  _savingPago=true;
-  var btn=document.querySelector('#modal-pago .btn-primary');
-  if(btn){btn.disabled=true;btn.textContent='Guardando...';}
   var nombre=document.getElementById('p-nombre').value.trim();
   var monto=parseFloat(document.getElementById('p-monto').value);
   var dia=parseInt(document.getElementById('p-dia').value)||null;
   var entidad=document.getElementById('p-entidad').value.trim()||null;
   if(!nombre){alert('Escribe un nombre.');return;}
   if(!monto||monto<=0){alert('Ingresa un monto válido.');return;}
+  _savingPago=true;
+  var btn=document.querySelector('#modal-pago .btn-primary');
+  if(btn){btn.disabled=true;btn.textContent='Guardando...';}
   var icono=_pagoTipo==='gasto'?'💳':'💵';
   var record={user_id:ST.userId,nombre:nombre,monto:monto,tipo:_pagoTipo,dia_cobro:dia,entidad:entidad,url_pago:null,icono:icono,activo:true};
   try{
