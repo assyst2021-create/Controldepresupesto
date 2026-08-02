@@ -666,15 +666,25 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
           <div class="card stat-card"><div class="sc-label">Ahorro</div><div class="sc-val" style="color:var(--savings);font-size:22px;" id="rep-savings">$0</div></div>
           <div class="card stat-card"><div class="sc-label">Balance</div><div class="sc-val" style="font-size:22px;" id="rep-balance">$0</div></div>
         </div>
-        <!-- Gráfica de barras mensual (12 meses) -->
-        <div class="section-head">Resumen anual</div>
-        <div class="card" style="padding:20px 20px 14px;margin-bottom:20px;overflow-x:auto;">
-          <div id="annual-chart" style="display:flex;align-items:flex-end;gap:6px;height:90px;min-width:480px;"></div>
-          <div id="annual-chart-labels" style="display:flex;gap:6px;margin-top:6px;min-width:480px;"></div>
-          <div style="display:flex;gap:16px;margin-top:12px;font-size:11px;font-weight:600;">
+        <!-- Gráfica interactiva -->
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+          <div class="section-head" style="margin:0;">Resumen anual</div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <button onclick="chartNavYear(-1)" style="background:#F1F5F9;border:none;border-radius:8px;width:30px;height:30px;cursor:pointer;font-size:16px;color:#475569;display:flex;align-items:center;justify-content:center;">‹</button>
+            <span id="chart-year-label" style="font-size:14px;font-weight:700;color:var(--gray-dark);min-width:44px;text-align:center;"></span>
+            <button onclick="chartNavYear(1)" style="background:#F1F5F9;border:none;border-radius:8px;width:30px;height:30px;cursor:pointer;font-size:16px;color:#475569;display:flex;align-items:center;justify-content:center;">›</button>
+          </div>
+        </div>
+        <div class="card" style="padding:20px 16px 16px;margin-bottom:20px;position:relative;">
+          <div id="chart-wrapper" style="position:relative;width:100%;">
+            <svg id="annual-svg" style="display:block;width:100%;overflow:visible;"></svg>
+            <div id="chart-tooltip" style="display:none;position:absolute;background:#1E293B;color:#fff;border-radius:12px;padding:10px 14px;font-size:12.5px;pointer-events:none;z-index:50;min-width:160px;box-shadow:0 4px 20px rgba(0,0,0,.2);transform:translateX(-50%);">
+            </div>
+          </div>
+          <div style="display:flex;gap:16px;margin-top:14px;font-size:12px;font-weight:600;justify-content:center;">
             <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:3px;background:#16A34A;display:inline-block;"></span>Ingresos</span>
             <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:3px;background:#DC2626;display:inline-block;"></span>Gastos</span>
-            <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:3px;background:#D97706;display:inline-block;"></span>Ahorro</span>
+            <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:3px;background:#F59E0B;display:inline-block;"></span>Ahorro</span>
           </div>
         </div>
         <!-- Calendario estilo Google -->
@@ -1304,7 +1314,7 @@ function renderReportes(){
     balEl.textContent=fmt(bal);
     balEl.style.color=bal>=0?'var(--income)':'var(--expense)';
 
-    // Gráfica anual — calcula primero, luego un solo innerHTML
+    // Gráfica anual SVG interactiva
     var annData=Array(12).fill(null).map(function(){return{i:0,e:0,s:0};});
     ST.movements.forEach(function(mv){
       var d=new Date(mv.date+'T12:00:00');
@@ -1314,26 +1324,9 @@ function renderReportes(){
       else if(mv.type==='expense')annData[mo].e+=mv.amount;
       else if(mv.type==='savings')annData[mo].s+=mv.amount;
     });
-    var maxVal=Math.max(1,annData.reduce(function(mx,d){return Math.max(mx,d.i,d.e,d.s);},0));
-    var chartH=document.getElementById('annual-chart');
-    if(chartH){
-      chartH.innerHTML=annData.map(function(d,i){
-        var hi=Math.round(d.i/maxVal*82);var he=Math.round(d.e/maxVal*82);var hs=Math.round(d.s/maxVal*82);
-        var isCur=i===ST.month;
-        return '<div style="position:relative;display:flex;flex-direction:column;align-items:center;flex:1;cursor:pointer;border-radius:6px;background:'+(isCur?'rgba(37,99,235,.07)':'transparent')+';padding-bottom:0;" onclick="repSelectMonth('+i+')">'
-          +'<div style="width:100%;display:flex;gap:1px;align-items:flex-end;">'
-          +'<div style="flex:1;height:'+hi+'px;background:#16A34A;border-radius:3px 3px 0 0;min-height:'+(d.i>0?3:0)+'px;"></div>'
-          +'<div style="flex:1;height:'+he+'px;background:#DC2626;border-radius:3px 3px 0 0;min-height:'+(d.e>0?3:0)+'px;"></div>'
-          +'<div style="flex:1;height:'+hs+'px;background:#D97706;border-radius:3px 3px 0 0;min-height:'+(d.s>0?3:0)+'px;"></div>'
-          +'</div></div>';
-      }).join('');
-    }
-    var labH=document.getElementById('annual-chart-labels');
-    if(labH){
-      labH.innerHTML=MONTHS_SHORT.map(function(l,i){
-        return '<div style="flex:1;text-align:center;font-size:10px;font-weight:'+(i===ST.month?'700':'500')+';color:'+(i===ST.month?'var(--blue-mid)':'var(--gray-light)')+';">'+l+'</div>';
-      }).join('');
-    }
+    var ylbl=document.getElementById('chart-year-label');
+    if(ylbl)ylbl.textContent=ST.year;
+    renderAnnualSVG(annData);
 
     // Calendario — aplazado un frame para no bloquear el hilo principal
     var calBody=document.getElementById('gcal-body');
@@ -1900,6 +1893,127 @@ async function submitCambiarPass(){
   else{sucEl.style.display='block';document.getElementById('cp-new').value='';document.getElementById('cp-confirm').value='';}
 }
 
+// ===== GRÁFICA SVG INTERACTIVA =====
+function niceMax(n){
+  if(n<=0)return 100;
+  var exp=Math.pow(10,Math.floor(Math.log10(n)));
+  var f=n/exp;
+  var nice=f<=1?1:f<=2?2:f<=5?5:10;
+  return nice*exp;
+}
+function fmtK(n){
+  if(n>=1000000)return (n/1000000).toFixed(1).replace('.0','')+'M';
+  if(n>=1000)return (n/1000).toFixed(0)+'K';
+  return n.toFixed(0);
+}
+function chartNavYear(dir){
+  ST.year+=dir;_calSelectedDay=null;
+  scheduleRenderReportes();
+}
+function showChartTip(evt,monthIdx,d){
+  var tip=document.getElementById('chart-tooltip');
+  var wrap=document.getElementById('chart-wrapper');
+  if(!tip||!wrap)return;
+  var wr=wrap.getBoundingClientRect();
+  var er=evt.target.getBoundingClientRect();
+  var tx=er.left-wr.left+er.width/2;
+  var ty=er.top-wr.top-8;
+  tip.style.left=Math.min(Math.max(tx,80),wr.width-80)+'px';
+  tip.style.top=(ty-tip.offsetHeight-4)+'px';
+  tip.innerHTML=
+    '<div style="font-weight:800;margin-bottom:6px;font-size:13px;">'+MONTHS_FULL[monthIdx]+'</div>'+
+    '<div style="display:flex;flex-direction:column;gap:4px;">'+
+    '<span style="display:flex;align-items:center;gap:6px;"><span style="width:8px;height:8px;border-radius:50%;background:#4ADE80;flex-shrink:0;"></span>Ingresos <b style="margin-left:auto;">'+fmt(d.i)+'</b></span>'+
+    '<span style="display:flex;align-items:center;gap:6px;"><span style="width:8px;height:8px;border-radius:50%;background:#F87171;flex-shrink:0;"></span>Gastos <b style="margin-left:auto;">'+fmt(d.e)+'</b></span>'+
+    '<span style="display:flex;align-items:center;gap:6px;"><span style="width:8px;height:8px;border-radius:50%;background:#FCD34D;flex-shrink:0;"></span>Ahorro <b style="margin-left:auto;">'+fmt(d.s)+'</b></span>'+
+    '</div>';
+  tip.style.display='block';
+  setTimeout(function(){
+    tip.style.top=(er.top-wr.top-tip.offsetHeight-10)+'px';
+  },0);
+}
+function hideChartTip(){
+  var tip=document.getElementById('chart-tooltip');
+  if(tip)tip.style.display='none';
+}
+function renderAnnualSVG(annData){
+  var svg=document.getElementById('annual-svg');
+  if(!svg)return;
+  var wrap=document.getElementById('chart-wrapper');
+  var W=wrap?wrap.clientWidth:600;
+  if(W<200)W=600;
+  var H=200, pL=52, pR=10, pT=16, pB=34;
+  var cW=W-pL-pR, cH=H-pT-pB;
+  svg.setAttribute('viewBox','0 0 '+W+' '+H);
+  svg.setAttribute('height',H);
+
+  var maxV=niceMax(annData.reduce(function(mx,d){return Math.max(mx,d.i,d.e,d.s);},0));
+  var steps=4;
+  var out='';
+
+  // Grid lines + Y labels
+  for(var g=0;g<=steps;g++){
+    var val=maxV/steps*g;
+    var gy=pT+cH-(val/maxV*cH);
+    out+='<line x1="'+pL+'" y1="'+gy+'" x2="'+(W-pR)+'" y2="'+gy+'" stroke="#E2E8F0" stroke-width="'+(g===0?1.5:1)+'"/>';
+    out+='<text x="'+(pL-7)+'" y="'+(gy+4)+'" text-anchor="end" font-size="9.5" fill="#94A3B8" font-family="inherit">'+fmtK(val)+'</text>';
+  }
+
+  var n=12, gW=cW/n;
+  var bW=Math.min(Math.floor(gW*0.22),14);
+  var gap=2;
+  var COLS=['#16A34A','#DC2626','#F59E0B'];
+
+  annData.forEach(function(d,i){
+    var vals=[d.i,d.e,d.s];
+    var gx=pL+i*gW;
+    var isCur=i===ST.month;
+
+    if(isCur){
+      out+='<rect x="'+(gx+2)+'" y="'+pT+'" width="'+(gW-4)+'" height="'+cH+'" fill="rgba(37,99,235,.07)" rx="4"/>';
+    }
+
+    var totalBW=3*(bW+gap)-gap;
+    var startX=gx+gW/2-totalBW/2;
+
+    vals.forEach(function(v,bi){
+      var bx=startX+bi*(bW+gap);
+      var bh=v>0?Math.max(3,v/maxV*cH):0;
+      var by=pT+cH-bh;
+      if(bh>0){
+        out+='<rect x="'+bx+'" y="'+by+'" width="'+bW+'" height="'+bh+'" fill="'+COLS[bi]+'" rx="3"'+
+          ' style="cursor:pointer;transition:opacity .15s;" '+
+          ' onmouseenter="showChartTip(event,'+i+',{i:'+d.i+',e:'+d.e+',s:'+d.s+'})"'+
+          ' onmouseleave="hideChartTip()"'+
+          ' onclick="repSelectMonth('+i+')"'+
+          ' onmousedown="this.style.opacity=.7" onmouseup="this.style.opacity=1"'+
+          '/>';
+        // Valor encima de la barra más alta del grupo
+        if(bi===0){
+          var topVal=Math.max(d.i,d.e,d.s);
+          if(topVal>0){
+            var topH=topVal/maxV*cH;
+            var topY=pT+cH-topH-5;
+            if(topH>16){
+              out+='<text x="'+(gx+gW/2)+'" y="'+topY+'" text-anchor="middle" font-size="8.5" fill="#64748B" font-family="inherit">'+fmtK(topVal)+'</text>';
+            }
+          }
+        }
+      }
+    });
+
+    // X label
+    var lx=gx+gW/2;
+    var ly=pT+cH+20;
+    out+='<text x="'+lx+'" y="'+ly+'" text-anchor="middle" font-size="9.5"'+
+      ' font-weight="'+(isCur?'700':'500')+'"'+
+      ' fill="'+(isCur?'#1E40AF':'#94A3B8')+'"'+
+      ' font-family="inherit" style="cursor:pointer;" onclick="repSelectMonth('+i+')">'+
+      MONTHS_SHORT[i]+'</text>';
+  });
+
+  svg.innerHTML=out;
+}
 // ===== TOUR =====
 var TOUR_STEPS=[
   {
