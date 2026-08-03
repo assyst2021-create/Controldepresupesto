@@ -1119,6 +1119,7 @@ var CURRENCIES={
   CAD:{sym:'$',  locale:'en-CA',decimals:2, label:'Dólar canadiense (CAD)'},
 };
 var _currency=localStorage.getItem('mf_currency')||'COP';
+function localDateStr(d){var dt=d||new Date();return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0');}
 function esc(s){if(!s)return '';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 function numFmt(el){var raw=el.value.replace(/\./g,'').replace(/[^0-9]/g,'');el.value=raw?parseInt(raw,10).toLocaleString('es-CO').replace(/,/g,'.'):''}
 function numVal(id){var el=document.getElementById(id);if(!el)return 0;return parseFloat(el.value.replace(/\./g,''))||0;}
@@ -1174,7 +1175,7 @@ function renderPanel(){
   if(!_panelFrom){
     var now=new Date();
     _panelFrom=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-01';
-    _panelTo=now.toISOString().slice(0,10);
+    _panelTo=localDateStr(now);
   }
   var movs=panelRangeMovs();
   var totI=movs.filter(function(x){return x.type==='income';}).reduce(function(a,x){return a+x.amount;},0);
@@ -1455,7 +1456,7 @@ function renderPresupuesto(){
 // RENDER RECORDATORIOS DE PAGO
 function renderRecordatorios(){
   var now=new Date();
-  var todayStr=now.toISOString().slice(0,10);
+  var todayStr=localDateStr(now);
   var recs=ST.recordatorios||[];
   // Ordenar: pendientes primero (por fecha), luego pagados
   var pend=recs.filter(function(r){return !r.pagado;}).sort(function(a,b){return (a.fecha_limite||'9999')-(b.fecha_limite||'9999');});
@@ -1488,7 +1489,7 @@ function renderRecordatorios(){
 }
 function renderPagosPendientesPanel(){
   var now=new Date();
-  var todayStr=now.toISOString().slice(0,10);
+  var todayStr=localDateStr(now);
   var pend=(ST.recordatorios||[]).filter(function(r){return !r.pagado;}).sort(function(a,b){return (a.fecha_limite||'9999').localeCompare(b.fecha_limite||'9999');});
   var container=document.getElementById('pagos-pendientes-panel');
   var list=document.getElementById('pagos-pendientes-panel-list');
@@ -1770,7 +1771,7 @@ function renderReportes(){
     if(!_repFrom){
       var _n=new Date();
       _repFrom=_n.getFullYear()+'-'+String(_n.getMonth()+1).padStart(2,'0')+'-01';
-      _repTo=_n.toISOString().slice(0,10);
+      _repTo=localDateStr(_n);
     }
     var movsRange=repRangeMovs();
     var mi=movsRange.filter(function(m){return m.type==='income';}).reduce(function(a,m){return a+m.amount;},0);
@@ -2082,7 +2083,7 @@ async function submitAbono(){
     var res=await _sb.from('metas').update({ahorrado:nuevoAhorrado}).eq('id',_abonoId).select();
     if(res.error){err.textContent='Error al guardar.';err.style.display='block';return;}
     ST.goals=ST.goals.map(function(x){return x.id===_abonoId?Object.assign({},x,{ahorrado:nuevoAhorrado}):x;});
-    var fecha=new Date().toISOString().slice(0,10);
+    var fecha=localDateStr();
     var movRes=await _sb.from('movimientos').insert({user_id:ST.userId,tipo:'savings',descripcion:'Abono meta: '+g.nombre,monto:monto,categoria:'Ahorro meta',fecha:fecha,icono:'🎯'}).select();
     if(!movRes.error&&movRes.data&&movRes.data[0]){
       var r=movRes.data[0];
@@ -2157,6 +2158,12 @@ _sb.auth.onAuthStateChange(async function(event,session){
     document.getElementById('sb-role').textContent=isAdmin?'Administrador':'Usuario';
     document.getElementById('admin-nav-section').style.display=isAdmin?'block':'none';
     document.getElementById('auth-overlay').style.display='none';
+    // Resetear rango del panel para que cada usuario empiece en "Este mes"
+    var _rn=new Date();
+    _panelPreset='mes';
+    _panelFrom=_rn.getFullYear()+'-'+String(_rn.getMonth()+1).padStart(2,'0')+'-01';
+    _panelTo=localDateStr(_rn);
+    _repPreset='mes';_repFrom=_panelFrom;_repTo=_panelTo;
     await loadData(user.id,isAdmin);
     loadCustomCats();
     renderScreen(ST.screen);
@@ -2480,7 +2487,7 @@ function openModal(id){
     var now=new Date();_modalType='expense';
     document.getElementById('m-desc').value='';
     document.getElementById('m-amount').value='';
-    document.getElementById('m-date').value=now.toISOString().slice(0,10);
+    document.getElementById('m-date').value=localDateStr(now);
     document.getElementById('modal-title').textContent='Nuevo movimiento';
     setModalType('expense');
     buildCatChips(null);
@@ -2750,7 +2757,7 @@ function calcMetaPreview(){
 }
 function openMetaModal(id){
   _editingMetaId=id||null;
-  var today=new Date().toISOString().slice(0,10);
+  var today=localDateStr();
   document.getElementById('mt-nombre').value='';
   setNumInput('mt-meta','');
   setNumInput('mt-ahorrado','');
@@ -2786,7 +2793,7 @@ function editMeta(id){
   document.getElementById('mt-nombre').value=g.nombre;
   setNumInput('mt-meta',g.meta);
   setNumInput('mt-ahorrado',g.ahorrado||0);
-  document.getElementById('mt-inicio').value=g.icono||new Date().toISOString().slice(0,10);
+  document.getElementById('mt-inicio').value=g.icono||localDateStr();
   document.getElementById('mt-fin').value=g.plazo||'';
   document.getElementById('modal-meta').style.display='flex';
   setTimeout(calcMetaPreview,50);
@@ -2901,7 +2908,7 @@ function panelRangeMovs(){
 }
 function setPanelPreset(preset){
   _panelPreset=preset;
-  var now=new Date(),today=now.toISOString().slice(0,10);
+  var now=new Date(),today=localDateStr(now);
   var row=document.getElementById('panel-custom-row');
   if(preset==='mes'){
     _panelFrom=now.getFullYear()+'-'+(String(now.getMonth()+1).padStart(2,'0'))+'-01';
@@ -2909,11 +2916,11 @@ function setPanelPreset(preset){
     if(row)row.style.display='none';
   } else if(preset==='30d'){
     var d=new Date(now);d.setDate(d.getDate()-29);
-    _panelFrom=d.toISOString().slice(0,10);_panelTo=today;
+    _panelFrom=localDateStr(d);_panelTo=today;
     if(row)row.style.display='none';
   } else if(preset==='3m'){
     var d=new Date(now);d.setMonth(d.getMonth()-3);
-    _panelFrom=d.toISOString().slice(0,10);_panelTo=today;
+    _panelFrom=localDateStr(d);_panelTo=today;
     if(row)row.style.display='none';
   } else if(preset==='year'){
     _panelFrom=now.getFullYear()+'-01-01';_panelTo=today;
@@ -2954,17 +2961,17 @@ function repRangeMovs(){
 }
 function setRepPreset(preset){
   _repPreset=preset;
-  var now=new Date(),today=now.toISOString().slice(0,10);
+  var now=new Date(),today=localDateStr(now);
   var row=document.getElementById('rep-custom-row');
   if(preset==='mes'){
     _repFrom=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-01';
     _repTo=today;if(row)row.style.display='none';
   } else if(preset==='3m'){
     var d=new Date(now);d.setMonth(d.getMonth()-3);
-    _repFrom=d.toISOString().slice(0,10);_repTo=today;if(row)row.style.display='none';
+    _repFrom=localDateStr(d);_repTo=today;if(row)row.style.display='none';
   } else if(preset==='6m'){
     var d=new Date(now);d.setMonth(d.getMonth()-6);
-    _repFrom=d.toISOString().slice(0,10);_repTo=today;if(row)row.style.display='none';
+    _repFrom=localDateStr(d);_repTo=today;if(row)row.style.display='none';
   } else if(preset==='year'){
     _repFrom=now.getFullYear()+'-01-01';_repTo=today;if(row)row.style.display='none';
   } else if(preset==='custom'){
@@ -3116,7 +3123,7 @@ function setTareaFilter(f){
 
 function renderTareas(){
   var all=ST.tareas||[];
-  var today=new Date().toISOString().slice(0,10);
+  var today=localDateStr();
 
   // Stats
   var total=all.length;
