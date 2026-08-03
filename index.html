@@ -1536,19 +1536,23 @@ async function submitRecordatorio(){
   var nombre=document.getElementById('rec-nombre').value.trim();
   if(!nombre)return;
   _savingRec=true;
+  var btn=document.querySelector('#modal-recordatorio .btn-primary');
+  if(btn){btn.disabled=true;btn.textContent='Guardando...';}
   var record={nombre:nombre,monto:numVal('rec-monto')||null,fecha_limite:document.getElementById('rec-fecha').value||null,notas:document.getElementById('rec-notas').value.trim()||null};
-  if(_editingRecId){
-    var res=await _sb.from('recordatorios_pago').update(record).eq('id',_editingRecId).select();
-    if(!res.error&&res.data){ST.recordatorios=ST.recordatorios.map(function(r){return r.id===_editingRecId?res.data[0]:r;});}
-  } else {
-    var uid=(await _sb.auth.getUser()).data.user.id;
-    var res=await _sb.from('recordatorios_pago').insert(Object.assign({user_id:uid,pagado:false},record)).select();
-    if(!res.error&&res.data){ST.recordatorios=[res.data[0]].concat(ST.recordatorios);}
+  try{
+    if(_editingRecId){
+      var res=await _sb.from('recordatorios_pago').update(record).eq('id',_editingRecId).select();
+      if(!res.error&&res.data){ST.recordatorios=ST.recordatorios.map(function(r){return r.id===_editingRecId?res.data[0]:r;});}
+    } else {
+      var res=await _sb.from('recordatorios_pago').insert(Object.assign({user_id:ST.userId,pagado:false},record)).select();
+      if(!res.error&&res.data){ST.recordatorios=[res.data[0]].concat(ST.recordatorios);}
+    }
+    closeRecordatorioModal();
+    renderRecordatorios();
+  }finally{
+    _savingRec=false;
+    if(btn){btn.disabled=false;btn.textContent='Guardar pago';}
   }
-  _savingRec=false;
-  closeRecordatorioModal();
-  renderRecordatorios();
-  if(document.getElementById('screen-presupuesto').style.display!=='none')renderPresupuesto();
 }
 async function pagarRecordatorio(id){
   var res=await _sb.from('recordatorios_pago').update({pagado:true}).eq('id',id).select();
@@ -1853,7 +1857,7 @@ function metaCalc(g){
   var falta=Math.max(0,(g.meta||0)-(g.ahorrado||0));
   var fin=g.plazo?new Date(g.plazo+'T12:00:00'):null;
   var diasRestantes=fin?Math.max(0,Math.round((fin-hoy)/(1000*60*60*24))):null;
-  var mesesRestantes=diasRestantes!==null?Math.max(1,Math.round(diasRestantes/30)):null;
+  var mesesRestantes=fin?Math.max(1,(fin.getFullYear()-hoy.getFullYear())*12+(fin.getMonth()-hoy.getMonth())+1):null;
   var cuotaMes=mesesRestantes&&falta>0?Math.ceil(falta/mesesRestantes):null;
   var cuotaDia=diasRestantes>0&&falta>0?Math.ceil(falta/diasRestantes):null;
   var proyeccion=null;
@@ -1880,6 +1884,16 @@ function renderMetas(){
     '</div>';
     return;
   }
+  // Pre-compute current-month abonos per meta name to avoid O(n*m) filtering inside map
+  var _now2=new Date();var _cM=_now2.getMonth();var _cY=_now2.getFullYear();
+  var _abonosMes={};
+  ST.movements.forEach(function(mv){
+    if(mv.type!=='savings')return;
+    var d=new Date(mv.date+'T12:00:00');
+    if(d.getMonth()!==_cM||d.getFullYear()!==_cY)return;
+    var m=mv.description&&mv.description.match(/^Abono meta: (.+)$/);
+    if(m){_abonosMes[m[1]]=(_abonosMes[m[1]]||0)+mv.amount;}
+  });
   el.innerHTML=ST.goals.map(function(g){
     var pct=g.meta>0?Math.min(100,Math.round((g.ahorrado||0)/g.meta*100)):0;
     var sem=metaSemaforo(pct);
@@ -1914,11 +1928,7 @@ function renderMetas(){
       '<div style="font-size:12px;color:var(--gray-light);margin-top:2px;">📈 A tu ritmo actual lo logras el <b style="color:var(--gray-dark);">'+calc.proyeccion+'</b></div>':'';
 
     // Progreso de este mes
-    var now2=new Date();var cM=now2.getMonth();var cY=now2.getFullYear();
-    var abonadoMes=ST.movements.filter(function(mv){
-      var d=new Date(mv.date+'T12:00:00');
-      return mv.type==='savings'&&mv.description==='Abono meta: '+g.nombre&&d.getMonth()===cM&&d.getFullYear()===cY;
-    }).reduce(function(a,mv){return a+mv.amount;},0);
+    var abonadoMes=_abonosMes[g.nombre]||0;
     var mesMeta=calc.cuotaMes||0;
     var mesHtml='';
     if(mesMeta>0&&calc.falta>0){
@@ -2747,7 +2757,7 @@ function calcMetaPreview(){
   var inicioD=new Date(inicio+'T12:00:00');
   var finD=new Date(fin+'T12:00:00');
   var dias=Math.max(1,Math.round((finD-inicioD)/(1000*60*60*24)));
-  var meses=Math.max(1,Math.round(dias/30));
+  var meses=Math.max(1,(finD.getFullYear()-inicioD.getFullYear())*12+(finD.getMonth()-inicioD.getMonth())+1);
   var porMes=falta>0?Math.ceil(falta/meses):0;
   var porDia=falta>0?Math.ceil(falta/dias):0;
   document.getElementById('mt-prev-mes').textContent=fmt(porMes);
@@ -2777,13 +2787,19 @@ async function submitMeta(){
   var fin=document.getElementById('mt-fin').value||null;
   if(!nombre){alert('Escribe un nombre para la meta.');return;}
   if(meta<=0){alert('Ingresa cuánto quieres ahorrar.');return;}
+  var btn=document.querySelector('#modal-meta .btn-primary');
+  if(btn){btn.disabled=true;btn.textContent='Guardando...';}
   var record={user_id:ST.userId,nombre:nombre,meta:meta,ahorrado:ahorrado,plazo:fin,icono:inicio};
-  if(_editingMetaId){
-    var res=await _sb.from('metas').update(record).eq('id',_editingMetaId).select();
-    if(!res.error&&res.data){ST.goals=ST.goals.map(function(g){return g.id===_editingMetaId?res.data[0]:g;});closeMetaModal();renderMetas();}
-  } else {
-    var res=await _sb.from('metas').insert(record).select();
-    if(!res.error&&res.data){ST.goals=res.data.concat(ST.goals);closeMetaModal();renderMetas();}
+  try{
+    if(_editingMetaId){
+      var res=await _sb.from('metas').update(record).eq('id',_editingMetaId).select();
+      if(!res.error&&res.data){ST.goals=ST.goals.map(function(g){return g.id===_editingMetaId?res.data[0]:g;});closeMetaModal();renderMetas();}
+    } else {
+      var res=await _sb.from('metas').insert(record).select();
+      if(!res.error&&res.data){ST.goals=res.data.concat(ST.goals);closeMetaModal();renderMetas();}
+    }
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent='Guardar meta';}
   }
 }
 function editMeta(id){
