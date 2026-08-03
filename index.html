@@ -1856,8 +1856,10 @@ function metaCalc(g){
   var hoy=new Date();hoy.setHours(12,0,0,0);
   var falta=Math.max(0,(g.meta||0)-(g.ahorrado||0));
   var fin=g.plazo?new Date(g.plazo+'T12:00:00'):null;
-  var diasRestantes=fin?Math.max(0,Math.round((fin-hoy)/(1000*60*60*24))):null;
-  var mesesRestantes=fin?Math.max(1,(fin.getFullYear()-hoy.getFullYear())*12+(fin.getMonth()-hoy.getMonth())+1):null;
+  var inicioMeta=g.icono?new Date(g.icono+'T12:00:00'):hoy;
+  var desde=inicioMeta>hoy?inicioMeta:hoy;
+  var diasRestantes=fin?Math.max(0,Math.round((fin-desde)/(1000*60*60*24))):null;
+  var mesesRestantes=fin?Math.max(1,(fin.getFullYear()-desde.getFullYear())*12+(fin.getMonth()-desde.getMonth())+1):null;
   var cuotaMes=mesesRestantes&&falta>0?Math.ceil(falta/mesesRestantes):null;
   var cuotaDia=diasRestantes>0&&falta>0?Math.ceil(falta/diasRestantes):null;
   var proyeccion=null;
