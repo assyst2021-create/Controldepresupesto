@@ -504,6 +504,35 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
   </div>
 </div>
 
+<!-- MODAL RECORDATORIO PAGO -->
+<div id="modal-recordatorio" class="modal-overlay" onclick="if(event.target===this)closeRecordatorioModal()">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 id="modal-rec-title">Nuevo pago pendiente</h3>
+      <button class="modal-close" onclick="closeRecordatorioModal()">&#x2715;</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px;">
+      <div class="form-group">
+        <label class="form-label">Nombre del pago *</label>
+        <input id="rec-nombre" class="form-input" type="text" placeholder="Ej: Arriendo, cuota celular..." maxlength="60"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Monto</label>
+        <input id="rec-monto" class="form-input" type="text" inputmode="numeric" placeholder="0" oninput="numFmt(this)"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Fecha límite de pago</label>
+        <input id="rec-fecha" class="form-input" type="date"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notas (opcional)</label>
+        <input id="rec-notas" class="form-input" type="text" placeholder="Banco, referencia, etc." maxlength="100"/>
+      </div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="submitRecordatorio()">Guardar pago</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL META -->
 <div id="modal-meta" class="modal-overlay" onclick="if(event.target===this)closeMetaModal()">
   <div class="modal-box">
@@ -746,6 +775,13 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
           <div class="card stat-card"><div class="sc-label">Gastos anuales</div><div class="sc-val" id="annual-expense">$0</div><div class="sc-sub" id="annual-year">Año 2025</div></div>
           <div class="card stat-card"><div class="sc-label">Ahorro anual</div><div class="sc-val" id="annual-savings">$0</div><div class="sc-sub">Este año</div></div>
         </div>
+        <div id="pagos-pendientes-panel" style="margin-bottom:20px;display:none;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+            <div class="section-head" style="margin:0;">Pagos pendientes</div>
+            <button class="btn btn-ghost" style="padding:5px 11px;font-size:12px;" onclick="navigate('presupuesto')">Ver todos</button>
+          </div>
+          <div id="pagos-pendientes-panel-list"></div>
+        </div>
         <div class="section-head">Alertas y recomendaciones</div>
         <div id="alerts-container" style="margin-bottom:20px;"></div>
         <div class="section-head" id="panel-movs-label">Movimientos del período</div>
@@ -809,6 +845,12 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
           <button class="btn btn-ghost" style="padding:6px 12px;font-size:12px;" onclick="openPagoModalTipo('ingreso')">+ Ingreso</button>
         </div>
         <div class="card" style="overflow:hidden;" id="ingresos-fijos-card"></div>
+        <!-- Pagos pendientes -->
+        <div style="display:flex;align-items:center;justify-content:space-between;margin:20px 0 10px;">
+          <div class="section-head" style="margin:0;">Pagos pendientes</div>
+          <button class="btn btn-ghost" style="padding:6px 12px;font-size:12px;" onclick="openRecordatorioModal()">+ Agregar</button>
+        </div>
+        <div class="card" style="overflow:hidden;" id="recordatorios-card"></div>
       </div>
     </div>
 
@@ -1148,6 +1190,7 @@ function renderPanel(){
   document.getElementById('annual-savings').textContent=fmt(as_);
   document.getElementById('annual-year').textContent='Año '+new Date().getFullYear();
 
+  renderPagosPendientesPanel();
   // Alertas basadas en el rango seleccionado
   renderAlerts({i:totI,e:totE,s:totS},balance);
 
@@ -1398,6 +1441,120 @@ function renderPresupuesto(){
   var ic=document.getElementById('ingresos-fijos-card');
   ic.innerHTML=ingresos.length?ingresos.map(function(p){return pagoHTML(p,'ingreso');}).join(''):
     '<div class="empty-state"><div class="e-icon">💵</div><p>Sin ingresos fijos aún</p></div>';
+  renderRecordatorios();
+}
+
+// RENDER RECORDATORIOS DE PAGO
+function renderRecordatorios(){
+  var now=new Date();
+  var todayStr=now.toISOString().slice(0,10);
+  var recs=ST.recordatorios||[];
+  // Ordenar: pendientes primero (por fecha), luego pagados
+  var pend=recs.filter(function(r){return !r.pagado;}).sort(function(a,b){return (a.fecha_limite||'9999')-(b.fecha_limite||'9999');});
+  var pend2=recs.filter(function(r){return !r.pagado;}).sort(function(a,b){return (a.fecha_limite||'9999').localeCompare(b.fecha_limite||'9999');});
+  var pagados=recs.filter(function(r){return r.pagado;}).sort(function(a,b){return b.created_at.localeCompare(a.created_at);});
+  var card=document.getElementById('recordatorios-card');
+  if(!card)return;
+  if(!recs.length){card.innerHTML='<div class="empty-state"><div class="e-icon">✅</div><p>Sin pagos pendientes</p></div>';return;}
+  card.innerHTML=pend2.concat(pagados).map(function(r){
+    var vencido=!r.pagado&&r.fecha_limite&&r.fecha_limite<todayStr;
+    var hoy=!r.pagado&&r.fecha_limite===todayStr;
+    var fechaLabel=r.fecha_limite?('<span style="font-size:11.5px;font-weight:600;color:'+(vencido?'#DC2626':hoy?'#D97706':'#64748B')+';">'+(vencido?'⚠️ Vencido: ':hoy?'⏰ Hoy: ':'')+r.fecha_limite+'</span>'):'';
+    return '<div class="pago-item" style="'+(r.pagado?'opacity:.55;':'')+'">'+
+      '<div class="pago-icon-wrap" style="background:'+(r.pagado?'#F0FDF4':'#FFF7ED')+';font-size:18px;">'+(r.pagado?'✅':'🔔')+'</div>'+
+      '<div style="flex:1;min-width:0;">'+
+        '<div class="pago-name" style="'+(r.pagado?'text-decoration:line-through;color:#94A3B8;':'')+'">'+esc(r.nombre)+'</div>'+
+        '<div class="pago-detail" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">'+
+          (r.monto>0?'<span>'+fmt(r.monto)+'</span>':'')+
+          fechaLabel+
+          (r.notas?'<span>'+esc(r.notas)+'</span>':'')+
+        '</div>'+
+      '</div>'+
+      (!r.pagado?'<button onclick="pagarRecordatorio(\''+r.id+'\')" style="background:#16A34A;color:#fff;border:none;border-radius:10px;padding:7px 13px;font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0;white-space:nowrap;">Pagar</button>':
+                 '<button onclick="despagarRecordatorio(\''+r.id+'\')" style="background:#F1F5F9;color:#64748B;border:1.5px solid #E2E8F0;border-radius:10px;padding:7px 13px;font-size:12px;font-weight:600;cursor:pointer;flex-shrink:0;white-space:nowrap;">Deshacer</button>')+
+      '<button class="icon-btn edit" onclick="editRecordatorio(\''+r.id+'\')" style="margin-left:4px;">✏️</button>'+
+      '<button class="icon-btn del" onclick="deleteRecordatorio(\''+r.id+'\')">🗑️</button>'+
+    '</div>';
+  }).join('');
+  renderPagosPendientesPanel();
+}
+function renderPagosPendientesPanel(){
+  var now=new Date();
+  var todayStr=now.toISOString().slice(0,10);
+  var pend=(ST.recordatorios||[]).filter(function(r){return !r.pagado;}).sort(function(a,b){return (a.fecha_limite||'9999').localeCompare(b.fecha_limite||'9999');});
+  var container=document.getElementById('pagos-pendientes-panel');
+  var list=document.getElementById('pagos-pendientes-panel-list');
+  if(!container||!list)return;
+  if(!pend.length){container.style.display='none';return;}
+  container.style.display='block';
+  list.innerHTML=pend.map(function(r){
+    var vencido=r.fecha_limite&&r.fecha_limite<todayStr;
+    var hoy=r.fecha_limite===todayStr;
+    return '<div class="alert-item '+(vencido?'danger':hoy?'warn':'info')+'" style="display:flex;align-items:center;gap:10px;">'+
+      '<div class="a-icon">'+(vencido?'⚠️':hoy?'⏰':'🔔')+'</div>'+
+      '<div style="flex:1;min-width:0;">'+
+        '<div class="a-title">'+esc(r.nombre)+(r.monto>0?' — '+fmt(r.monto):'')+'</div>'+
+        '<div class="a-msg">'+(r.fecha_limite?(vencido?'Venció el ':hoy?'Vence hoy: ':' Vence el ')+r.fecha_limite:'Sin fecha límite')+(r.notas?' · '+esc(r.notas):'')+'</div>'+
+      '</div>'+
+      '<button onclick="pagarRecordatorio(\''+r.id+'\')" style="background:#16A34A;color:#fff;border:none;border-radius:10px;padding:7px 13px;font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0;white-space:nowrap;">Pagar</button>'+
+    '</div>';
+  }).join('');
+}
+var _editingRecId=null;
+var _savingRec=false;
+function openRecordatorioModal(id){
+  _editingRecId=id||null;
+  document.getElementById('modal-rec-title').textContent=id?'Editar pago':'Nuevo pago pendiente';
+  document.getElementById('rec-nombre').value='';
+  document.getElementById('rec-monto').value='';
+  document.getElementById('rec-fecha').value='';
+  document.getElementById('rec-notas').value='';
+  if(id){
+    var r=ST.recordatorios.find(function(x){return x.id===id;});
+    if(r){
+      document.getElementById('rec-nombre').value=r.nombre||'';
+      setNumInput('rec-monto',r.monto);
+      document.getElementById('rec-fecha').value=r.fecha_limite||'';
+      document.getElementById('rec-notas').value=r.notas||'';
+    }
+  }
+  document.getElementById('modal-recordatorio').style.display='flex';
+}
+function closeRecordatorioModal(){document.getElementById('modal-recordatorio').style.display='none';_editingRecId=null;_savingRec=false;}
+function editRecordatorio(id){openRecordatorioModal(id);}
+async function submitRecordatorio(){
+  if(_savingRec)return;
+  var nombre=document.getElementById('rec-nombre').value.trim();
+  if(!nombre)return;
+  _savingRec=true;
+  var record={nombre:nombre,monto:numVal('rec-monto')||null,fecha_limite:document.getElementById('rec-fecha').value||null,notas:document.getElementById('rec-notas').value.trim()||null};
+  if(_editingRecId){
+    var res=await _sb.from('recordatorios_pago').update(record).eq('id',_editingRecId).select();
+    if(!res.error&&res.data){ST.recordatorios=ST.recordatorios.map(function(r){return r.id===_editingRecId?res.data[0]:r;});}
+  } else {
+    var uid=(await _sb.auth.getUser()).data.user.id;
+    var res=await _sb.from('recordatorios_pago').insert(Object.assign({user_id:uid,pagado:false},record)).select();
+    if(!res.error&&res.data){ST.recordatorios=[res.data[0]].concat(ST.recordatorios);}
+  }
+  _savingRec=false;
+  closeRecordatorioModal();
+  renderRecordatorios();
+  if(document.getElementById('screen-presupuesto').style.display!=='none')renderPresupuesto();
+}
+async function pagarRecordatorio(id){
+  var res=await _sb.from('recordatorios_pago').update({pagado:true}).eq('id',id).select();
+  if(!res.error&&res.data){ST.recordatorios=ST.recordatorios.map(function(r){return r.id===id?res.data[0]:r;});renderRecordatorios();}
+}
+async function despagarRecordatorio(id){
+  var res=await _sb.from('recordatorios_pago').update({pagado:false}).eq('id',id).select();
+  if(!res.error&&res.data){ST.recordatorios=ST.recordatorios.map(function(r){return r.id===id?res.data[0]:r;});renderRecordatorios();}
+}
+async function deleteRecordatorio(id){
+  if(!confirm('¿Eliminar este pago?'))return;
+  await _sb.from('recordatorios_pago').delete().eq('id',id);
+  ST.recordatorios=ST.recordatorios.filter(function(r){return r.id!==id;});
+  renderRecordatorios();
+  renderPagosPendientesPanel();
 }
 
 // RENDER COMPRAS
@@ -1915,23 +2072,25 @@ _sb.auth.onAuthStateChange(async function(event,session){
     if(!localStorage.getItem('mf_tour_done')){startTour();}
   } else {
     document.getElementById('auth-overlay').style.display='flex';
-    ST.movements=[];ST.goals=[];ST.pagos=[];ST.compras=[];ST.profiles=[];ST.isAdmin=false;
+    ST.movements=[];ST.goals=[];ST.pagos=[];ST.compras=[];ST.profiles=[];ST.recordatorios=[];ST.isAdmin=false;
   }
 });
 
 async function loadData(uid,isAdmin){
-  var [movRes,goalRes,pagosRes,comprasRes,tareasRes]=await Promise.all([
+  var [movRes,goalRes,pagosRes,comprasRes,tareasRes,recRes]=await Promise.all([
     _sb.from('movimientos').select('*').eq('user_id',uid).order('created_at',{ascending:false}),
     _sb.from('metas').select('*').eq('user_id',uid).order('created_at',{ascending:false}),
     _sb.from('pagos_fijos').select('*').eq('user_id',uid).eq('activo',true).order('tipo').order('nombre'),
     _sb.from('items_compras').select('*').eq('user_id',uid).order('comprado').order('created_at',{ascending:false}),
-    _sb.from('tareas').select('*').eq('user_id',uid).order('created_at',{ascending:false})
+    _sb.from('tareas').select('*').eq('user_id',uid).order('created_at',{ascending:false}),
+    _sb.from('recordatorios_pago').select('*').eq('user_id',uid).order('pagado').order('fecha_limite',{nullsFirst:false})
   ]);
   ST.movements=(movRes.data||[]).map(function(r){return{id:r.id,type:r.tipo,description:r.descripcion,amount:parseFloat(r.monto),category:r.categoria,date:r.fecha,icon:r.icono||'💰',createdAt:r.created_at};});
   ST.goals=goalRes.data||[];
   ST.pagos=pagosRes.data||[];
   ST.compras=comprasRes.data||[];
   ST.tareas=tareasRes.data||[];
+  ST.recordatorios=recRes.data||[];
   recomputeAnnual(ST.movements);
   if(isAdmin){
     var pr=await _sb.from('profiles').select('*').order('created_at',{ascending:false});
