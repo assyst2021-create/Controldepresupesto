@@ -1851,9 +1851,9 @@ function metaCalc(g){
   var falta=Math.max(0,(g.meta||0)-(g.ahorrado||0));
   var fin=g.plazo?new Date(g.plazo+'T12:00:00'):null;
   var diasRestantes=fin?Math.max(0,Math.round((fin-hoy)/(1000*60*60*24))):null;
-  var mesesRestantes=diasRestantes!==null?Math.max(0.5,diasRestantes/30.44):null;
-  var cuotaMes=mesesRestantes?Math.ceil(falta/mesesRestantes):null;
-  var cuotaDia=diasRestantes>0?Math.ceil(falta/diasRestantes):null;
+  var mesesRestantes=diasRestantes!==null?Math.max(1,Math.round(diasRestantes/30)):null;
+  var cuotaMes=mesesRestantes&&falta>0?Math.ceil(falta/mesesRestantes):null;
+  var cuotaDia=diasRestantes>0&&falta>0?Math.ceil(falta/diasRestantes):null;
   var proyeccion=null;
   if(g.icono){
     var inicio=new Date(g.icono+'T12:00:00');
@@ -2739,7 +2739,7 @@ function calcMetaPreview(){
   var inicioD=new Date(inicio+'T12:00:00');
   var finD=new Date(fin+'T12:00:00');
   var dias=Math.max(1,Math.round((finD-inicioD)/(1000*60*60*24)));
-  var meses=Math.max(0.5,dias/30.44);
+  var meses=Math.max(1,Math.round(dias/30));
   var porMes=falta>0?Math.ceil(falta/meses):0;
   var porDia=falta>0?Math.ceil(falta/dias):0;
   document.getElementById('mt-prev-mes').textContent=fmt(porMes);
