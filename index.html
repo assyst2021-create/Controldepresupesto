@@ -540,38 +540,45 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
       <h3 id="modal-meta-title">Nueva meta</h3>
       <button class="modal-close" onclick="closeMetaModal()">&#x2715;</button>
     </div>
-    <div class="form-group"><label>Nombre de la meta</label><input id="mt-nombre" type="text" placeholder="Ej: Vacaciones, Carro..."/></div>
+    <div class="form-group"><label>Nombre de la meta</label><input id="mt-nombre" type="text" placeholder="Ej: Vacaciones, Carro, Fondo de emergencia..."/></div>
+    <!-- Tabs de modo -->
+    <div style="display:flex;gap:6px;margin-bottom:14px;background:#F1F5F9;border-radius:12px;padding:4px;">
+      <button id="mt-tab-cuota" onclick="setMetaTab('cuota')" style="flex:1;padding:8px;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;background:var(--primary);color:#fff;transition:all .15s;">Por mes</button>
+      <button id="mt-tab-total" onclick="setMetaTab('total')" style="flex:1;padding:8px;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;background:transparent;color:var(--gray);transition:all .15s;">Por meta total</button>
+    </div>
+    <!-- Modo: por cuota mensual -->
+    <div id="mt-mode-cuota">
+      <div class="form-group">
+        <label class="form-label">¿Cuánto puedes ahorrar por mes?</label>
+        <input id="mt-cuota-input" class="form-input" type="text" inputmode="numeric" placeholder="0" oninput="numFmt(this);calcMetaDesdeCuota()" style="font-size:20px;font-weight:800;"/>
+      </div>
+    </div>
+    <!-- Modo: por meta total -->
+    <div id="mt-mode-total" style="display:none;">
+      <div class="form-group">
+        <label class="form-label">¿Cuánto quieres ahorrar en total?</label>
+        <input id="mt-meta" class="form-input" type="text" inputmode="numeric" placeholder="0" oninput="numFmt(this);calcMetaPreview()" style="font-size:20px;font-weight:800;"/>
+      </div>
+    </div>
     <div class="modal-row">
-      <div class="form-group"><label>Meta total</label><input id="mt-meta" type="text" inputmode="numeric" placeholder="0" oninput="numFmt(this);calcMetaPreview()"/></div>
-      <div class="form-group"><label>Ya ahorrado</label><input id="mt-ahorrado" type="text" inputmode="numeric" placeholder="0" oninput="numFmt(this);calcMetaPreview()"/></div>
+      <div class="form-group"><label class="form-label">Ya tengo ahorrado</label><input id="mt-ahorrado" class="form-input" type="text" inputmode="numeric" placeholder="0" oninput="numFmt(this);calcMetaPreview();calcMetaDesdeCuota()"/></div>
+      <div class="form-group"><label class="form-label">¿Cuándo quiero lograrlo?</label><input id="mt-fin" class="form-input" type="date" oninput="calcMetaPreview();calcMetaDesdeCuota()"/></div>
     </div>
-    <!-- Alternativa: poner cuota mensual y calcular total -->
-    <div class="form-group" style="margin-bottom:6px;">
-      <label style="display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--gray-light);font-weight:600;cursor:pointer;">
-        <input type="checkbox" id="mt-usar-cuota" onchange="toggleMetaCuotaMode(this.checked)" style="accent-color:var(--primary);width:15px;height:15px;cursor:pointer;"/>
-        Prefiero ingresar cuánto puedo ahorrar por mes
-      </label>
-    </div>
-    <div id="mt-cuota-row" style="display:none;">
-      <div class="form-group"><label>¿Cuánto puedes ahorrar por mes?</label><input id="mt-cuota-input" type="text" inputmode="numeric" placeholder="0" oninput="numFmt(this);calcMetaDesdeCuota()"/></div>
-    </div>
-    <div class="modal-row">
-      <div class="form-group"><label>¿Desde cuándo inicia?</label><input id="mt-inicio" type="date" oninput="calcMetaPreview()"/></div>
-      <div class="form-group"><label>¿Cuándo finaliza?</label><input id="mt-fin" type="date" oninput="calcMetaPreview()"/></div>
-    </div>
-    <!-- Preview calculado -->
+    <input type="hidden" id="mt-inicio"/>
+    <!-- Preview calculado — siempre visible cuando hay datos -->
     <div id="mt-preview" style="display:none;background:linear-gradient(135deg,#EFF6FF,#F0FDF4);border:1.5px solid #BFDBFE;border-radius:14px;padding:14px 16px;margin-bottom:4px;">
-      <div style="font-size:11px;font-weight:800;color:var(--primary);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Plan de ahorro calculado</div>
-      <div style="display:flex;gap:12px;flex-wrap:wrap;">
-        <div style="flex:1;min-width:100px;background:#fff;border-radius:10px;padding:10px 14px;text-align:center;">
+      <div style="font-size:11px;font-weight:800;color:var(--primary);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Tu plan de ahorro</div>
+      <div id="mt-prev-total-row" style="display:none;font-size:12px;color:var(--gray);font-weight:600;margin-bottom:10px;">Meta total calculada: <b id="mt-prev-total-val" style="color:var(--primary);font-size:14px;"></b></div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <div style="flex:1;min-width:90px;background:#fff;border-radius:10px;padding:10px 12px;text-align:center;">
           <div id="mt-prev-mes" style="font-size:18px;font-weight:900;color:var(--primary);">—</div>
           <div style="font-size:11px;color:var(--gray-light);font-weight:600;margin-top:2px;">por mes</div>
         </div>
-        <div style="flex:1;min-width:100px;background:#fff;border-radius:10px;padding:10px 14px;text-align:center;">
+        <div style="flex:1;min-width:90px;background:#fff;border-radius:10px;padding:10px 12px;text-align:center;">
           <div id="mt-prev-dia" style="font-size:18px;font-weight:900;color:#16A34A;">—</div>
           <div style="font-size:11px;color:var(--gray-light);font-weight:600;margin-top:2px;">por día</div>
         </div>
-        <div style="flex:1;min-width:100px;background:#fff;border-radius:10px;padding:10px 14px;text-align:center;">
+        <div style="flex:1;min-width:90px;background:#fff;border-radius:10px;padding:10px 12px;text-align:center;">
           <div id="mt-prev-dias" style="font-size:18px;font-weight:900;color:#D97706;">—</div>
           <div style="font-size:11px;color:var(--gray-light);font-weight:600;margin-top:2px;">días restantes</div>
         </div>
@@ -579,7 +586,7 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
     </div>
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeMetaModal()">Cancelar</button>
-      <button class="btn btn-primary" onclick="submitMeta()">Guardar</button>
+      <button class="btn btn-primary" onclick="submitMeta()">Guardar meta</button>
     </div>
   </div>
 </div>
@@ -1904,6 +1911,33 @@ function renderMetas(){
     var proyHtml=calc.proyeccion&&calc.falta>0?
       '<div style="font-size:12px;color:var(--gray-light);margin-top:2px;">📈 A tu ritmo actual lo logras el <b style="color:var(--gray-dark);">'+calc.proyeccion+'</b></div>':'';
 
+    // Progreso de este mes
+    var now2=new Date();var cM=now2.getMonth();var cY=now2.getFullYear();
+    var abonadoMes=ST.movements.filter(function(mv){
+      var d=new Date(mv.date+'T12:00:00');
+      return mv.type==='savings'&&mv.description==='Abono meta: '+g.nombre&&d.getMonth()===cM&&d.getFullYear()===cY;
+    }).reduce(function(a,mv){return a+mv.amount;},0);
+    var mesMeta=calc.cuotaMes||0;
+    var mesHtml='';
+    if(mesMeta>0&&calc.falta>0){
+      var pctMes2=Math.min(100,Math.round(abonadoMes/mesMeta*100));
+      var mcol=pctMes2>=100?'#16A34A':pctMes2>=50?'#D97706':'#DC2626';
+      mesHtml='<div style="background:#F8FAFC;border-radius:10px;padding:10px 14px;margin-top:10px;border:1.5px solid var(--border);">'+
+        '<div style="font-size:11px;font-weight:700;color:var(--gray);text-transform:uppercase;margin-bottom:6px;">Progreso este mes</div>'+
+        '<div style="display:flex;align-items:center;gap:10px;">'+
+          '<div style="flex:1;background:#E2E8F0;border-radius:20px;height:7px;overflow:hidden;">'+
+            '<div style="height:100%;border-radius:20px;background:'+mcol+';width:'+pctMes2+'%;transition:width .4s;"></div>'+
+          '</div>'+
+          '<span style="font-size:12px;font-weight:800;color:'+mcol+';flex-shrink:0;">'+fmt(abonadoMes)+' / '+fmt(mesMeta)+'</span>'+
+        '</div>'+
+        '<div style="font-size:11.5px;color:var(--gray-light);margin-top:4px;">'+
+          (pctMes2>=100?'✅ ¡Cuota del mes cumplida!':
+           pctMes2===0?'Aún no has abonado este mes — agrega tu cuota de '+fmt(mesMeta):
+           'Te faltan '+fmt(mesMeta-abonadoMes)+' para completar la cuota de este mes')+
+        '</div>'+
+      '</div>';
+    }
+
     return '<div class="card meta-card">'+
       // Header
       '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;">'+
@@ -1928,6 +1962,7 @@ function renderMetas(){
         '</div>'+
       '</div>'+
       proyHtml+
+      mesHtml+
       // Fechas + acciones
       '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;flex-wrap:wrap;gap:8px;">'+
         '<span style="font-size:12px;color:var(--gray-light);">'+(inicio&&fin?'📅 '+inicio+' → '+fin:fin?'📅 Hasta '+fin:inicio?'📅 Desde '+inicio:'Sin fechas')+'</span>'+
@@ -1948,6 +1983,14 @@ function openAbono(id){
   var g=ST.goals.find(function(x){return x.id===id;});
   if(!g)return;
   var calc=metaCalc(g);
+  var pct=g.meta>0?Math.min(100,Math.round((g.ahorrado||0)/g.meta*100)):0;
+  // Cuánto ya abonó este mes a esta meta
+  var now=new Date();var curM=now.getMonth();var curY=now.getFullYear();
+  var abonadoMes=ST.movements.filter(function(mv){
+    var d=new Date(mv.date+'T12:00:00');
+    return mv.type==='savings'&&mv.description==='Abono meta: '+g.nombre&&d.getMonth()===curM&&d.getFullYear()===curY;
+  }).reduce(function(a,mv){return a+mv.amount;},0);
+  var faltaCuota=calc.cuotaMes?Math.max(0,calc.cuotaMes-abonadoMes):0;
   var existing=document.getElementById('modal-abono');
   if(existing)existing.remove();
   var m=document.createElement('div');
@@ -1955,15 +1998,45 @@ function openAbono(id){
   m.className='modal-overlay';
   m.style.display='flex';
   m.onclick=function(e){if(e.target===m)closeAbono();};
+  // Barra de progreso general
+  var fillColor=pct>=75?'#16A34A':pct>=33?'#D97706':'#DC2626';
+  var mesHtml='';
+  if(calc.cuotaMes){
+    var pctMes=Math.min(100,Math.round(abonadoMes/calc.cuotaMes*100));
+    var mesColor=pctMes>=100?'#16A34A':pctMes>=50?'#D97706':'#DC2626';
+    mesHtml='<div style="background:#F0FDF4;border-radius:10px;padding:10px 14px;margin-top:10px;">'+
+      '<div style="font-size:11px;font-weight:700;color:#15803D;text-transform:uppercase;margin-bottom:4px;">Este mes llevas</div>'+
+      '<div style="display:flex;align-items:baseline;gap:6px;">'+
+        '<span style="font-size:16px;font-weight:800;color:'+mesColor+';">'+fmt(abonadoMes)+'</span>'+
+        '<span style="font-size:12px;color:var(--gray-light);">de '+fmt(calc.cuotaMes)+' sugeridos ('+pctMes+'%)</span>'+
+      '</div>'+
+      (faltaCuota>0?'<div style="font-size:12px;color:#15803D;margin-top:3px;font-weight:600;">Te faltan '+fmt(faltaCuota)+' para completar la cuota del mes</div>':
+       '<div style="font-size:12px;color:#15803D;margin-top:3px;font-weight:600;">✅ ¡Cuota del mes completada!</div>')+
+    '</div>';
+  }
   m.innerHTML=
-    '<div class="modal-box" style="max-width:380px;">'+
+    '<div class="modal-box" style="max-width:400px;">'+
     '<div class="modal-header"><h3>💰 Agregar abono</h3><button class="modal-close" onclick="closeAbono()">&#x2715;</button></div>'+
-    '<div style="background:#EFF6FF;border-radius:12px;padding:14px 16px;margin-bottom:16px;">'+
-      '<div style="font-size:13px;font-weight:700;color:#1E40AF;margin-bottom:4px;">Meta: '+esc(g.nombre)+'</div>'+
-      '<div style="font-size:12px;color:#3B82F6;">Ya llevas <b>'+fmt(g.ahorrado||0)+'</b> de <b>'+fmt(g.meta)+'</b> ('+Math.round((g.ahorrado||0)/g.meta*100)+'%)</div>'+
-      (calc.cuotaMes?'<div style="font-size:12px;color:#3B82F6;margin-top:4px;">Cuota mensual sugerida: <b>'+fmt(calc.cuotaMes)+'</b></div>':'')+
+    // Resumen de la meta
+    '<div style="background:#EFF6FF;border-radius:12px;padding:14px 16px;margin-bottom:14px;">'+
+      '<div style="font-size:14px;font-weight:800;color:#1E40AF;margin-bottom:8px;">🎯 '+esc(g.nombre)+'</div>'+
+      '<div style="background:rgba(255,255,255,.6);border-radius:8px;height:8px;margin-bottom:6px;overflow:hidden;">'+
+        '<div style="height:100%;border-radius:8px;background:'+fillColor+';width:'+pct+'%;transition:width .4s;"></div>'+
+      '</div>'+
+      '<div style="display:flex;justify-content:space-between;font-size:12px;font-weight:600;">'+
+        '<span style="color:#1E40AF;">'+fmt(g.ahorrado||0)+' ahorrado</span>'+
+        '<span style="color:var(--gray-light);">Meta: '+fmt(g.meta)+' ('+pct+'%)</span>'+
+      '</div>'+
+      mesHtml+
     '</div>'+
-    '<div class="form-group"><label>¿Cuánto vas a abonar?</label><input id="abono-monto" type="text" inputmode="numeric" placeholder="0" oninput="numFmt(this)" style="font-size:18px;font-weight:700;"/></div>'+
+    // Input abono
+    '<div class="form-group">'+
+      '<label style="font-size:13px;font-weight:700;color:var(--gray-dark);margin-bottom:6px;display:block;">¿Cuánto vas a abonar ahora?</label>'+
+      (calc.cuotaMes&&faltaCuota>0?'<div style="font-size:12px;color:var(--gray-light);margin-bottom:8px;">Sugerido para completar la cuota: <b style="color:var(--primary);">'+fmt(faltaCuota)+'</b></div>':'')+
+      '<input id="abono-monto" type="text" inputmode="numeric" placeholder="0" oninput="numFmt(this);abonoPreview()" style="width:100%;font-size:22px;font-weight:800;border:2px solid var(--border);border-radius:14px;padding:14px 16px;font-family:Inter,sans-serif;outline:none;"/>'+
+    '</div>'+
+    // Preview en tiempo real
+    '<div id="abono-preview" style="display:none;background:#F0FDF4;border-radius:10px;padding:10px 14px;margin-top:-4px;margin-bottom:4px;font-size:13px;font-weight:600;color:#15803D;"></div>'+
     '<div id="abono-error" class="auth-error"></div>'+
     '<div class="modal-actions">'+
       '<button class="btn btn-ghost" onclick="closeAbono()">Cancelar</button>'+
@@ -1971,7 +2044,25 @@ function openAbono(id){
     '</div>'+
     '</div>';
   document.body.appendChild(m);
-  setTimeout(function(){document.getElementById('abono-monto').focus();},100);
+  // Pre-llenar con lo que falta de la cuota
+  if(faltaCuota>0)setNumInput('abono-monto',faltaCuota);
+  setTimeout(function(){var el=document.getElementById('abono-monto');if(el){el.focus();abonoPreview();}},100);
+}
+function abonoPreview(){
+  var monto=numVal('abono-monto');
+  var prev=document.getElementById('abono-preview');
+  var g=ST.goals.find(function(x){return x.id===_abonoId;});
+  if(!g||!prev)return;
+  if(!monto||monto<=0){prev.style.display='none';return;}
+  var nuevo=(g.ahorrado||0)+monto;
+  var pctNuevo=Math.min(100,Math.round(nuevo/g.meta*100));
+  prev.style.display='block';
+  if(nuevo>=g.meta){
+    prev.innerHTML='🎉 ¡Con este abono alcanzas la meta! Total: '+fmt(nuevo);
+    prev.style.background='#F0FDF4';prev.style.color='#15803D';
+  } else {
+    prev.innerHTML='Después de este abono tendrás <b>'+fmt(nuevo)+'</b> de '+fmt(g.meta)+' ('+pctNuevo+'%) · Faltan '+fmt(g.meta-nuevo);
+  }
 }
 function closeAbono(){var m=document.getElementById('modal-abono');if(m)m.remove();_abonoId=null;}
 var _savingAbono=false;
@@ -2637,31 +2728,37 @@ async function deleteCompra(id){
 
 // METAS
 var _editingMetaId=null;
+var _metaTab='cuota';
+function setMetaTab(tab){
+  _metaTab=tab;
+  document.getElementById('mt-mode-cuota').style.display=tab==='cuota'?'block':'none';
+  document.getElementById('mt-mode-total').style.display=tab==='total'?'block':'none';
+  document.getElementById('mt-tab-cuota').style.background=tab==='cuota'?'var(--primary)':'transparent';
+  document.getElementById('mt-tab-cuota').style.color=tab==='cuota'?'#fff':'var(--gray)';
+  document.getElementById('mt-tab-total').style.background=tab==='total'?'var(--primary)':'transparent';
+  document.getElementById('mt-tab-total').style.color=tab==='total'?'#fff':'var(--gray)';
+  if(tab==='cuota')calcMetaDesdeCuota(); else calcMetaPreview();
+}
 function _resetMetaPreview(){
-  document.getElementById('mt-usar-cuota').checked=false;
-  document.getElementById('mt-cuota-row').style.display='none';
   document.getElementById('mt-cuota-input').value='';
   document.getElementById('mt-preview').style.display='none';
-}
-function toggleMetaCuotaMode(on){
-  document.getElementById('mt-cuota-row').style.display=on?'block':'none';
-  if(!on){document.getElementById('mt-cuota-input').value='';calcMetaPreview();}
-  else{calcMetaDesdeCuota();}
+  setMetaTab('cuota');
 }
 function calcMetaPreview(){
   var meta=numVal('mt-meta');
   var ahorrado=numVal('mt-ahorrado');
   var fin=document.getElementById('mt-fin').value;
-  var inicio=document.getElementById('mt-inicio').value||new Date().toISOString().slice(0,10);
+  var hoy=new Date().toISOString().slice(0,10);
   var prev=document.getElementById('mt-preview');
   if(!meta||meta<=0||!fin){prev.style.display='none';return;}
   var falta=Math.max(0,meta-ahorrado);
-  var hoy=new Date(inicio+'T12:00:00');
+  var hoyD=new Date(hoy+'T12:00:00');
   var finD=new Date(fin+'T12:00:00');
-  var dias=Math.max(1,Math.round((finD-hoy)/(1000*60*60*24)));
+  var dias=Math.max(1,Math.round((finD-hoyD)/(1000*60*60*24)));
   var meses=Math.max(0.5,dias/30.44);
-  var porMes=Math.ceil(falta/meses);
-  var porDia=Math.ceil(falta/dias);
+  var porMes=falta>0?Math.ceil(falta/meses):0;
+  var porDia=falta>0&&dias>0?Math.ceil(falta/dias):0;
+  document.getElementById('mt-prev-total-row').style.display='none';
   document.getElementById('mt-prev-mes').textContent=fmt(porMes);
   document.getElementById('mt-prev-dia').textContent=fmt(porDia);
   document.getElementById('mt-prev-dias').textContent=dias;
@@ -2669,17 +2766,21 @@ function calcMetaPreview(){
 }
 function calcMetaDesdeCuota(){
   var cuota=numVal('mt-cuota-input');
+  var ahorrado=numVal('mt-ahorrado');
   var fin=document.getElementById('mt-fin').value;
-  var inicio=document.getElementById('mt-inicio').value||new Date().toISOString().slice(0,10);
+  var hoy=new Date().toISOString().slice(0,10);
   var prev=document.getElementById('mt-preview');
   if(!cuota||cuota<=0||!fin){prev.style.display='none';return;}
-  var hoy=new Date(inicio+'T12:00:00');
+  var hoyD=new Date(hoy+'T12:00:00');
   var finD=new Date(fin+'T12:00:00');
-  var dias=Math.max(1,Math.round((finD-hoy)/(1000*60*60*24)));
+  var dias=Math.max(1,Math.round((finD-hoyD)/(1000*60*60*24)));
   var meses=Math.max(0.5,dias/30.44);
-  var totalCalc=Math.ceil(cuota*meses);
+  var totalCalc=Math.ceil(cuota*meses)+ahorrado;
   setNumInput('mt-meta',totalCalc);
-  var porDia=Math.ceil(totalCalc/dias);
+  var falta=Math.max(0,totalCalc-ahorrado);
+  var porDia=falta>0&&dias>0?Math.ceil(falta/dias):0;
+  document.getElementById('mt-prev-total-row').style.display='block';
+  document.getElementById('mt-prev-total-val').textContent=fmt(totalCalc);
   document.getElementById('mt-prev-mes').textContent=fmt(cuota);
   document.getElementById('mt-prev-dia').textContent=fmt(porDia);
   document.getElementById('mt-prev-dias').textContent=dias;
@@ -2688,27 +2789,24 @@ function calcMetaDesdeCuota(){
 function openMetaModal(id){
   _editingMetaId=id||null;
   var today=new Date().toISOString().slice(0,10);
-  if(!id){
-    document.getElementById('mt-nombre').value='';
-    setNumInput('mt-meta','');
-    setNumInput('mt-ahorrado',0);
-    document.getElementById('mt-inicio').value=today;
-    document.getElementById('mt-fin').value='';
-    document.getElementById('modal-meta-title').textContent='Nueva meta';
-  }
+  document.getElementById('mt-nombre').value='';
+  setNumInput('mt-meta','');
+  setNumInput('mt-ahorrado',0);
+  document.getElementById('mt-inicio').value=today;
+  document.getElementById('mt-fin').value='';
+  document.getElementById('modal-meta-title').textContent='Nueva meta';
   _resetMetaPreview();
   document.getElementById('modal-meta').style.display='flex';
-  setTimeout(calcMetaPreview,50);
 }
 function closeMetaModal(){document.getElementById('modal-meta').style.display='none';_editingMetaId=null;}
 async function submitMeta(){
   var nombre=document.getElementById('mt-nombre').value.trim();
   var meta=numVal('mt-meta');
   var ahorrado=numVal('mt-ahorrado');
-  var inicio=document.getElementById('mt-inicio').value||null;
+  var inicio=document.getElementById('mt-inicio').value||new Date().toISOString().slice(0,10);
   var fin=document.getElementById('mt-fin').value||null;
   if(!nombre){alert('Escribe un nombre para la meta.');return;}
-  if(meta<=0){alert('Ingresa el monto de la meta.');return;}
+  if(meta<=0){alert('Ingresa la cuota mensual y la fecha para calcular la meta, o cambia a "Por meta total".');return;}
   var record={user_id:ST.userId,nombre:nombre,meta:meta,ahorrado:ahorrado,plazo:fin,icono:inicio};
   if(_editingMetaId){
     var res=await _sb.from('metas').update(record).eq('id',_editingMetaId).select();
@@ -2724,10 +2822,12 @@ function editMeta(id){
   document.getElementById('modal-meta-title').textContent='Editar meta';
   document.getElementById('mt-nombre').value=g.nombre;
   setNumInput('mt-meta',g.meta);
-  setNumInput('mt-ahorrado',g.ahorrado);
-  document.getElementById('mt-inicio').value=g.icono||'';
+  setNumInput('mt-ahorrado',g.ahorrado||0);
+  document.getElementById('mt-inicio').value=g.icono||new Date().toISOString().slice(0,10);
   document.getElementById('mt-fin').value=g.plazo||'';
+  setMetaTab('total');
   document.getElementById('modal-meta').style.display='flex';
+  setTimeout(calcMetaPreview,50);
 }
 async function deleteMeta(id){
   if(!confirm('¿Eliminar esta meta?'))return;
