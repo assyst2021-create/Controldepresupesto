@@ -1173,8 +1173,6 @@ function renderAlerts(m,balance){
   // ── Mes anterior para comparaciones ──
   var prevMonth=curMonth===0?11:curMonth-1;
   var prevYear=curMonth===0?curYear-1:curYear;
-  var prev=ST.MONTHLY_DATA[prevMonth]||{i:0,e:0,s:0};
-  // Recalcular prev con año correcto
   var prevMovs=ST.movements.filter(function(mv){
     var d=new Date(mv.date+'T12:00:00');
     return d.getMonth()===prevMonth&&d.getFullYear()===prevYear;
@@ -1184,37 +1182,59 @@ function renderAlerts(m,balance){
   var prevS=prevMovs.filter(function(x){return x.type==='savings';}).reduce(function(a,x){return a+x.amount;},0);
 
   // ── 1. Balance negativo ──
-  if(balance<0)
-    alerts.push({cls:'danger',icon:'📉',title:'Balance negativo',msg:'Tus gastos superan tus ingresos en '+fmt(Math.abs(balance))+' este mes.'});
+  if(balance<0){
+    var exceso=Math.abs(balance);
+    alerts.push({cls:'danger',icon:'📉',title:'Balance negativo: −'+fmt(exceso),msg:'Tus gastos ('+fmt(m.e)+') superan tus ingresos ('+fmt(m.i)+') en '+fmt(exceso)+'. Necesitas reducir gastos o registrar ingresos pendientes para corregirlo.'});
+  }
 
   // ── 2. Gastos vs ingresos ──
   if(m.i>0){
     var pctG=Math.round(m.e/m.i*100);
-    if(pctG>=90)alerts.push({cls:'danger',icon:'🚨',title:'Gastos críticos: '+pctG+'%',msg:'Casi sin margen. Solo te queda '+fmt(m.i-m.e)+' de margen este mes.'});
-    else if(pctG>=70)alerts.push({cls:'warn',icon:'⚠️',title:'Gastos elevados: '+pctG+'%',msg:'Ya consumiste '+pctG+'% de tus ingresos en gastos.'});
+    var margen=m.i-m.e;
+    if(pctG>=90)
+      alerts.push({cls:'danger',icon:'🚨',title:'Gastos críticos: '+pctG+'% de tus ingresos',msg:'Llevas gastado '+fmt(m.e)+' de '+fmt(m.i)+' que ingresaste. Solo te quedan '+fmt(Math.max(0,margen))+' libres. La regla 50/30/20 sugiere no superar el 80% en gastos necesarios.'});
+    else if(pctG>=70)
+      alerts.push({cls:'warn',icon:'⚠️',title:'Gastos elevados: '+pctG+'% de tus ingresos',msg:'Llevas '+fmt(m.e)+' en gastos sobre '+fmt(m.i)+' de ingresos. Te quedan '+fmt(margen)+' disponibles. Lo recomendable es mantener gastos por debajo del 70%.'});
   }
 
-  // ── 3. Ahorro insuficiente ──
-  if(m.i>0&&m.s<m.i*0.1)
-    alerts.push({cls:'info',icon:'💡',title:'Ahorra más',msg:'Solo estás ahorrando el '+Math.round(m.s/m.i*100)+'%. Lo ideal es al menos el 20% de tus ingresos.'});
+  // ── 3. Ahorro — regla del 20% ──
+  if(m.i>0){
+    var pctS=Math.round(m.s/m.i*100);
+    var metaAhorro=Math.round(m.i*0.20);
+    var faltaAhorro=Math.max(0,metaAhorro-m.s);
+    if(m.s===0){
+      alerts.push({cls:'danger',icon:'💰',title:'No has ahorrado nada este mes',msg:'Lo ideal es ahorrar al menos el 20% de tus ingresos ('+fmt(metaAhorro)+' con tu ingreso actual de '+fmt(m.i)+'). Empieza por registrar aunque sea un pequeño ahorro.'});
+    } else if(pctS<10){
+      alerts.push({cls:'warn',icon:'💡',title:'Ahorro muy bajo: solo el '+pctS+'% ('+fmt(m.s)+')',msg:'La meta recomendada es el 20% de tus ingresos = '+fmt(metaAhorro)+'/mes. Te faltan '+fmt(faltaAhorro)+' para llegar a esa meta este mes.'});
+    } else if(pctS<20){
+      alerts.push({cls:'info',icon:'💡',title:'Ahorro del '+pctS+'%, vas bien pero puedes mejorar',msg:'Llevas ahorrado '+fmt(m.s)+' de '+fmt(m.i)+' que ingresaste. La meta ideal es el 20% = '+fmt(metaAhorro)+'. Te faltan '+fmt(faltaAhorro)+' para alcanzarla.'});
+    } else {
+      alerts.push({cls:'success',icon:'🌟',title:'¡Excelente ahorro! '+pctS+'% de tus ingresos',msg:'Llevas ahorrado '+fmt(m.s)+' de '+fmt(m.i)+' (meta 20% = '+fmt(metaAhorro)+'). ¡Estás superando la recomendación!'});
+    }
+  }
 
   // ── 4. Comparación gastos vs mes anterior ──
   if(prevE>0&&m.e>0){
     var diffPct=Math.round((m.e-prevE)/prevE*100);
-    if(diffPct>=20)alerts.push({cls:'warn',icon:'📈',title:'Gastos '+diffPct+'% más altos que el mes pasado',msg:'Este mes llevas '+fmt(m.e)+' vs '+fmt(prevE)+' del mes anterior.'});
-    else if(diffPct<=-15)alerts.push({cls:'success',icon:'🎉',title:'¡Gastaste '+Math.abs(diffPct)+'% menos que el mes pasado!',msg:'Ahorraste '+fmt(prevE-m.e)+' en comparación con '+MONTHS_FULL[prevMonth]+'.'});
+    var diffAbs=Math.abs(m.e-prevE);
+    if(diffPct>=20)
+      alerts.push({cls:'warn',icon:'📈',title:'Gastos '+diffPct+'% más altos que '+MONTHS_FULL[prevMonth],msg:'Este mes llevas '+fmt(m.e)+' en gastos vs '+fmt(prevE)+' el mes pasado. La diferencia es de +'+fmt(diffAbs)+'. Revisa en qué categorías aumentaron.'});
+    else if(diffPct<=-15)
+      alerts.push({cls:'success',icon:'🎉',title:'¡Gastaste '+Math.abs(diffPct)+'% menos que '+MONTHS_FULL[prevMonth]+'!',msg:'Este mes: '+fmt(m.e)+' vs '+fmt(prevE)+' el mes pasado. Lograste reducir '+fmt(diffAbs)+' en gastos. ¡Sigue así!'});
   }
 
   // ── 5. Comparación ingresos vs mes anterior ──
   if(prevI>0&&m.i>0){
     var diffI=Math.round((m.i-prevI)/prevI*100);
-    if(diffI>=10)alerts.push({cls:'success',icon:'💰',title:'Ingresos '+diffI+'% más altos',msg:'Tus ingresos subieron '+fmt(m.i-prevI)+' respecto al mes pasado.'});
-    else if(diffI<=-15)alerts.push({cls:'warn',icon:'📉',title:'Ingresos bajaron un '+Math.abs(diffI)+'%',msg:'Este mes ingresaste '+fmt(prevI-m.i)+' menos que en '+MONTHS_FULL[prevMonth]+'.'});
+    var diffIabs=Math.abs(m.i-prevI);
+    if(diffI>=10)
+      alerts.push({cls:'success',icon:'💰',title:'Ingresos '+diffI+'% más altos que '+MONTHS_FULL[prevMonth],msg:'Este mes: '+fmt(m.i)+' vs '+fmt(prevI)+' el mes pasado (+'+fmt(diffIabs)+'). Aprovecha el ingreso extra para aumentar tu ahorro o pagar deudas.'});
+    else if(diffI<=-15)
+      alerts.push({cls:'warn',icon:'📉',title:'Ingresos bajaron '+Math.abs(diffI)+'% vs '+MONTHS_FULL[prevMonth],msg:'Este mes: '+fmt(m.i)+' vs '+fmt(prevI)+' el mes pasado (−'+fmt(diffIabs)+'). Considera reducir gastos variables para mantener tu porcentaje de ahorro.'});
   }
 
   // ── 6. Categoría disparada vs promedio ──
-  var catTotals={};
-  var catCounts={};
+  var catTotals={};var catCounts={};
   var movsConDatos=ST.movements.filter(function(mv){
     var d=new Date(mv.date+'T12:00:00');
     return mv.type==='expense'&&!(d.getMonth()===curMonth&&d.getFullYear()===curYear);
@@ -1229,62 +1249,76 @@ function renderAlerts(m,balance){
     var d=new Date(mv.date+'T12:00:00');
     return mv.type==='expense'&&d.getMonth()===curMonth&&d.getFullYear()===curYear;
   }).forEach(function(mv){var c=mv.category||'Otro';curCatMap[c]=(curCatMap[c]||0)+mv.amount;});
+  var topCat=null,topDiff=0;
   Object.keys(curCatMap).forEach(function(cat){
     var avg=catTotals[cat]&&catCounts[cat]?catTotals[cat]/Math.min(catCounts[cat],6):0;
-    if(avg>0&&curCatMap[cat]>avg*1.8&&curCatMap[cat]>50000)
-      alerts.push({cls:'warn',icon:'🔍',title:'Gasto alto en '+cat,msg:'Llevas '+fmt(curCatMap[cat])+' este mes, casi el doble de tu promedio habitual ('+fmt(Math.round(avg))+')'});
+    var diff=avg>0?curCatMap[cat]-avg:0;
+    if(avg>0&&curCatMap[cat]>avg*1.8&&curCatMap[cat]>50000&&diff>topDiff){topDiff=diff;topCat={cat:cat,cur:curCatMap[cat],avg:Math.round(avg)};}
   });
+  if(topCat)
+    alerts.push({cls:'warn',icon:'🔍',title:'Gasto inusual en '+topCat.cat+': '+fmt(topCat.cur),msg:'Este mes gastaste '+fmt(topCat.cur)+' en '+topCat.cat+', cuando tu promedio habitual es '+fmt(topCat.avg)+'. La diferencia es +'+fmt(topCat.cur-topCat.avg)+'. ¿Fue un gasto extraordinario?'});
 
-
-  // ── 8. Proyección de ahorro hacia metas ──
-  if(ST.goals&&ST.goals.length&&m.s>0){
+  // ── 7. Proyección de ahorro hacia metas ──
+  if(ST.goals&&ST.goals.length){
     ST.goals.forEach(function(g){
       var falta=g.meta-g.ahorrado;
+      var pctAlc=Math.min(100,Math.round(g.ahorrado/g.meta*100));
       if(falta>0){
-        var meses=Math.ceil(falta/m.s);
-        if(meses<=24)
-          alerts.push({cls:'info',icon:'🎯',title:'Meta "'+g.nombre+'": '+meses+' mes'+(meses===1?'':'es'),msg:'Si sigues ahorrando '+fmt(m.s)+'/mes, la alcanzas en '+meses+' mes'+(meses===1?'':'es')+'. Faltan '+fmt(falta)+'.'});
+        if(m.s>0){
+          var meses=Math.ceil(falta/m.s);
+          if(meses<=24)
+            alerts.push({cls:'info',icon:'🎯',title:'Meta "'+g.nombre+'": '+pctAlc+'% completada',msg:'Llevas '+fmt(g.ahorrado)+' de '+fmt(g.meta)+'. Faltan '+fmt(falta)+'. Ahorrando '+fmt(m.s)+'/mes (tu ritmo actual) la alcanzas en '+meses+' mes'+(meses===1?'':'es')+'.'});
+        } else {
+          alerts.push({cls:'info',icon:'🎯',title:'Meta "'+g.nombre+'": '+pctAlc+'% completada',msg:'Llevas '+fmt(g.ahorrado)+' de '+fmt(g.meta)+'. Faltan '+fmt(falta)+'. Para alcanzarla en 12 meses necesitas ahorrar '+fmt(Math.ceil(falta/12))+'/mes.'});
+        }
       } else {
-        alerts.push({cls:'success',icon:'🏆',title:'¡Meta alcanzada: '+g.nombre+'!',msg:'Ya tienes '+fmt(g.ahorrado)+' de tu meta de '+fmt(g.meta)+'.'});
+        alerts.push({cls:'success',icon:'🏆',title:'¡Meta alcanzada: '+g.nombre+'!',msg:'Ya tienes '+fmt(g.ahorrado)+' de los '+fmt(g.meta)+' que te propusiste. ¡Felicitaciones!'});
       }
     });
   }
 
-  // ── 9. Días sin registrar movimientos ──
+  // ── 8. Días sin registrar movimientos ──
   var latestMov=ST.movements.length?new Date(ST.movements[0].date+'T12:00:00'):null;
   if(latestMov){
     var diasSin=Math.floor((now-latestMov)/86400000);
-    if(diasSin>=5)
-      alerts.push({cls:'info',icon:'📝',title:'Llevas '+diasSin+' días sin registrar',msg:'Recuerda mantener tus movimientos al día para que los reportes sean precisos.'});
+    if(diasSin>=7)
+      alerts.push({cls:'warn',icon:'📝',title:'Llevas '+diasSin+' días sin registrar movimientos',msg:'Tu último movimiento fue el '+ST.movements[0].date+'. Registros desactualizados hacen que los reportes y recomendaciones sean menos precisos.'});
+    else if(diasSin>=4)
+      alerts.push({cls:'info',icon:'📝',title:''+diasSin+' días sin registrar movimientos',msg:'Tu último movimiento fue el '+ST.movements[0].date+'. Tómate 2 minutos para poner al día tus gastos e ingresos.'});
   }
 
-  // ── 10. Lista de compras pendiente grande ──
+  // ── 9. Lista de compras pendiente grande ──
   if(ST.compras&&ST.compras.length){
     var pendCompras=ST.compras.filter(function(c){return !c.comprado;});
     var totalPend=pendCompras.reduce(function(a,c){return a+parseFloat(c.precio_estimado||0);},0);
-    if(totalPend>0&&m.i>0&&totalPend>m.i*0.5)
-      alerts.push({cls:'info',icon:'🛒',title:'Lista de compras: '+fmt(totalPend),msg:'Tienes '+pendCompras.length+' compras pendientes que equivalen al '+Math.round(totalPend/m.i*100)+'% de tus ingresos.'});
+    if(totalPend>0&&m.i>0&&totalPend>m.i*0.5){
+      var pctPend=Math.round(totalPend/m.i*100);
+      alerts.push({cls:'info',icon:'🛒',title:'Lista de compras pendiente: '+fmt(totalPend) +' ('+pctPend+'%)',msg:'Tienes '+pendCompras.length+' artículos pendientes por '+fmt(totalPend)+', equivalente al '+pctPend+'% de tus ingresos ('+fmt(m.i)+'). Prioriza cuáles son urgentes antes de comprar.'});
+    }
   }
 
-  // ── 11. Gastos fijos vs ingresos fijos ──
+  // ── 10. Gastos fijos vs ingresos fijos ──
   var totalFijosG=ST.pagos.filter(function(p){return p.tipo==='gasto';}).reduce(function(a,p){return a+parseFloat(p.monto||0);},0);
   var totalFijosI=ST.pagos.filter(function(p){return p.tipo==='ingreso';}).reduce(function(a,p){return a+parseFloat(p.monto||0);},0);
-  if(totalFijosI>0&&totalFijosG>totalFijosI*0.8)
-    alerts.push({cls:'warn',icon:'💳',title:'Gastos fijos muy altos',msg:'Tus gastos fijos ('+fmt(totalFijosG)+') son el '+Math.round(totalFijosG/totalFijosI*100)+'% de tus ingresos fijos.'});
+  if(totalFijosI>0&&totalFijosG>totalFijosI*0.8){
+    var pctFijos=Math.round(totalFijosG/totalFijosI*100);
+    var libresMes=totalFijosI-totalFijosG;
+    alerts.push({cls:'warn',icon:'💳',title:'Gastos fijos muy altos: '+pctFijos+'% de tus ingresos fijos',msg:'Tienes comprometidos '+fmt(totalFijosG)+' en gastos fijos de '+fmt(totalFijosI)+' de ingresos fijos. Solo te quedan '+fmt(Math.max(0,libresMes))+' libres al mes. Lo recomendable es no superar el 50%.'});
+  }
 
-  // ── 12. Mejor racha de ahorro ──
+  // ── 11. Mejor racha de ahorro ──
   var mejorMes=-1,mejorAhorro=0;
   ST.MONTHLY_DATA.forEach(function(d,i){if(d&&d.s>mejorAhorro){mejorAhorro=d.s;mejorMes=i;}});
   if(mejorMes>=0&&mejorAhorro>0&&mejorMes===curMonth&&m.s>0)
-    alerts.push({cls:'success',icon:'⭐',title:'¡Mejor mes de ahorro del año!',msg:'Este mes llevas '+fmt(m.s)+' ahorrado, el mejor resultado del año hasta ahora.'});
+    alerts.push({cls:'success',icon:'⭐',title:'¡Tu mejor mes de ahorro del año!',msg:'Este mes llevas '+fmt(m.s)+' ahorrado, superando todos los meses anteriores. ¡Sigue con ese ritmo!'});
 
-  // ── 13. Sin ingresos registrados ──
+  // ── 12. Sin ingresos registrados ──
   if(m.i===0&&today>5)
-    alerts.push({cls:'info',icon:'💵',title:'Sin ingresos registrados este mes',msg:'¿Ya recibiste tu pago? Recuerda registrar tus ingresos.'});
+    alerts.push({cls:'info',icon:'💵',title:'Sin ingresos registrados este mes',msg:'¿Ya recibiste tu pago? Si tus ingresos son recurrentes, agrégalos en Presupuesto → Ingresos fijos para que el sistema los proyecte automáticamente.'});
 
   // ── Todo bien ──
   if(!alerts.length)
-    alerts.push({cls:'success',icon:'✅',title:'¡Finanzas en orden!',msg:'Todo bajo control este mes. Sigue así.'});
+    alerts.push({cls:'success',icon:'✅',title:'¡Tus finanzas están en orden!',msg:'Ingresos, gastos y ahorro van bien este mes. Sigue registrando todos tus movimientos para mantener el control.'});
 
   var el=document.getElementById('alerts-container');
   el.innerHTML=alerts.map(function(a){
