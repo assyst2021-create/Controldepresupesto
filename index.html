@@ -406,7 +406,6 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
         <span>Categorías</span>
         <div style="display:flex;align-items:center;gap:6px;">
           <span id="cat-count-label" style="font-size:11.5px;font-weight:700;color:var(--primary);background:#EFF6FF;border-radius:20px;padding:2px 10px;display:none;"></span>
-          <button type="button" onclick="openCatManager()" style="font-size:11.5px;font-weight:700;color:var(--gray);background:#F1F5F9;border:1.5px solid var(--border);border-radius:20px;padding:3px 10px;cursor:pointer;">⚙️ Gestionar</button>
         </div>
       </label>
       <div class="cat-chips" id="cat-chips-container"></div>
@@ -493,7 +492,6 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
     <div class="form-group">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
         <label style="margin:0;">Categoría</label>
-        <button type="button" onclick="openCatManager('compra')" style="background:none;border:none;color:var(--primary);font-size:12px;font-weight:700;cursor:pointer;padding:0;">⚙️ Gestionar</button>
       </div>
       <div id="c-cat-chips" class="cat-chips-wrap"></div>
     </div>
@@ -1931,6 +1929,45 @@ function loadCustomCats(){
 function saveCustomCats(){
   try{localStorage.setItem(_catsKey(),JSON.stringify(_customCats));}catch(e){}
 }
+function focusCatInput(id){var el=document.getElementById(id);if(el)el.focus();}
+function addCatInline(ctx){
+  var inputId=ctx==='compra'?'ccat-inline-input':'cat-inline-input';
+  var inp=document.getElementById(inputId);
+  if(!inp)return;
+  var nombre=inp.value.trim();
+  if(!nombre)return;
+  loadCustomCats();
+  if(_customCats.find(function(c){return c.v===nombre;})){inp.value='';return;}
+  _customCats.push({v:nombre,e:'🏷️'});
+  saveCustomCats();
+  inp.value='';
+  if(ctx==='compra'){
+    buildCompraCatChips(_selectedCompraCat);
+    var newEl=document.querySelector('.cat-list-item[data-ccat="'+CSS.escape(nombre)+'"]');
+    if(newEl){toggleCompraCat(newEl);}
+  } else {
+    var cur=_selectedCats.slice();
+    buildCatChips(null);
+    cur.forEach(function(c){
+      if(_selectedCats.indexOf(c)<0)_selectedCats.push(c);
+      var el=document.querySelector('.cat-list-item[data-cat="'+CSS.escape(c)+'"]');
+      if(el)el.classList.add('selected');
+    });
+    var newMov=document.querySelector('.cat-list-item[data-cat="'+CSS.escape(nombre)+'"]');
+    if(newMov){toggleCat(newMov);}
+    updateCatCountLabel();
+  }
+}
+function deleteCatInline(v){
+  loadCustomCats();
+  _customCats=_customCats.filter(function(c){return c.v!==v;});
+  saveCustomCats();
+  _selectedCats=_selectedCats.filter(function(c){return c!==v;});
+  if(_selectedCompraCat===v)_selectedCompraCat=null;
+  buildCatChips(null);
+  buildCompraCatChips(_selectedCompraCat);
+  updateCatCountLabel();
+}
 function getCatList(){
   return CAT_LIST_DEFAULT.concat(_customCats.map(function(c){return{v:c.v,e:c.e||'🏷️',custom:true};}));
 }
@@ -1944,14 +1981,20 @@ function buildCatChips(preselected){
   var html='<div class="cat-list">';
   getCatList().forEach(function(c){
     var sel=_selectedCats.indexOf(c.v)>=0?' selected':'';
-    html+='<div class="cat-list-item'+sel+'" data-cat="'+esc(c.v)+'" onclick="toggleCat(this)"><div class="cat-check">✓</div><span>'+esc(c.e)+'</span><span>'+esc(c.v)+'</span></div>';
+    var del=c.custom?'<button type="button" onclick="event.stopPropagation();deleteCatInline(\''+esc(c.v)+'\')" style="margin-left:auto;background:none;border:none;color:#CBD5E1;font-size:13px;cursor:pointer;padding:0 2px;line-height:1;" title="Eliminar">✕</button>':'';
+    html+='<div class="cat-list-item'+sel+'" data-cat="'+esc(c.v)+'" onclick="toggleCat(this)"><div class="cat-check">✓</div><span>'+esc(c.e)+'</span><span style="flex:1;">'+esc(c.v)+'</span>'+del+'</div>';
   });
+  html+='<div class="cat-list-item cat-add-row" onclick="focusCatInput(\'cat-inline-input\')" style="cursor:text;gap:6px;">'+
+    '<span style="font-size:16px;color:#94A3B8;">+</span>'+
+    '<input id="cat-inline-input" type="text" placeholder="Nueva categoría..." maxlength="30" onclick="event.stopPropagation()" onkeydown="if(event.key===\'Enter\')addCatInline(\'mov\')" style="border:none;outline:none;background:transparent;font-size:13.5px;color:var(--gray-dark);flex:1;min-width:0;"/>'+
+    '<button type="button" onclick="event.stopPropagation();addCatInline(\'mov\')" style="background:var(--primary);color:#fff;border:none;border-radius:7px;padding:4px 10px;font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0;">Agregar</button>'+
+  '</div>';
   html+='</div>';
   container.innerHTML=html;
   if(preselected&&!getCatList().find(function(c){return c.v===preselected;})){
-    var extra='<div class="cat-list-item selected" data-cat="'+esc(preselected)+'" onclick="toggleCat(this)"><div class="cat-check">✓</div><span>🏷️</span><span>'+esc(preselected)+'</span></div>';
+    var extra='<div class="cat-list-item selected" data-cat="'+esc(preselected)+'" onclick="toggleCat(this)"><div class="cat-check">✓</div><span>🏷️</span><span style="flex:1;">'+esc(preselected)+'</span></div>';
     var list=container.querySelector('.cat-list');
-    if(list)list.insertAdjacentHTML('beforeend',extra);
+    if(list){var addRow=list.querySelector('.cat-add-row');if(addRow)addRow.insertAdjacentHTML('beforebegin',extra);}
     if(_selectedCats.indexOf(preselected)<0)_selectedCats.push(preselected);
   }
   updateCatCountLabel();
@@ -2309,8 +2352,14 @@ function buildCompraCatChips(preselected){
   var html='<div class="cat-list">';
   getCompraCatList().forEach(function(c){
     var sel=_selectedCompraCat===c.v?' selected':'';
-    html+='<div class="cat-list-item'+sel+'" data-ccat="'+esc(c.v)+'" onclick="toggleCompraCat(this)"><div class="cat-check">✓</div><span>'+esc(c.e)+'</span><span>'+esc(c.v)+'</span></div>';
+    var del=c.custom?'<button type="button" onclick="event.stopPropagation();deleteCatInline(\''+esc(c.v)+'\')" style="margin-left:auto;background:none;border:none;color:#CBD5E1;font-size:13px;cursor:pointer;padding:0 2px;line-height:1;" title="Eliminar">✕</button>':'';
+    html+='<div class="cat-list-item'+sel+'" data-ccat="'+esc(c.v)+'" onclick="toggleCompraCat(this)"><div class="cat-check">✓</div><span>'+esc(c.e)+'</span><span style="flex:1;">'+esc(c.v)+'</span>'+del+'</div>';
   });
+  html+='<div class="cat-list-item cat-add-row" onclick="focusCatInput(\'ccat-inline-input\')" style="cursor:text;gap:6px;">'+
+    '<span style="font-size:16px;color:#94A3B8;">+</span>'+
+    '<input id="ccat-inline-input" type="text" placeholder="Nueva categoría..." maxlength="30" onclick="event.stopPropagation()" onkeydown="if(event.key===\'Enter\')addCatInline(\'compra\')" style="border:none;outline:none;background:transparent;font-size:13.5px;color:var(--gray-dark);flex:1;min-width:0;"/>'+
+    '<button type="button" onclick="event.stopPropagation();addCatInline(\'compra\')" style="background:var(--primary);color:#fff;border:none;border-radius:7px;padding:4px 10px;font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0;">Agregar</button>'+
+  '</div>';
   html+='</div>';
   wrap.innerHTML=html;
 }
