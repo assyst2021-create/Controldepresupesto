@@ -547,24 +547,24 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
     </div>
     <!-- 2. Monto total a ahorrar -->
     <div class="form-group">
-      <label class="form-label">¿Cuánto quiero ahorrar?</label>
+      <label class="form-label">¿Cuánto quieres ahorrar en total?</label>
       <input id="mt-meta" class="form-input" type="text" inputmode="numeric" placeholder="0" oninput="numFmt(this);calcMetaPreview()" style="font-size:22px;font-weight:800;"/>
     </div>
-    <!-- 3. Fechas -->
+    <!-- 3. Ya ahorrado -->
+    <div class="form-group">
+      <label class="form-label">Ya tengo ahorrado</label>
+      <input id="mt-ahorrado" class="form-input" type="text" inputmode="numeric" placeholder="0" oninput="numFmt(this);calcMetaPreview()"/>
+    </div>
+    <!-- 4. Fechas -->
     <div class="modal-row">
       <div class="form-group">
-        <label class="form-label">Desde</label>
+        <label class="form-label">Fecha inicial</label>
         <input id="mt-inicio" class="form-input" type="date" oninput="calcMetaPreview()"/>
       </div>
       <div class="form-group">
-        <label class="form-label">Hasta</label>
+        <label class="form-label">Fecha final</label>
         <input id="mt-fin" class="form-input" type="date" oninput="calcMetaPreview()"/>
       </div>
-    </div>
-    <!-- 4. Ya ahorrado -->
-    <div class="form-group">
-      <label class="form-label">¿Cuánto tengo ahorrado hasta ahora?</label>
-      <input id="mt-ahorrado" class="form-input" type="text" inputmode="numeric" placeholder="0" oninput="numFmt(this);calcMetaPreview()"/>
     </div>
     <!-- 5. Cálculo automático -->
     <div id="mt-preview" style="display:none;background:linear-gradient(135deg,#EFF6FF,#F0FDF4);border:1.5px solid #BFDBFE;border-radius:14px;padding:14px 16px;margin-bottom:4px;">
