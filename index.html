@@ -457,9 +457,7 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
     <div class="form-group"><label>Nombre</label><input id="p-nombre" type="text" placeholder="Ej: Arriendo, Netflix, Salario..."/></div>
     <div class="modal-row">
       <div class="form-group"><label>Monto mensual</label><input id="p-monto" type="text" inputmode="numeric" placeholder="0" oninput="numFmt(this)"/></div>
-      <div class="form-group"><label>¿Qué día del mes?</label>
-        <select id="p-dia"><option value="">Sin día específico</option></select>
-      </div>
+      <div class="form-group"><label>Fecha</label><input id="p-dia-fecha" type="date"/></div>
     </div>
     <div class="form-group"><label>Entidad bancaria / Empresa</label><input id="p-entidad" type="text" placeholder="Ej: Bancolombia, Claro, Empresa..."/></div>
     <div class="modal-actions">
@@ -2593,13 +2591,6 @@ async function deleteMovement(id){
 
 // PAGOS FIJOS
 var _editingPagoId=null,_pagoTipo='gasto';
-function buildDiaSelect(selectedVal){
-  var sel=document.getElementById('p-dia');
-  if(!sel)return;
-  var opts='<option value="">Sin día específico</option>';
-  for(var d=1;d<=31;d++){opts+='<option value="'+d+'"'+(selectedVal==d?' selected':'')+'>Día '+d+' de cada mes</option>';}
-  sel.innerHTML=opts;
-}
 // AGREGAR AL MES (movimiento puntual para _presMes/_presYear)
 var _addMesTipo='gasto',_savingAddMes=false;
 function setAddMesTipo(t){_addMesTipo=t;document.getElementById('amt-g').className='mtt'+(t==='gasto'?' active-e':'');document.getElementById('amt-i').className='mtt'+(t==='ingreso'?' active-i':'');}
@@ -2653,9 +2644,9 @@ function openPagoModal(id){
     document.getElementById('p-nombre').value='';
     document.getElementById('p-monto').value='';
     document.getElementById('p-entidad').value='';
+    document.getElementById('p-dia-fecha').value='';
     document.getElementById('modal-pago-title').textContent='Nuevo pago fijo';
     setPagoTipo(_pagoTipo||'gasto');
-    buildDiaSelect('');
   }
   document.getElementById('modal-pago').style.display='flex';
 }
@@ -2666,7 +2657,8 @@ async function submitPago(){
   if(_savingPago)return;
   var nombre=document.getElementById('p-nombre').value.trim();
   var monto=numVal('p-monto');
-  var dia=parseInt(document.getElementById('p-dia').value)||null;
+  var fechaVal=document.getElementById('p-dia-fecha').value;
+  var dia=fechaVal?parseInt(fechaVal.split('-')[2]):null;
   var entidad=document.getElementById('p-entidad').value.trim()||null;
   if(!nombre){alert('Escribe un nombre.');return;}
   if(!monto||monto<=0){alert('Ingresa un monto válido.');return;}
@@ -2696,7 +2688,14 @@ function editPago(id){
   document.getElementById('p-nombre').value=p.nombre;
   setNumInput('p-monto',p.monto);
   document.getElementById('p-entidad').value=p.entidad||'';
-  buildDiaSelect(p.dia_cobro||'');
+  if(p.dia_cobro){
+    var yy=_presYear,mm=String(_presMes+1).padStart(2,'0');
+    var ddMax=new Date(_presYear,_presMes+1,0).getDate();
+    var dd=String(Math.min(p.dia_cobro,ddMax)).padStart(2,'0');
+    document.getElementById('p-dia-fecha').value=yy+'-'+mm+'-'+dd;
+  } else {
+    document.getElementById('p-dia-fecha').value='';
+  }
   setPagoTipo(p.tipo);
   document.getElementById('modal-pago').style.display='flex';
 }
