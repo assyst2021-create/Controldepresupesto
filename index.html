@@ -799,8 +799,14 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
           <button class="btn btn-ghost" style="padding:6px 12px;font-size:12px;" onclick="openRecordatorioModal()">+ Agregar</button>
         </div>
         <div class="card" style="overflow:hidden;" id="recordatorios-card"></div>
+        <!-- Resumen mes actual -->
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin:20px 0 14px;">
+          <div class="card stat-card"><div class="sc-label">Ingresos del mes</div><div class="sc-val" style="color:var(--income);font-size:20px;" id="pres-mes-income">$0</div></div>
+          <div class="card stat-card"><div class="sc-label">Gastos del mes</div><div class="sc-val" style="color:var(--expense);font-size:20px;" id="pres-mes-expense">$0</div></div>
+          <div class="card stat-card"><div class="sc-label">Balance del mes</div><div class="sc-val" style="font-size:20px;" id="pres-mes-balance">$0</div></div>
+        </div>
         <!-- Alertas y recomendaciones -->
-        <div style="display:flex;align-items:center;justify-content:space-between;margin:20px 0 10px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin:0 0 10px;">
           <div class="section-head" style="margin:0;">Alertas y recomendaciones</div>
         </div>
         <div id="alerts-container" style="margin-bottom:20px;"></div>
@@ -1392,13 +1398,20 @@ function renderPresupuesto(){
   ic.innerHTML=ingresos.length?ingresos.map(function(p){return pagoHTML(p,'ingreso');}).join(''):
     '<div class="empty-state"><div class="e-icon">💵</div><p>Sin ingresos fijos aún</p></div>';
   renderRecordatorios();
-  // Alertas basadas en el mes actual
+  // Resumen y alertas del mes actual
   var _hoy=new Date();var _cm=_hoy.getMonth();var _cy=_hoy.getFullYear();
   var _movMes=ST.movements.filter(function(mv){var d=new Date(mv.date+'T12:00:00');return d.getMonth()===_cm&&d.getFullYear()===_cy;});
   var _totI=_movMes.filter(function(x){return x.type==='income';}).reduce(function(a,x){return a+x.amount;},0);
   var _totE=_movMes.filter(function(x){return x.type==='expense';}).reduce(function(a,x){return a+x.amount;},0);
   var _totS=_movMes.filter(function(x){return x.type==='savings';}).reduce(function(a,x){return a+x.amount;},0);
-  renderAlerts({i:_totI,e:_totE,s:_totS},_totI-_totE-_totS);
+  var _bal=_totI-_totE-_totS;
+  var iEl=document.getElementById('pres-mes-income');
+  var eEl=document.getElementById('pres-mes-expense');
+  var bEl=document.getElementById('pres-mes-balance');
+  if(iEl)iEl.textContent=fmt(_totI);
+  if(eEl)eEl.textContent=fmt(_totE);
+  if(bEl){bEl.textContent=(_bal<0?'- ':'')+fmt(Math.abs(_bal));bEl.style.color=_bal<0?'var(--expense)':_bal>0?'var(--income)':'var(--gray)';}
+  renderAlerts({i:_totI,e:_totE,s:_totS},_bal);
 }
 
 // REGISTRAR PAGO/INGRESO FIJO ESTE MES
