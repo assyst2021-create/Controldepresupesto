@@ -419,6 +419,37 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
   </div>
 </div>
 
+<!-- MODAL GRÁFICA ANUAL -->
+<div id="modal-grafica" class="modal-overlay" onclick="if(event.target===this)closeGrafica()">
+  <div class="modal-box" style="max-width:720px;">
+    <div class="modal-header">
+      <h3>📊 Gráfica anual</h3>
+      <button class="modal-close" onclick="closeGrafica()">&#x2715;</button>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:14px;">
+      <button onclick="graficaYearNav(-1)" style="width:32px;height:32px;border:none;background:#F1F5F9;border-radius:8px;cursor:pointer;font-size:16px;color:#475569;">‹</button>
+      <span id="grafica-year-label" style="font-size:15px;font-weight:800;color:#1E293B;min-width:60px;text-align:center;"></span>
+      <button onclick="graficaYearNav(1)" style="width:32px;height:32px;border:none;background:#F1F5F9;border-radius:8px;cursor:pointer;font-size:16px;color:#475569;">›</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px;">
+      <div class="card stat-card" style="padding:10px;"><div class="sc-label">Ingresos año</div><div class="sc-val" style="color:var(--income);font-size:17px;" id="grafica-tot-i">$0</div></div>
+      <div class="card stat-card" style="padding:10px;"><div class="sc-label">Gastos año</div><div class="sc-val" style="color:var(--expense);font-size:17px;" id="grafica-tot-e">$0</div></div>
+      <div class="card stat-card" style="padding:10px;"><div class="sc-label">Ahorro año</div><div class="sc-val" style="color:var(--savings);font-size:17px;" id="grafica-tot-s">$0</div></div>
+    </div>
+    <div class="card" style="padding:16px 12px 12px;position:relative;">
+      <div style="position:relative;width:100%;">
+        <svg id="grafica-svg" style="display:block;width:100%;overflow:visible;"></svg>
+        <div id="grafica-tooltip" style="display:none;position:absolute;background:#1E293B;color:#fff;border-radius:12px;padding:9px 13px;font-size:12px;pointer-events:none;z-index:50;min-width:150px;box-shadow:0 4px 20px rgba(0,0,0,.25);transform:translateX(-50%);"></div>
+      </div>
+      <div style="display:flex;gap:16px;margin-top:12px;font-size:12px;font-weight:600;justify-content:center;">
+        <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:3px;background:#16A34A;display:inline-block;"></span>Ingresos</span>
+        <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:3px;background:#DC2626;display:inline-block;"></span>Gastos</span>
+        <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:3px;background:#F59E0B;display:inline-block;"></span>Ahorro</span>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL AGREGAR AL MES -->
 <div id="modal-add-mes" class="modal-overlay" onclick="if(event.target===this)closeAddMes()">
   <div class="modal-box">
@@ -807,6 +838,7 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
           <span id="pres-mes-nav-label" style="font-size:14px;font-weight:800;color:#1E293B;min-width:140px;text-align:center;"></span>
           <button onclick="presMesNav(1)" style="width:32px;height:32px;border:none;background:transparent;cursor:pointer;font-size:18px;color:#475569;border-radius:8px;display:flex;align-items:center;justify-content:center;transition:background .15s;" onmouseover="this.style.background='#E2E8F0'" onmouseout="this.style.background='transparent'">›</button>
           <button onclick="presMesNav(0)" style="margin-left:6px;padding:4px 12px;border:none;background:#1E40AF;color:#fff;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">Hoy</button>
+          <button onclick="openGrafica()" style="margin-left:6px;padding:4px 12px;border:none;background:#fff;color:#1E40AF;border:1.5px solid #C7D2FE;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:5px;">📊 Gráfica</button>
         </div>
         <!-- Tablas de pagos -->
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
@@ -1280,6 +1312,81 @@ function presMesNav(delta){
     else if(_presMes>11){_presMes=0;_presYear++;}
   }
   renderTablasPagos();
+}
+
+// GRÁFICA ANUAL (independiente del mes seleccionado en la tabla)
+var _graficaYear=new Date().getFullYear();
+function openGrafica(){
+  _graficaYear=_presYear||new Date().getFullYear();
+  document.getElementById('modal-grafica').style.display='flex';
+  renderGraficaChart();
+}
+function closeGrafica(){document.getElementById('modal-grafica').style.display='none';}
+function graficaYearNav(delta){_graficaYear+=delta;renderGraficaChart();}
+function renderGraficaChart(){
+  document.getElementById('grafica-year-label').textContent=_graficaYear;
+  var data=Array(12).fill(null).map(function(){return{i:0,e:0,s:0};});
+  ST.movements.forEach(function(mv){
+    var d=new Date(mv.date+'T12:00:00');
+    if(d.getFullYear()!==_graficaYear)return;
+    var mo=d.getMonth();
+    if(mv.type==='income')data[mo].i+=mv.amount;
+    else if(mv.type==='expense')data[mo].e+=mv.amount;
+    else if(mv.type==='savings')data[mo].s+=mv.amount;
+  });
+  var totI=data.reduce(function(a,x){return a+x.i;},0);
+  var totE=data.reduce(function(a,x){return a+x.e;},0);
+  var totS=data.reduce(function(a,x){return a+x.s;},0);
+  document.getElementById('grafica-tot-i').textContent=fmt(totI);
+  document.getElementById('grafica-tot-e').textContent=fmt(totE);
+  document.getElementById('grafica-tot-s').textContent=fmt(totS);
+
+  var svg=document.getElementById('grafica-svg');
+  var tooltip=document.getElementById('grafica-tooltip');
+  var W=680,H=280,padL=40,padB=30,padT=10;
+  var chartW=W-padL-10,chartH=H-padT-padB;
+  var maxVal=Math.max(1,Math.max.apply(null,data.map(function(x){return Math.max(x.i,x.e,x.s);})));
+  var groupW=chartW/12;
+  var barW=Math.min(9,groupW/4.2);
+  svg.setAttribute('viewBox','0 0 '+W+' '+H);
+  var svgHtml='';
+  // Líneas guía horizontales
+  for(var g=0;g<=4;g++){
+    var gy=padT+chartH-(chartH*g/4);
+    svgHtml+='<line x1="'+padL+'" y1="'+gy+'" x2="'+(W-10)+'" y2="'+gy+'" stroke="#F1F5F9" stroke-width="1"/>';
+    var val=Math.round(maxVal*g/4);
+    svgHtml+='<text x="'+(padL-6)+'" y="'+(gy+3)+'" font-size="9" fill="#94A3B8" text-anchor="end">'+(val>=1000?Math.round(val/1000)+'k':val)+'</text>';
+  }
+  data.forEach(function(x,i){
+    var gx=padL+groupW*i+groupW/2;
+    var bars=[{v:x.i,color:'#16A34A',label:'Ingresos'},{v:x.e,color:'#DC2626',label:'Gastos'},{v:x.s,color:'#F59E0B',label:'Ahorro'}];
+    var startX=gx-(barW*3+4)/2;
+    bars.forEach(function(b,bi){
+      var bh=Math.round(chartH*b.v/maxVal);
+      var bx=startX+bi*(barW+2);
+      var by=padT+chartH-bh;
+      svgHtml+='<rect x="'+bx+'" y="'+by+'" width="'+barW+'" height="'+bh+'" rx="2" fill="'+b.color+'" class="grafica-bar" data-month="'+i+'" style="cursor:pointer;transition:opacity .15s;"/>';
+    });
+    svgHtml+='<text x="'+gx+'" y="'+(H-8)+'" font-size="10" font-weight="700" fill="#64748B" text-anchor="middle">'+MONTHS_SHORT[i]+'</text>';
+  });
+  svg.innerHTML=svgHtml;
+  svg.querySelectorAll('.grafica-bar').forEach(function(bar){
+    bar.addEventListener('mouseenter',function(e){
+      var mo=parseInt(bar.dataset.month);
+      var x=data[mo];
+      bar.style.opacity='0.75';
+      tooltip.innerHTML='<div style="font-weight:800;margin-bottom:5px;">'+MONTHS_FULL[mo]+' '+_graficaYear+'</div>'+
+        '<div style="color:#4ADE80;">Ingresos: '+fmt(x.i)+'</div>'+
+        '<div style="color:#F87171;">Gastos: '+fmt(x.e)+'</div>'+
+        '<div style="color:#FBBF24;">Ahorro: '+fmt(x.s)+'</div>';
+      tooltip.style.display='block';
+      var rect=bar.getBoundingClientRect();
+      var svgRect=svg.getBoundingClientRect();
+      tooltip.style.left=(rect.left-svgRect.left+rect.width/2)+'px';
+      tooltip.style.top=(rect.top-svgRect.top-70)+'px';
+    });
+    bar.addEventListener('mouseleave',function(){bar.style.opacity='1';tooltip.style.display='none';});
+  });
 }
 function renderTablasPagos(){
   var gastos=ST.pagos.filter(function(p){return p.tipo==='gasto';});
