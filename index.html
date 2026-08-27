@@ -1482,9 +1482,10 @@ function renderTablasPagos(){
     var amtColor=tipo==='gasto'?'#DC2626':'#16A34A';
     var mm=String(_presMes+1).padStart(2,'0');var yy=_presYear;
     var cb='border-bottom:1px solid #E2E8F0;border-right:1px solid #E2E8F0;text-align:center;';
+    var mbs='width:20px;height:20px;border:none;border-radius:5px;background:#F1F5F9;cursor:pointer;font-size:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;padding:0;';
     function moveBtns(key){
-      return '<button class="icon-btn" title="Subir" onclick="moveRow(\''+tipo+'\',\''+key+'\',-1)" style="padding:2px;">🔼</button>'+
-             '<button class="icon-btn" title="Bajar" onclick="moveRow(\''+tipo+'\',\''+key+'\',1)" style="padding:2px;">🔽</button>';
+      return '<button title="Subir" onclick="moveRow(\''+tipo+'\',\''+key+'\',-1)" style="'+mbs+'">▲</button>'+
+             '<button title="Bajar" onclick="moveRow(\''+tipo+'\',\''+key+'\',1)" style="'+mbs+'">▼</button>';
     }
     // Unifica plantilla + ítems puntuales del mes en una sola lista ordenada por día
     var allRows=items.map(function(p){
@@ -1504,10 +1505,12 @@ function renderTablasPagos(){
           '<td style="padding:9px 12px;font-size:13.5px;font-weight:600;color:#1E293B;'+cb+'">'+esc(p.nombre)+'</td>'+
           '<td style="padding:9px 12px;font-size:13.5px;font-weight:700;color:'+amtColor+';white-space:nowrap;'+cb+'">'+fmt(p.monto)+'</td>'+
           '<td style="padding:9px 12px;'+cb+'">'+tipoBadge(p.entidad||p.nombre)+'</td>'+
-          '<td style="padding:9px 8px;text-align:center;white-space:nowrap;border-bottom:1px solid #E2E8F0;">'+
-            moveBtns(key)+
-            '<button class="icon-btn edit" onclick="editPago(\''+p.id+'\')">✏️</button>'+
-            '<button class="icon-btn del" onclick="deletePago(\''+p.id+'\')">🗑️</button>'+
+          '<td style="padding:6px 8px;white-space:nowrap;border-bottom:1px solid #E2E8F0;">'+
+            '<div style="display:flex;align-items:center;justify-content:center;gap:3px;">'+
+              moveBtns(key)+
+              '<button class="icon-btn edit" style="width:24px;height:24px;font-size:12px;" onclick="editPago(\''+p.id+'\')">✏️</button>'+
+              '<button class="icon-btn del" style="width:24px;height:24px;font-size:12px;" onclick="deletePago(\''+p.id+'\')">🗑️</button>'+
+            '</div>'+
           '</td>'+
         '</tr>';
       })()};
@@ -1522,7 +1525,7 @@ function renderTablasPagos(){
         '<td style="padding:9px 12px;font-size:13.5px;font-weight:600;color:#1E293B;'+cb+'">'+esc(nombre)+'</td>'+
         '<td style="padding:9px 12px;font-size:13.5px;font-weight:700;color:'+amtColor+';white-space:nowrap;'+cb+'">'+fmt(mv.amount)+'</td>'+
         '<td style="padding:9px 12px;'+cb+'">'+tipoBadge(mv.category||nombre)+'</td>'+
-        '<td style="padding:9px 8px;text-align:center;border-bottom:1px solid #E2E8F0;">'+moveBtns(key)+'<button class="icon-btn edit" onclick="editMovMes(\''+mv.id+'\')">✏️</button><button class="icon-btn del" onclick="deleteMovMes(\''+mv.id+'\')">🗑️</button></td>'+
+        '<td style="padding:6px 8px;white-space:nowrap;border-bottom:1px solid #E2E8F0;"><div style="display:flex;align-items:center;justify-content:center;gap:3px;">'+moveBtns(key)+'<button class="icon-btn edit" style="width:24px;height:24px;font-size:12px;" onclick="editMovMes(\''+mv.id+'\')">✏️</button><button class="icon-btn del" style="width:24px;height:24px;font-size:12px;" onclick="deleteMovMes(\''+mv.id+'\')">🗑️</button></div></td>'+
       '</tr>'};
     }));
     var pref=_getOrdenArr(tipo);
