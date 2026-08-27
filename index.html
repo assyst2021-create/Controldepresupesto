@@ -1399,6 +1399,18 @@ function renderPresupuesto(){
   document.getElementById('fixed-expense-total').textContent=fmt(totalG);
   document.getElementById('fixed-expense-count').textContent=gastos.length+(gastos.length===1?' obligación':' obligaciones');
 
+  // Pre-compute which pagos_fijos were already registered this month
+  var _hoyPF=new Date();var _cMPF=_hoyPF.getMonth();var _cYPF=_hoyPF.getFullYear();
+  var _pagadosMes={};
+  ST.movements.forEach(function(mv){
+    var d=new Date(mv.date+'T12:00:00');
+    if(d.getMonth()!==_cMPF||d.getFullYear()!==_cYPF)return;
+    var mg=mv.description&&mv.description.match(/^Pago: (.+)$/);
+    if(mg)_pagadosMes['g:'+mg[1]]=mv.id;
+    var mi=mv.description&&mv.description.match(/^Ingreso: (.+)$/);
+    if(mi)_pagadosMes['i:'+mi[1]]=mv.id;
+  });
+
   function pagoHTML(p,tipo){
     var color=tipo==='gasto'?'var(--expense)':'var(--income)';
     var bg=tipo==='gasto'?'#FFF5F5':'#F0FDF4';
@@ -1406,6 +1418,13 @@ function renderPresupuesto(){
     var det='';
     if(p.entidad)det+=p.entidad;
     if(p.dia_cobro)det+=(det?' · ':'')+'Cada mes, día '+p.dia_cobro;
+    var key=(tipo==='gasto'?'g:':'i:')+p.nombre;
+    var pagado=!!_pagadosMes[key];
+    var btnLabel=tipo==='gasto'?(pagado?'✓ Pagado':'Pagar'):(pagado?'✓ Recibido':'Registrar');
+    var btnStyle=pagado
+      ?'background:#D1FAE5;color:#065F46;border:1.5px solid #6EE7B7;cursor:default;'
+      :(tipo==='gasto'?'background:#1E40AF;color:#fff;border:1.5px solid #1E40AF;cursor:pointer;':'background:#16A34A;color:#fff;border:1.5px solid #16A34A;cursor:pointer;');
+    var btnClick=pagado?'':'onclick="registrarPagoFijo(\''+p.id+'\',\''+tipo+'\')"';
     return '<div class="pago-item">'+
       '<div class="pago-icon-wrap" style="background:'+bg+';font-size:18px;">'+ico+'</div>'+
       '<div style="flex:1;min-width:0;">'+
@@ -1413,6 +1432,7 @@ function renderPresupuesto(){
         (det?'<div class="pago-detail">'+esc(det)+'</div>':'')+
       '</div>'+
       '<div class="pago-amount" style="color:'+color+';">'+fmt(p.monto)+'</div>'+
+      '<button style="padding:5px 12px;border-radius:20px;font-size:12px;font-weight:700;'+btnStyle+'" '+btnClick+' '+(pagado?'disabled':'')+'>'+btnLabel+'</button>'+
       '<button class="icon-btn edit" onclick="editPago(\''+p.id+'\')">✏️</button>'+
       '<button class="icon-btn del" onclick="deletePago(\''+p.id+'\')">🗑️</button>'+
     '</div>';
@@ -1424,6 +1444,30 @@ function renderPresupuesto(){
   ic.innerHTML=ingresos.length?ingresos.map(function(p){return pagoHTML(p,'ingreso');}).join(''):
     '<div class="empty-state"><div class="e-icon">💵</div><p>Sin ingresos fijos aún</p></div>';
   renderRecordatorios();
+}
+
+// REGISTRAR PAGO/INGRESO FIJO ESTE MES
+async function registrarPagoFijo(id,tipo){
+  var p=ST.pagos.find(function(x){return x.id===id;});
+  if(!p)return;
+  var btn=event&&event.currentTarget?event.currentTarget:null;
+  if(btn){btn.disabled=true;btn.textContent='Guardando...';}
+  var desc=(tipo==='gasto'?'Pago: ':'Ingreso: ')+p.nombre;
+  var tipoMov=tipo==='gasto'?'expense':'income';
+  var fecha=localDateStr();
+  var record={user_id:ST.userId,tipo:tipoMov,descripcion:desc,monto:p.monto,categoria:p.entidad||p.nombre,fecha:fecha,icono:p.icono||'💳'};
+  try{
+    var res=await _sb.from('movimientos').insert(record).select();
+    if(res.error){alert('Error al registrar: '+res.error.message);return;}
+    if(res.data&&res.data[0]){
+      var r=res.data[0];
+      ST.movements.unshift({id:r.id,type:r.tipo,description:r.descripcion,amount:parseFloat(r.monto),category:r.categoria,date:r.fecha,icon:r.icono||'💳',createdAt:r.created_at});
+      recomputeAnnual(ST.movements);
+    }
+    renderPresupuesto();
+  }finally{
+    if(btn&&btn.isConnected){btn.disabled=false;}
+  }
 }
 
 // RENDER RECORDATORIOS DE PAGO
