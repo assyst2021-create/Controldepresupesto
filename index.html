@@ -419,6 +419,30 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
   </div>
 </div>
 
+<!-- MODAL AGREGAR AL MES -->
+<div id="modal-add-mes" class="modal-overlay" onclick="if(event.target===this)closeAddMes()">
+  <div class="modal-box" style="max-width:360px;">
+    <div class="modal-header">
+      <h3 id="add-mes-title">Agregar al mes</h3>
+      <button class="modal-close" onclick="closeAddMes()">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Nombre / Proveedor</label>
+        <input id="am-nombre" class="form-input" placeholder="Ej: Netflix, Salario extra..." />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Monto</label>
+        <input id="am-monto" class="form-input" type="text" inputmode="numeric" placeholder="0" oninput="fmtNumInput(this)" />
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeAddMes()">Cancelar</button>
+      <button class="btn btn-primary" id="am-save-btn" onclick="submitAddMes()">Agregar</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL PAGO FIJO -->
 <div id="modal-pago" class="modal-overlay" onclick="if(event.target===this)closePagoModal()">
   <div class="modal-box">
@@ -792,20 +816,14 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
         <!-- Tablas de pagos -->
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
           <div class="section-head" style="margin:0;">Gastos obligatorios</div>
-          <button class="btn btn-ghost" style="padding:6px 12px;font-size:12px;" onclick="openPagoModalTipo('gasto')">+ Gasto</button>
+          <button class="btn btn-ghost" style="padding:6px 12px;font-size:12px;" onclick="openAddMes('gasto')">+ Agregar</button>
         </div>
         <div class="card" style="margin-bottom:20px;overflow:hidden;padding:0;" id="gastos-fijos-card"></div>
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
           <div class="section-head" style="margin:0;">Ingresos fijos</div>
-          <button class="btn btn-ghost" style="padding:6px 12px;font-size:12px;" onclick="openPagoModalTipo('ingreso')">+ Ingreso</button>
+          <button class="btn btn-ghost" style="padding:6px 12px;font-size:12px;" onclick="openAddMes('ingreso')">+ Agregar</button>
         </div>
         <div class="card" style="overflow:hidden;padding:0;" id="ingresos-fijos-card"></div>
-        <!-- Recordatorios de pago -->
-        <div style="display:flex;align-items:center;justify-content:space-between;margin:20px 0 10px;">
-          <div class="section-head" style="margin:0;">Recordatorios de pago</div>
-          <button class="btn btn-ghost" style="padding:6px 12px;font-size:12px;" onclick="openRecordatorioModal()">+ Agregar</button>
-        </div>
-        <div class="card" style="overflow:hidden;" id="recordatorios-card"></div>
         <!-- Resumen mes actual -->
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin:20px 0 14px;">
           <div class="card stat-card"><div class="sc-label">Ingresos del mes</div><div class="sc-val" style="color:var(--income);font-size:20px;" id="pres-mes-income">$0</div></div>
@@ -1448,7 +1466,6 @@ function renderPresupuesto(){
   var gastos=ST.pagos.filter(function(p){return p.tipo==='gasto';});
   var ingresos=ST.pagos.filter(function(p){return p.tipo==='ingreso';});
   renderTablasPagos(); // actualiza hero + tablas con valores reales del mes
-  renderRecordatorios();
   // Resumen y alertas del mes actual
   var _hoy=new Date();var _cm=_hoy.getMonth();var _cy=_hoy.getFullYear();
   var _movMes=ST.movements.filter(function(mv){var d=new Date(mv.date+'T12:00:00');return d.getMonth()===_cm&&d.getFullYear()===_cy;});
@@ -2628,6 +2645,47 @@ function buildDiaSelect(selectedVal){
   for(var d=1;d<=31;d++){opts+='<option value="'+d+'"'+(selectedVal==d?' selected':'')+'>Día '+d+' de cada mes</option>';}
   sel.innerHTML=opts;
 }
+// AGREGAR AL MES (movimiento puntual para _presMes/_presYear)
+var _addMesTipo='gasto',_savingAddMes=false;
+function openAddMes(tipo){
+  _addMesTipo=tipo||'gasto';
+  document.getElementById('am-nombre').value='';
+  document.getElementById('am-monto').value='';
+  document.getElementById('add-mes-title').textContent=tipo==='gasto'?'Agregar gasto al mes':'Agregar ingreso al mes';
+  document.getElementById('modal-add-mes').style.display='flex';
+  setTimeout(function(){document.getElementById('am-nombre').focus();},100);
+}
+function closeAddMes(){document.getElementById('modal-add-mes').style.display='none';}
+async function submitAddMes(){
+  if(_savingAddMes)return;
+  var nombre=document.getElementById('am-nombre').value.trim();
+  var monto=numVal('am-monto');
+  if(!nombre||!monto){alert('Ingresa nombre y monto.');return;}
+  _savingAddMes=true;
+  var btn=document.getElementById('am-save-btn');
+  if(btn){btn.disabled=true;btn.textContent='Guardando...';}
+  var desc=(_addMesTipo==='gasto'?'Pago: ':'Ingreso: ')+nombre;
+  var tipoMov=_addMesTipo==='gasto'?'expense':'income';
+  // Fecha: día 1 del mes seleccionado
+  var d=new Date(_presYear,_presMes,1);
+  var fecha=_presYear+'-'+String(_presMes+1).padStart(2,'0')+'-01';
+  var record={user_id:ST.userId,tipo:tipoMov,descripcion:desc,monto:monto,categoria:nombre,fecha:fecha,icono:_addMesTipo==='gasto'?'💳':'💰'};
+  try{
+    var res=await _sb.from('movimientos').insert(record).select();
+    if(res.error){alert('Error: '+res.error.message);return;}
+    if(res.data&&res.data[0]){
+      var r=res.data[0];
+      ST.movements.unshift({id:r.id,type:r.tipo,description:r.descripcion,amount:parseFloat(r.monto),category:r.categoria,date:r.fecha,icon:r.icono,createdAt:r.created_at});
+      recomputeAnnual(ST.movements);
+    }
+    closeAddMes();
+    renderTablasPagos();
+  }finally{
+    _savingAddMes=false;
+    if(btn){btn.disabled=false;btn.textContent='Agregar';}
+  }
+}
+
 function openPagoModalTipo(tipo){_pagoTipo=tipo||'gasto';openPagoModal();}
 function openPagoModal(id){
   _editingPagoId=id||null;
