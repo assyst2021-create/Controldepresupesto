@@ -822,17 +822,6 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
           <button class="btn btn-ghost" style="padding:6px 12px;font-size:12px;" onclick="openAddMes('ingreso')">+ Agregar</button>
         </div>
         <div class="card" style="overflow:hidden;padding:0;" id="ingresos-fijos-card"></div>
-        <!-- Resumen mes actual -->
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin:20px 0 14px;">
-          <div class="card stat-card"><div class="sc-label">Ingresos del mes</div><div class="sc-val" style="color:var(--income);font-size:20px;" id="pres-mes-income">$0</div></div>
-          <div class="card stat-card"><div class="sc-label">Gastos del mes</div><div class="sc-val" style="color:var(--expense);font-size:20px;" id="pres-mes-expense">$0</div></div>
-          <div class="card stat-card"><div class="sc-label">Balance del mes</div><div class="sc-val" style="font-size:20px;" id="pres-mes-balance">$0</div></div>
-        </div>
-        <!-- Alertas y recomendaciones -->
-        <div style="display:flex;align-items:center;justify-content:space-between;margin:0 0 10px;">
-          <div class="section-head" style="margin:0;">Alertas y recomendaciones</div>
-        </div>
-        <div id="alerts-container" style="margin-bottom:20px;"></div>
       </div>
     </div>
 
@@ -1429,12 +1418,6 @@ function renderTablasPagos(){
   var totE=allMovsMes.filter(function(x){return x.type==='expense';}).reduce(function(a,x){return a+x.amount;},0);
   var totS=allMovsMes.filter(function(x){return x.type==='savings';}).reduce(function(a,x){return a+x.amount;},0);
   var bal=totI-totE-totS;
-  var iEl2=document.getElementById('pres-mes-income');var eEl2=document.getElementById('pres-mes-expense');var bEl2=document.getElementById('pres-mes-balance');
-  if(iEl2)iEl2.textContent=fmt(totI);
-  if(eEl2)eEl2.textContent=fmt(totE);
-  if(bEl2){bEl2.textContent=(bal<0?'- ':'')+fmt(Math.abs(bal));bEl2.style.color=bal<0?'var(--expense)':bal>0?'var(--income)':'var(--gray)';}
-  // Alertas basadas en el mes seleccionado
-  renderAlerts({i:totI,e:totE,s:totS},bal,_presMes,_presYear);
 }
 
 // RENDER PRESUPUESTO
