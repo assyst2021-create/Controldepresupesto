@@ -1320,8 +1320,21 @@ function renderTablasPagos(){
     var c=_badgeMap[label];
     return '<span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:11.5px;font-weight:700;background:'+c+'22;color:'+c+';border:1px solid '+c+'55;white-space:nowrap;">'+esc(label)+'</span>';
   }
-  function buildTable(items,tipo){
-    if(!items.length)return '<div class="empty-state"><div class="e-icon">'+(tipo==='gasto'?'💳':'💵')+'</div><p>Sin '+(tipo==='gasto'?'gastos':'ingresos')+' fijos aún</p></div>';
+  // Todos los movimientos del mes seleccionado
+  var _movsMes=ST.movements.filter(function(mv){var d=new Date(mv.date+'T12:00:00');return d.getMonth()===_presMes&&d.getFullYear()===_presYear;});
+
+  // Movimientos puntuales del mes (agregados con "+ Agregar") que NO están en la plantilla
+  var nombresG=new Set(gastos.map(function(p){return p.nombre;}));
+  var nombresI=new Set(ingresos.map(function(p){return p.nombre;}));
+  var extraG=[];var extraI=[];
+  _movsMes.forEach(function(mv){
+    var mg=mv.description&&mv.description.match(/^Pago: (.+)$/);
+    if(mg&&!nombresG.has(mg[1]))extraG.push(mv);
+    var mi=mv.description&&mv.description.match(/^Ingreso: (.+)$/);
+    if(mi&&!nombresI.has(mi[1]))extraI.push(mv);
+  });
+
+  function buildTable(items,tipo,extras){
     var amtColor=tipo==='gasto'?'#DC2626':'#16A34A';
     var mm=String(_presMes+1).padStart(2,'0');var yy=_presYear;
     var sorted=items.slice().sort(function(a,b){return (parseInt(a.dia)||31)-(parseInt(b.dia)||31);});
@@ -1346,8 +1359,24 @@ function renderTablasPagos(){
         '</td>'+
       '</tr>';
     }).join('');
-    var total=items.reduce(function(a,p){return a+parseFloat(p.monto||0);},0);
-    var pagados=items.filter(function(p){return !!_pagadosMes[(tipo==='gasto'?'g:':'i:')+p.nombre];}).length;
+    // Filas de ítems puntuales del mes (ya registrados, solo eliminar)
+    var extraRows=(extras||[]).map(function(mv){
+      var nombre=mv.description.replace(/^(Pago|Ingreso): /,'');
+      var d=new Date(mv.date+'T12:00:00');
+      var fecha=String(d.getDate()).padStart(2,'0')+'/'+mm+'/'+yy;
+      return '<tr style="border-bottom:1px solid #F1F5F9;background:#F0FDF4;">'+
+        '<td style="padding:9px 12px;text-align:center;width:44px;"><button onclick="deleteMovMes(\''+mv.id+'\')" title="Clic para eliminar" style="width:26px;height:26px;border-radius:7px;border:none;background:#16A34A;display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;margin:auto;cursor:pointer;">✓</button></td>'+
+        '<td style="padding:9px 12px;font-size:12.5px;color:#64748B;white-space:nowrap;width:100px;">'+fecha+'</td>'+
+        '<td style="padding:9px 12px;font-size:13.5px;font-weight:600;color:#1E293B;">'+esc(nombre)+'</td>'+
+        '<td style="padding:9px 12px;font-size:13.5px;font-weight:700;color:'+amtColor+';text-align:right;white-space:nowrap;">'+fmt(mv.amount)+'</td>'+
+        '<td style="padding:9px 12px;font-size:11px;color:#94A3B8;font-style:italic;">Este mes</td>'+
+        '<td style="padding:9px 8px;text-align:right;"><button class="icon-btn del" onclick="deleteMovMes(\''+mv.id+'\')">🗑️</button></td>'+
+      '</tr>';
+    }).join('');
+    if(!items.length&&!extraRows)return '<div class="empty-state"><div class="e-icon">'+(tipo==='gasto'?'💳':'💵')+'</div><p>Sin '+(tipo==='gasto'?'gastos':'ingresos')+' este mes</p></div>';
+    var total=items.reduce(function(a,p){return a+parseFloat(p.monto||0);},0)+(extras||[]).reduce(function(a,mv){return a+mv.amount;},0);
+    var pagados=items.filter(function(p){return !!_pagadosMes[(tipo==='gasto'?'g:':'i:')+p.nombre];}).length+(extras||[]).length;
+    var totalItems=items.length+(extras||[]).length;
     return '<div style="overflow-x:auto;">'+
       '<table style="width:100%;border-collapse:collapse;min-width:500px;">'+
         '<thead><tr style="background:#F8FAFC;border-bottom:2px solid #E2E8F0;">'+
@@ -1358,9 +1387,9 @@ function renderTablasPagos(){
           '<th style="padding:9px 12px;font-size:10.5px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.07em;">Tipo de pago</th>'+
           '<th></th>'+
         '</tr></thead>'+
-        '<tbody>'+rows+'</tbody>'+
+        '<tbody>'+rows+extraRows+'</tbody>'+
         '<tfoot><tr style="border-top:2px solid #E2E8F0;background:#F8FAFC;">'+
-          '<td colspan="2" style="padding:10px 12px;font-size:12px;font-weight:600;color:#64748B;">'+pagados+' / '+items.length+' registrados</td>'+
+          '<td colspan="2" style="padding:10px 12px;font-size:12px;font-weight:600;color:#64748B;">'+pagados+' / '+totalItems+' registrados</td>'+
           '<td style="padding:10px 12px;font-size:12px;font-weight:700;color:#475569;">Total</td>'+
           '<td style="padding:10px 12px;font-size:15px;font-weight:800;color:'+amtColor+';text-align:right;">'+fmt(total)+'</td>'+
           '<td colspan="2"></td>'+
@@ -1368,14 +1397,10 @@ function renderTablasPagos(){
       '</table>'+
     '</div>';
   }
-  var gc=document.getElementById('gastos-fijos-card');if(gc)gc.innerHTML=buildTable(gastos,'gasto');
-  var ic=document.getElementById('ingresos-fijos-card');if(ic)ic.innerHTML=buildTable(ingresos,'ingreso');
+  var gc=document.getElementById('gastos-fijos-card');if(gc)gc.innerHTML=buildTable(gastos,'gasto',extraG);
+  var ic=document.getElementById('ingresos-fijos-card');if(ic)ic.innerHTML=buildTable(ingresos,'ingreso',extraI);
 
   // Hero: solo lo registrado (chuleado) en el mes seleccionado
-  var _movsMes=ST.movements.filter(function(mv){
-    var d=new Date(mv.date+'T12:00:00');
-    return d.getMonth()===_presMes&&d.getFullYear()===_presYear;
-  });
   var regI=_movsMes.filter(function(mv){return mv.type==='income'&&mv.description&&mv.description.match(/^Ingreso: /);}).reduce(function(a,mv){return a+mv.amount;},0);
   var regG=_movsMes.filter(function(mv){return mv.type==='expense'&&mv.description&&mv.description.match(/^Pago: /);}).reduce(function(a,mv){return a+mv.amount;},0);
   var regLibre=regI-regG;
@@ -1401,11 +1426,7 @@ function renderTablasPagos(){
   if(fecEl){var cntG=gastos.filter(function(p){return !!_pagadosMes['g:'+p.nombre];}).length;fecEl.textContent=cntG+' / '+gastos.length+' pagados';}
 
   // Tarjetas resumen del mes seleccionado
-  var allMovsMes=ST.movements.filter(function(mv){
-    var d=new Date(mv.date+'T12:00:00');
-    return d.getMonth()===_presMes&&d.getFullYear()===_presYear;
-  });
-  var totI=allMovsMes.filter(function(x){return x.type==='income';}).reduce(function(a,x){return a+x.amount;},0);
+  var totI=_movsMes.filter(function(x){return x.type==='income';}).reduce(function(a,x){return a+x.amount;},0);
   var totE=allMovsMes.filter(function(x){return x.type==='expense';}).reduce(function(a,x){return a+x.amount;},0);
   var totS=allMovsMes.filter(function(x){return x.type==='savings';}).reduce(function(a,x){return a+x.amount;},0);
   var bal=totI-totE-totS;
@@ -1446,6 +1467,16 @@ async function registrarPagoFijo(id,tipo){
   }finally{
     if(btn&&btn.isConnected){btn.disabled=false;}
   }
+}
+
+// ELIMINAR MOVIMIENTO PUNTUAL DEL MES (agregado con "+ Agregar")
+async function deleteMovMes(movId){
+  if(!confirm('¿Eliminar este registro del mes?'))return;
+  var res=await _sb.from('movimientos').delete().eq('id',movId);
+  if(res.error){alert('Error: '+res.error.message);return;}
+  ST.movements=ST.movements.filter(function(m){return m.id!==movId;});
+  recomputeAnnual(ST.movements);
+  renderTablasPagos();
 }
 
 // DESMARCAR PAGO FIJO (toggle)
