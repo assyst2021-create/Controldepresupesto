@@ -1606,8 +1606,8 @@ function renderTablasPagos(){
   var ic=document.getElementById('ingresos-fijos-card');if(ic)ic.innerHTML=buildTable(ingresos,'ingreso',extraI);
 
   // Hero: solo lo registrado (chuleado) en el mes seleccionado
-  var regI=_movsMes.filter(function(mv){return mv.type==='income'&&mv.description&&mv.description.match(/^Ingreso: /);}).reduce(function(a,mv){return a+mv.amount;},0);
-  var regG=_movsMes.filter(function(mv){return mv.type==='expense'&&mv.description&&mv.description.match(/^Pago: /);}).reduce(function(a,mv){return a+mv.amount;},0);
+  var regI=ingresos.reduce(function(a,p){var k='i:'+p.nombre;return a+(_pagadosMes[k]?parseFloat(_pagadosMonto[k]||0):0);},0)+extraI.reduce(function(a,mv){return a+mv.amount;},0);
+  var regG=gastos.reduce(function(a,p){var k='g:'+p.nombre;return a+(_pagadosMes[k]?parseFloat(_pagadosMonto[k]||0):0);},0)+extraG.reduce(function(a,mv){return a+mv.amount;},0);
   var regLibre=regI-regG;
   var totalIplan=ingresos.reduce(function(a,p){return a+parseFloat(p.monto||0);},0);
   var totalGplan=gastos.reduce(function(a,p){return a+parseFloat(p.monto||0);},0);
