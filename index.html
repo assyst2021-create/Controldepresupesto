@@ -2139,7 +2139,8 @@ function renderUsuarios(){
     var badge=isAdm?'<span class="badge badge-admin">Admin</span>':activo?'<span class="badge badge-active">Activo</span>':'<span class="badge badge-inactive">Inactivo</span>';
     var toggle=isAdm?'':activo?'<button class="toggle-btn deactivate" onclick="toggleActivo(\''+p.id+'\',true)">Desactivar</button>':'<button class="toggle-btn activate" onclick="toggleActivo(\''+p.id+'\',false)">Activar</button>';
     var editBtn='<button class="icon-btn edit" style="margin-left:6px;" onclick="openEditarUsuario(\''+p.id+'\')">✏️</button>';
-    return '<div class="user-item"><div class="user-av" style="background:'+(activo?'#EFF6FF':'#F1F5F9')+';">👤</div><div style="flex:1;min-width:0;"><div class="u-name">'+esc(p.nombre||'Sin nombre')+'</div><div class="u-email">'+esc(p.email||'')+(p.created_at?' · desde '+p.created_at.slice(0,10):'')+'</div></div>'+badge+toggle+editBtn+'</div>';
+    var delBtn=isAdm?'':'<button class="icon-btn del" onclick="deleteUsuario(\''+p.id+'\')">🗑️</button>';
+    return '<div class="user-item"><div class="user-av" style="background:'+(activo?'#EFF6FF':'#F1F5F9')+';">👤</div><div style="flex:1;min-width:0;"><div class="u-name">'+esc(p.nombre||'Sin nombre')+'</div><div class="u-email">'+esc(p.email||'')+(p.created_at?' · desde '+p.created_at.slice(0,10):'')+'</div></div>'+badge+toggle+editBtn+delBtn+'</div>';
   }).join('');
 }
 
@@ -2944,6 +2945,13 @@ async function submitUsuario(){
   document.getElementById('u-nombre').value='';document.getElementById('u-email').value='';document.getElementById('u-pass').value='';
   var pr=await _sb.from('profiles').select('*').order('created_at',{ascending:false});
   if(!pr.error){ST.profiles=pr.data||[];renderUsuarios();}
+}
+async function deleteUsuario(id){
+  if(!confirm('¿Eliminar este usuario permanentemente? Esta acción no se puede deshacer.'))return;
+  var res=await _sb.from('profiles').delete().eq('id',id);
+  if(res.error){alert('Error: '+res.error.message);return;}
+  ST.profiles=ST.profiles.filter(function(p){return p.id!==id;});
+  renderUsuarios();
 }
 async function toggleActivo(id,activo){
   var nuevoEstado=!activo;
