@@ -1321,45 +1321,47 @@ function renderTablasPagos(){
   function buildTable(items,tipo,extras){
     var amtColor=tipo==='gasto'?'#DC2626':'#16A34A';
     var mm=String(_presMes+1).padStart(2,'0');var yy=_presYear;
-    var sorted=items.slice().sort(function(a,b){return (parseInt(a.dia)||31)-(parseInt(b.dia)||31);});
-    var rows=sorted.map(function(p){
-      var key=(tipo==='gasto'?'g:':'i:')+p.nombre;
-      var pagado=!!_pagadosMes[key];
-      var movId=_pagadosMes[key]||'';
-      var dd=p.dia_cobro?String(p.dia_cobro).padStart(2,'0'):'--';
-      var fecha=dd+'/'+mm+'/'+yy;
-      var estado=pagado
-        ?'<button onclick="togglePagoFijo(\''+movId+'\',\''+p.id+'\',\''+tipo+'\')" title="Clic para desmarcar" style="width:26px;height:26px;border-radius:7px;border:none;background:#16A34A;display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;margin:auto;cursor:pointer;">✓</button>'
-        :'<button onclick="registrarPagoFijo(\''+p.id+'\',\''+tipo+'\')" title="Registrar pago" style="width:26px;height:26px;border-radius:7px;border:2px solid #CBD5E1;background:#fff;cursor:pointer;display:block;margin:auto;transition:border-color .15s;" onmouseover="this.style.borderColor=\'#2563EB\'" onmouseout="this.style.borderColor=\'#CBD5E1\'"></button>';
-      var cb='border-bottom:1px solid #E2E8F0;border-right:1px solid #E2E8F0;text-align:center;';
-      return '<tr style="'+(pagado?'background:#F0FDF4;':'')+'" >'+
-        '<td style="padding:9px 12px;width:44px;'+cb+'">'+estado+'</td>'+
-        '<td style="padding:9px 12px;font-size:12.5px;color:#64748B;white-space:nowrap;width:100px;'+cb+'">'+fecha+'</td>'+
-        '<td style="padding:9px 12px;font-size:13.5px;font-weight:600;color:#1E293B;'+cb+'">'+esc(p.nombre)+'</td>'+
-        '<td style="padding:9px 12px;font-size:13.5px;font-weight:700;color:'+amtColor+';white-space:nowrap;'+cb+'">'+fmt(p.monto)+'</td>'+
-        '<td style="padding:9px 12px;'+cb+'">'+tipoBadge(p.entidad||p.nombre)+'</td>'+
-        '<td style="padding:9px 8px;text-align:center;white-space:nowrap;border-bottom:1px solid #E2E8F0;">'+
-          '<button class="icon-btn edit" onclick="editPago(\''+p.id+'\')">✏️</button>'+
-          '<button class="icon-btn del" onclick="deletePago(\''+p.id+'\')">🗑️</button>'+
-        '</td>'+
-      '</tr>';
-    }).join('');
-    // Filas de ítems puntuales del mes (ya registrados, solo eliminar)
-    var extraRows=(extras||[]).map(function(mv){
+    var cb='border-bottom:1px solid #E2E8F0;border-right:1px solid #E2E8F0;text-align:center;';
+    // Unifica plantilla + ítems puntuales del mes en una sola lista ordenada por día
+    var allRows=items.map(function(p){
+      return {day:parseInt(p.dia_cobro)||31,html:(function(){
+        var key=(tipo==='gasto'?'g:':'i:')+p.nombre;
+        var pagado=!!_pagadosMes[key];
+        var movId=_pagadosMes[key]||'';
+        var dd=p.dia_cobro?String(p.dia_cobro).padStart(2,'0'):'--';
+        var fecha=dd+'/'+mm+'/'+yy;
+        var estado=pagado
+          ?'<button onclick="togglePagoFijo(\''+movId+'\',\''+p.id+'\',\''+tipo+'\')" title="Clic para desmarcar" style="width:26px;height:26px;border-radius:7px;border:none;background:#16A34A;display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;margin:auto;cursor:pointer;">✓</button>'
+          :'<button onclick="registrarPagoFijo(\''+p.id+'\',\''+tipo+'\')" title="Registrar pago" style="width:26px;height:26px;border-radius:7px;border:2px solid #CBD5E1;background:#fff;cursor:pointer;display:block;margin:auto;transition:border-color .15s;" onmouseover="this.style.borderColor=\'#2563EB\'" onmouseout="this.style.borderColor=\'#CBD5E1\'"></button>';
+        return '<tr style="'+(pagado?'background:#F0FDF4;':'')+'" >'+
+          '<td style="padding:9px 12px;width:44px;'+cb+'">'+estado+'</td>'+
+          '<td style="padding:9px 12px;font-size:12.5px;color:#64748B;white-space:nowrap;width:100px;'+cb+'">'+fecha+'</td>'+
+          '<td style="padding:9px 12px;font-size:13.5px;font-weight:600;color:#1E293B;'+cb+'">'+esc(p.nombre)+'</td>'+
+          '<td style="padding:9px 12px;font-size:13.5px;font-weight:700;color:'+amtColor+';white-space:nowrap;'+cb+'">'+fmt(p.monto)+'</td>'+
+          '<td style="padding:9px 12px;'+cb+'">'+tipoBadge(p.entidad||p.nombre)+'</td>'+
+          '<td style="padding:9px 8px;text-align:center;white-space:nowrap;border-bottom:1px solid #E2E8F0;">'+
+            '<button class="icon-btn edit" onclick="editPago(\''+p.id+'\')">✏️</button>'+
+            '<button class="icon-btn del" onclick="deletePago(\''+p.id+'\')">🗑️</button>'+
+          '</td>'+
+        '</tr>';
+      })()};
+    }).concat((extras||[]).map(function(mv){
       var nombre=mv.description.replace(/^(Pago|Ingreso): /,'');
       var d=new Date(mv.date+'T12:00:00');
       var fecha=String(d.getDate()).padStart(2,'0')+'/'+mm+'/'+yy;
-      var cb='border-bottom:1px solid #E2E8F0;border-right:1px solid #E2E8F0;text-align:center;';
-      return '<tr style="background:#F0FDF4;">'+
+      return {day:d.getDate(),html:'<tr style="background:#F0FDF4;">'+
         '<td style="padding:9px 12px;width:44px;'+cb+'"><button onclick="deleteMovMes(\''+mv.id+'\')" title="Clic para eliminar" style="width:26px;height:26px;border-radius:7px;border:none;background:#16A34A;display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;margin:auto;cursor:pointer;">✓</button></td>'+
         '<td style="padding:9px 12px;font-size:12.5px;color:#64748B;white-space:nowrap;width:100px;'+cb+'">'+fecha+'</td>'+
         '<td style="padding:9px 12px;font-size:13.5px;font-weight:600;color:#1E293B;'+cb+'">'+esc(nombre)+'</td>'+
         '<td style="padding:9px 12px;font-size:13.5px;font-weight:700;color:'+amtColor+';white-space:nowrap;'+cb+'">'+fmt(mv.amount)+'</td>'+
         '<td style="padding:9px 12px;'+cb+'">'+tipoBadge(mv.category||nombre)+'</td>'+
         '<td style="padding:9px 8px;text-align:center;border-bottom:1px solid #E2E8F0;"><button class="icon-btn edit" onclick="editMovMes(\''+mv.id+'\')">✏️</button><button class="icon-btn del" onclick="deleteMovMes(\''+mv.id+'\')">🗑️</button></td>'+
-      '</tr>';
-    }).join('');
-    if(!items.length&&!extraRows)return '<div class="empty-state"><div class="e-icon">'+(tipo==='gasto'?'💳':'💵')+'</div><p>Sin '+(tipo==='gasto'?'gastos':'ingresos')+' este mes</p></div>';
+      '</tr>'};
+    }));
+    allRows.sort(function(a,b){return a.day-b.day;});
+    var rows=allRows.map(function(r){return r.html;}).join('');
+    var extraRows='';
+    if(!items.length&&!(extras||[]).length)return '<div class="empty-state"><div class="e-icon">'+(tipo==='gasto'?'💳':'💵')+'</div><p>Sin '+(tipo==='gasto'?'gastos':'ingresos')+' este mes</p></div>';
     var total=items.reduce(function(a,p){return a+parseFloat(p.monto||0);},0)+(extras||[]).reduce(function(a,mv){return a+mv.amount;},0);
     var pagados=items.filter(function(p){return !!_pagadosMes[(tipo==='gasto'?'g:':'i:')+p.nombre];}).length+(extras||[]).length;
     var totalItems=items.length+(extras||[]).length;
