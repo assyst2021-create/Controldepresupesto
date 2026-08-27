@@ -274,17 +274,35 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
   #sidebar{display:none;}
   #bottom-nav{display:block;}
   #main-content{padding-bottom:80px;}
-  .main-header{padding:16px 16px 0;}
-  .main-body{padding:14px 16px 24px;}
-  .hero-amount{font-size:32px;}
+  .main-header{padding:14px 14px 0;gap:8px;}
+  .main-header h2{font-size:18px;}
+  .main-header .btn{padding:8px 12px;font-size:12px;}
+  .main-body{padding:12px 12px 24px;}
+  .hero-amount{font-size:28px;}
+  .balance-hero{padding:20px 18px;border-radius:18px;}
   .panel-grid,.budget-grid{grid-template-columns:1fr;}
-  .modal-box{padding:22px 18px;}
+  .modal-box{padding:20px 16px;border-radius:20px;}
   .modal-row{grid-template-columns:1fr;}
+  /* Tablas con scroll horizontal en mobile */
+  #gastos-fijos-card,#ingresos-fijos-card,#compras-card{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  #gastos-fijos-card table,#ingresos-fijos-card table,#compras-card table{min-width:520px;}
+  /* Hero sub-cards más pequeñas */
+  .hero-sub-cards{gap:8px;}
+  .hero-sub-card{padding:10px 12px;}
+  /* Mes nav más compacto */
+  #pres-mes-nav-label{min-width:110px;font-size:13px;}
+  /* Section head */
+  .section-head{font-size:13px;}
+  /* Cards scroll fix */
+  .card{overflow-x:auto;}
   .gcal-side{width:100%;border-left:none;border-top:1px solid var(--border);}
   .gcal-wrap{flex-direction:column;}
   .gcal-day{min-height:60px;}
   .gcal-chip{display:none;}
   .gcal-more{font-size:10px;}
+  /* Stat cards compactas */
+  .stat-card{padding:14px 12px;}
+  .sc-val{font-size:18px;}
 }
 /* ===== PRESET RANGE CHIPS ===== */
 .panel-preset{padding:7px 14px;border-radius:20px;border:1.5px solid #CBD5E1;font-size:12.5px;font-weight:700;cursor:pointer;background:#F8FAFC;color:#64748B;transition:background .15s,border-color .15s,color .15s;}
@@ -375,7 +393,7 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
       </div>
     </div>
     <button class="btn-auth" onclick="doAuth()">Iniciar sesión</button>
-    <button id="btn-install-login" onclick="installApp()" style="display:none;width:100%;margin-top:10px;padding:12px;border:1.5px solid #16A34A;border-radius:14px;background:transparent;color:#16A34A;font-family:'Inter',sans-serif;font-size:14px;font-weight:700;cursor:pointer;">📲 Instalar aplicación</button>
+    <button class="btn-install-all" onclick="installApp()" style="display:none;width:100%;margin-top:10px;padding:12px;border:1.5px solid #16A34A;border-radius:14px;background:transparent;color:#16A34A;font-family:'Inter',sans-serif;font-size:14px;font-weight:700;cursor:pointer;">📲 Instalar aplicación</button>
   </div>
 </div>
 
@@ -915,9 +933,9 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
 <!-- BOTTOM NAV -->
 <div id="bottom-nav">
   <div class="bnav-inner">
-    <button class="bnav-btn active" data-screen="presupuesto" onclick="navigate('presupuesto')"><span class="bn-icon">💳</span>Presupuesto mensual</button>
-    <button class="fab" onclick="openModal()">+</button>
-    <button class="bnav-btn" data-screen="compras" onclick="navigate('compras')"><span class="bn-icon">🛒</span>Planeador</button>
+    <button class="bnav-btn active" data-screen="presupuesto" onclick="navigate('presupuesto')"><span class="bn-icon">💳</span>Presupuesto</button>
+    <button class="bnav-btn" data-screen="compras" onclick="navigate('compras')"><span class="bn-icon">🛒</span>Compras</button>
+    <button class="bnav-btn" onclick="openMoreSheet()"><span class="bn-icon">☰</span>Más</button>
   </div>
 </div>
 
@@ -944,6 +962,7 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
     <select class="currency-sel" onchange="setCurrency(this.value)" style="flex:1;font-size:14px;font-weight:600;border:1.5px solid var(--border);border-radius:10px;padding:10px 12px;background:#fff;color:var(--gray-dark);cursor:pointer;"></select>
   </div>
   <button class="sheet-item" onclick="closeMoreSheet();openCambiarPass()"><span class="si-icon">🔑</span>Cambiar contraseña</button>
+  <button class="btn-install-all sheet-item" onclick="closeMoreSheet();installApp()" style="display:none;color:#16A34A;"><span class="si-icon">📲</span>Instalar aplicación</button>
 <button class="sheet-item danger" onclick="closeMoreSheet();doSignOut()"><span class="si-icon">🚪</span>Cerrar sesión</button>
   <div style="height:8px;"></div>
 </div>
@@ -971,24 +990,25 @@ function sheetNav(screen){
 
 // PWA INSTALL
 var _installPrompt=null;
+if('serviceWorker' in navigator){
+  window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js');});
+}
 window.addEventListener('beforeinstallprompt',function(e){
   e.preventDefault();
   _installPrompt=e;
-  var btn=document.getElementById('btn-install-login');
-  if(btn)btn.style.display='block';
+  document.querySelectorAll('.btn-install-all').forEach(function(b){b.style.display='block';});
 });
 window.addEventListener('appinstalled',function(){
   _installPrompt=null;
-  var btn=document.getElementById('btn-install-login');
-  if(btn)btn.style.display='none';
+  document.querySelectorAll('.btn-install-all').forEach(function(b){b.style.display='none';});
 });
 function installApp(){
-  if(!_installPrompt){
-    alert('Para instalar: en tu navegador toca el menú (⋮) y selecciona "Agregar a pantalla de inicio".');
-    return;
-  }
+  if(!_installPrompt)return;
   _installPrompt.prompt();
-  _installPrompt.userChoice.then(function(){_installPrompt=null;document.getElementById('btn-install').style.display='none';});
+  _installPrompt.userChoice.then(function(){
+    _installPrompt=null;
+    document.querySelectorAll('.btn-install-all').forEach(function(b){b.style.display='none';});
+  });
 }
 
 var _sb = window.supabase.createClient(
