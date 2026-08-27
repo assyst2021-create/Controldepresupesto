@@ -1346,14 +1346,25 @@ function closeGrafica(){document.getElementById('modal-grafica').style.display='
 function graficaYearNav(delta){_graficaYear+=delta;document.getElementById('grafica-detalle').innerHTML='';renderGraficaChart();}
 function renderGraficaChart(){
   document.getElementById('grafica-year-label').textContent=_graficaYear;
-  var data=Array(12).fill(null).map(function(){return{i:0,e:0,s:0};});
+  var data=Array(12).fill(null).map(function(){return{i:0,e:0,s:0,_seenI:{},_seenE:{}};});
   ST.movements.forEach(function(mv){
     var d=new Date(mv.date+'T12:00:00');
     if(d.getFullYear()!==_graficaYear)return;
     var mo=d.getMonth();
-    if(mv.type==='income')data[mo].i+=mv.amount;
-    else if(mv.type==='expense')data[mo].e+=mv.amount;
-    else if(mv.type==='savings')data[mo].s+=mv.amount;
+    // Deduplica por descripción (mismo criterio que el hero): un solo registro por nombre en el mes
+    if(mv.type==='income'){
+      var ki=mv.description||('id_'+mv.id);
+      data[mo]._seenI[ki]=mv.amount;
+    } else if(mv.type==='expense'){
+      var ke=mv.description||('id_'+mv.id);
+      data[mo]._seenE[ke]=mv.amount;
+    } else if(mv.type==='savings'){
+      data[mo].s+=mv.amount;
+    }
+  });
+  data.forEach(function(x){
+    x.i=Object.values(x._seenI).reduce(function(a,v){return a+v;},0);
+    x.e=Object.values(x._seenE).reduce(function(a,v){return a+v;},0);
   });
   var totI=data.reduce(function(a,x){return a+x.i;},0);
   var totE=data.reduce(function(a,x){return a+x.e;},0);
