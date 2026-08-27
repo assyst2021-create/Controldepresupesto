@@ -2948,8 +2948,9 @@ async function submitUsuario(){
 }
 async function deleteUsuario(id){
   if(!confirm('¿Eliminar este usuario permanentemente? Esta acción no se puede deshacer.'))return;
-  var res=await _sb.from('profiles').delete().eq('id',id);
+  var res=await _sb.from('profiles').delete().eq('id',id).select();
   if(res.error){alert('Error: '+res.error.message);return;}
+  if(!res.data||!res.data.length){alert('No se pudo eliminar: permisos insuficientes (RLS) o el usuario tiene datos asociados.');return;}
   ST.profiles=ST.profiles.filter(function(p){return p.id!==id;});
   renderUsuarios();
 }
