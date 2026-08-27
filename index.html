@@ -1412,41 +1412,42 @@ function renderTablasPagos(){
   }
   var gc=document.getElementById('gastos-fijos-card');if(gc)gc.innerHTML=buildTable(gastos,'gasto');
   var ic=document.getElementById('ingresos-fijos-card');if(ic)ic.innerHTML=buildTable(ingresos,'ingreso');
+
+  // Hero: solo lo registrado (chuleado) en el mes seleccionado
+  var _movsMes=ST.movements.filter(function(mv){
+    var d=new Date(mv.date+'T12:00:00');
+    return d.getMonth()===_presMes&&d.getFullYear()===_presYear;
+  });
+  var regI=_movsMes.filter(function(mv){return mv.type==='income'&&mv.description&&mv.description.match(/^Ingreso: /);}).reduce(function(a,mv){return a+mv.amount;},0);
+  var regG=_movsMes.filter(function(mv){return mv.type==='expense'&&mv.description&&mv.description.match(/^Pago: /);}).reduce(function(a,mv){return a+mv.amount;},0);
+  var regLibre=regI-regG;
+  var totalIplan=ingresos.reduce(function(a,p){return a+parseFloat(p.monto||0);},0);
+  var totalGplan=gastos.reduce(function(a,p){return a+parseFloat(p.monto||0);},0);
+  var libreEl=document.getElementById('budget-libre');
+  if(libreEl){libreEl.textContent=fmt(Math.abs(regLibre));libreEl.style.color=regLibre>=0?'#fff':'#FCA5A5';if(regLibre<0)libreEl.textContent='- '+fmt(Math.abs(regLibre));}
+  var pct=totalIplan>0?Math.min(100,Math.round(regG/totalIplan*100)):0;
+  var bar=document.getElementById('budget-bar');
+  if(bar){bar.style.width=pct+'%';bar.style.background=pct>=90?'#F87171':pct>=70?'#FCD34D':'#4ADE80';}
+  var barLbl=document.getElementById('budget-bar-label');
+  if(barLbl){
+    if(regI===0&&regG===0){barLbl.textContent='Marca los pagos e ingresos del mes para ver el análisis';}
+    else{barLbl.textContent=fmt(regG)+' pagado · '+fmt(regI)+' recibido · '+fmt(Math.abs(regLibre))+(regLibre>=0?' disponible':' en negativo');}
+  }
+  var fiEl=document.getElementById('fixed-income-total');
+  if(fiEl)fiEl.textContent=fmt(regI);
+  var fcEl=document.getElementById('fixed-income-count');
+  if(fcEl){var cntI=ingresos.filter(function(p){return !!_pagadosMes['i:'+p.nombre];}).length;fcEl.textContent=cntI+' / '+ingresos.length+' registrados';}
+  var feEl=document.getElementById('fixed-expense-total');
+  if(feEl)feEl.textContent=fmt(regG);
+  var fecEl=document.getElementById('fixed-expense-count');
+  if(fecEl){var cntG=gastos.filter(function(p){return !!_pagadosMes['g:'+p.nombre];}).length;fecEl.textContent=cntG+' / '+gastos.length+' pagados';}
 }
 
 // RENDER PRESUPUESTO
 function renderPresupuesto(){
   var gastos=ST.pagos.filter(function(p){return p.tipo==='gasto';});
   var ingresos=ST.pagos.filter(function(p){return p.tipo==='ingreso';});
-  var totalG=gastos.reduce(function(a,p){return a+parseFloat(p.monto||0);},0);
-  var totalI=ingresos.reduce(function(a,p){return a+parseFloat(p.monto||0);},0);
-  var libre=totalI-totalG;
-  var pctComprometido=totalI>0?Math.min(100,Math.round(totalG/totalI*100)):0;
-
-  // Hero
-  var libreEl=document.getElementById('budget-libre');
-  if(libreEl){
-    libreEl.textContent=fmt(Math.abs(libre));
-    libreEl.style.color=libre>=0?'#fff':'#FCA5A5';
-    if(libre<0){libreEl.textContent='- '+fmt(Math.abs(libre));}
-  }
-  var bar=document.getElementById('budget-bar');
-  if(bar){
-    bar.style.width=pctComprometido+'%';
-    bar.style.background=pctComprometido>=90?'#F87171':pctComprometido>=70?'#FCD34D':'#4ADE80';
-  }
-  var barLbl=document.getElementById('budget-bar-label');
-  if(barLbl){
-    if(totalI===0){barLbl.textContent='Agrega tus ingresos fijos para ver el análisis';}
-    else if(libre<0){barLbl.textContent='⚠️ Los gastos fijos superan tus ingresos en '+fmt(Math.abs(libre));}
-    else{barLbl.textContent=pctComprometido+'% de tus ingresos comprometido en gastos fijos · '+fmt(libre)+' libre';}
-  }
-  document.getElementById('fixed-income-total').textContent=fmt(totalI);
-  document.getElementById('fixed-income-count').textContent=ingresos.length+(ingresos.length===1?' fuente':' fuentes');
-  document.getElementById('fixed-expense-total').textContent=fmt(totalG);
-  document.getElementById('fixed-expense-count').textContent=gastos.length+(gastos.length===1?' obligación':' obligaciones');
-
-  renderTablasPagos();
+  renderTablasPagos(); // actualiza hero + tablas con valores reales del mes
   renderRecordatorios();
   // Resumen y alertas del mes actual
   var _hoy=new Date();var _cm=_hoy.getMonth();var _cy=_hoy.getFullYear();
