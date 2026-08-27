@@ -1431,8 +1431,7 @@ function renderGraficaDetalle(mo){
 }
 async function deleteMovGrafica(id,mo){
   var res=await _sb.from('movimientos').delete().eq('id',id).select();
-  if(res.error){alert('Error: '+res.error.message);return;}
-  if(!res.data||!res.data.length){alert('No se pudo eliminar (permisos).');return;}
+  if(res.error||!res.data||!res.data.length)return;
   ST.movements=ST.movements.filter(function(mv){return mv.id!==id;});
   recomputeAnnual(ST.movements);
   renderGraficaChart();
@@ -1814,12 +1813,37 @@ function renderCompras(){
   document.getElementById('compras-done-count').textContent=done.length+' artículos';
   var card=document.getElementById('compras-card');
   if(!ST.compras.length){card.innerHTML='<div class="empty-state"><div class="e-icon">🛒</div><p>Tu lista de compras está vacía</p></div>';return;}
-  card.innerHTML=ST.compras.map(function(c){
+  var thStyle='background:#F1F5F9;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#475569;padding:9px 12px;text-align:center;border:1px solid #000;';
+  var html='<table style="width:100%;border-collapse:collapse;">'+
+    '<thead><tr>'+
+    '<th style="'+thStyle+'width:60px;">Estado</th>'+
+    '<th style="'+thStyle+'">Artículo</th>'+
+    '<th style="'+thStyle+'">Categoría</th>'+
+    '<th style="'+thStyle+'">Prioridad</th>'+
+    '<th style="'+thStyle+'">Precio est.</th>'+
+    '<th style="'+thStyle+'width:80px;">Acciones</th>'+
+    '</tr></thead><tbody>';
+  ST.compras.forEach(function(c){
     var safeUrl=c.url&&(c.url.startsWith('https://')||c.url.startsWith('http://'))?c.url:null;
-    var urlLink=safeUrl?'<a href="'+esc(safeUrl)+'" target="_blank" rel="noopener noreferrer" style="color:var(--blue-mid);font-size:12px;font-weight:600;text-decoration:none;">Ver</a>':'';
-    var cat=c.categoria?'<span>'+esc(c.categoria)+'</span>':'';
-    return '<div class="compra-item"><div class="check-circle'+(c.comprado?' done':'')+'" onclick="toggleCompra(\''+c.id+'\')">'+(c.comprado?'<span style="color:#fff;font-size:13px;font-weight:700;">✓</span>':'')+'</div><div style="flex:1;min-width:0;"><div class="ci-name'+(c.comprado?' done':'')+'">'+esc(c.nombre)+'</div><div class="ci-meta"><span class="tag tag-'+(c.prioridad||'media')+'">'+(c.prioridad||'media')+'</span>'+cat+urlLink+'</div></div><div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">'+(c.precio_estimado>0?'<span style="font-size:14px;font-weight:700;">'+fmt(c.precio_estimado)+'</span>':'')+'<button class="icon-btn edit" onclick="editCompra(\''+c.id+'\')">✏️</button><button class="icon-btn del" onclick="deleteCompra(\''+c.id+'\')">🗑️</button></div></div>';
-  }).join('');
+    var urlLink=safeUrl?'&nbsp;<a href="'+esc(safeUrl)+'" target="_blank" rel="noopener noreferrer" style="color:var(--blue-mid);font-size:11px;font-weight:600;text-decoration:none;">↗</a>':'';
+    var tdStyle='border:1px solid #000;padding:9px 12px;text-align:center;font-size:13px;'+(c.comprado?'opacity:.55;text-decoration:line-through;':'');
+    html+='<tr style="background:'+(c.comprado?'#F0FDF4':'#fff')+';">'+
+      '<td style="'+tdStyle+'"><div class="check-circle'+(c.comprado?' done':'')+'" onclick="toggleCompra(\''+c.id+'\')" style="margin:0 auto;">'+(c.comprado?'<span style="color:#fff;font-size:13px;font-weight:700;">✓</span>':'')+'</div></td>'+
+      '<td style="'+tdStyle+';text-align:left;font-weight:600;">'+esc(c.nombre)+urlLink+'</td>'+
+      '<td style="'+tdStyle+'">'+esc(c.categoria||'—')+'</td>'+
+      '<td style="'+tdStyle+'"><span class="tag tag-'+(c.prioridad||'media')+'">'+(c.prioridad||'media')+'</span></td>'+
+      '<td style="'+tdStyle+';font-weight:700;color:'+(c.comprado?'#15803D':'#DC2626')+';">'+(c.precio_estimado>0?fmt(c.precio_estimado):'—')+'</td>'+
+      '<td style="'+tdStyle+'"><button class="icon-btn edit" onclick="editCompra(\''+c.id+'\')">✏️</button> <button class="icon-btn del" onclick="deleteCompra(\''+c.id+'\')">🗑️</button></td>'+
+    '</tr>';
+  });
+  var totalAll=ST.compras.reduce(function(a,c){return a+parseFloat(c.precio_estimado||0);},0);
+  html+='<tr style="background:#F8FAFC;font-weight:800;">'+
+    '<td colspan="4" style="border:1px solid #000;padding:9px 12px;text-align:center;font-size:13px;font-weight:700;color:#475569;">Total</td>'+
+    '<td style="border:1px solid #000;padding:9px 12px;text-align:center;font-size:13px;font-weight:800;color:#DC2626;">'+fmt(totalAll)+'</td>'+
+    '<td style="border:1px solid #000;"></td>'+
+  '</tr>';
+  html+='</tbody></table>';
+  card.innerHTML=html;
 }
 
 // RENDER INDICADORES
@@ -3156,16 +3180,13 @@ async function submitUsuario(){
   if(!pr.error){ST.profiles=pr.data||[];renderUsuarios();}
 }
 async function deleteUsuario(id){
-  if(!confirm('¿Eliminar este usuario permanentemente? Esta acción no se puede deshacer.'))return;
   var res=await _sb.from('profiles').delete().eq('id',id).select();
-  if(res.error){alert('Error: '+res.error.message);return;}
-  if(!res.data||!res.data.length){alert('No se pudo eliminar: permisos insuficientes (RLS) o el usuario tiene datos asociados.');return;}
+  if(res.error||!res.data||!res.data.length)return;
   ST.profiles=ST.profiles.filter(function(p){return p.id!==id;});
   renderUsuarios();
 }
 async function toggleActivo(id,activo){
   var nuevoEstado=!activo;
-  if(!confirm('¿'+(nuevoEstado?'Activar':'Desactivar')+' este usuario?'))return;
   await _sb.from('profiles').update({activo:nuevoEstado}).eq('id',id);
   ST.profiles=ST.profiles.map(function(p){return p.id===id?Object.assign({},p,{activo:nuevoEstado}):p;});
   renderUsuarios();
