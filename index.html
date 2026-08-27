@@ -1477,13 +1477,14 @@ function renderTablasPagos(){
     btnPl.style.display=(_fueraDeInicio&&_mesTienePlantilla(py,pm))?'inline-flex':'none';
   }
   var _pagadosMes={};
+  var _pagadosMonto={};
   ST.movements.forEach(function(mv){
     var d=new Date(mv.date+'T12:00:00');
     if(d.getMonth()!==_presMes||d.getFullYear()!==_presYear)return;
     var mg=mv.description&&mv.description.match(/^Pago: (.+)$/);
-    if(mg)_pagadosMes['g:'+mg[1]]=mv.id;
+    if(mg){_pagadosMes['g:'+mg[1]]=mv.id;_pagadosMonto['g:'+mg[1]]=mv.amount;}
     var mi=mv.description&&mv.description.match(/^Ingreso: (.+)$/);
-    if(mi)_pagadosMes['i:'+mi[1]]=mv.id;
+    if(mi){_pagadosMes['i:'+mi[1]]=mv.id;_pagadosMonto['i:'+mi[1]]=mv.amount;}
   });
   var _mesNombre=MONTHS_FULL[_presMes].toUpperCase()+' '+_presYear;
   var navLbl=document.getElementById('pres-mes-nav-label');
@@ -1526,6 +1527,7 @@ function renderTablasPagos(){
         var pkey=(tipo==='gasto'?'g:':'i:')+p.nombre;
         var pagado=!!_pagadosMes[pkey];
         var movId=_pagadosMes[pkey]||'';
+        var montoMostrado=pagado?_pagadosMonto[pkey]:p.monto;
         var dd=p.dia_cobro?String(p.dia_cobro).padStart(2,'0'):'--';
         var fecha=dd+'/'+mm+'/'+yy;
         var estado=pagado
@@ -1535,7 +1537,7 @@ function renderTablasPagos(){
           '<td style="padding:9px 12px;width:44px;'+cb+'">'+estado+'</td>'+
           '<td style="padding:9px 12px;font-size:12.5px;color:#64748B;white-space:nowrap;width:100px;'+cb+'">'+fecha+'</td>'+
           '<td style="padding:9px 12px;font-size:13.5px;font-weight:600;color:#1E293B;'+cb+'">'+esc(p.nombre)+'</td>'+
-          '<td style="padding:9px 12px;font-size:13.5px;font-weight:700;color:'+amtColor+';white-space:nowrap;'+cb+'">'+fmt(p.monto)+'</td>'+
+          '<td style="padding:9px 12px;font-size:13.5px;font-weight:700;color:'+amtColor+';white-space:nowrap;'+cb+'">'+fmt(montoMostrado)+'</td>'+
           '<td style="padding:9px 12px;'+cb+'">'+tipoBadge(p.entidad||p.nombre)+'</td>'+
           '<td style="padding:6px 8px;white-space:nowrap;border-bottom:1px solid #000;">'+
             '<div style="display:flex;align-items:center;justify-content:center;gap:3px;">'+
@@ -1572,7 +1574,11 @@ function renderTablasPagos(){
     var rows=allRows.map(function(r){return r.html;}).join('');
     var extraRows='';
     if(!items.length&&!(extras||[]).length)return '<div class="empty-state"><div class="e-icon">'+(tipo==='gasto'?'💳':'💵')+'</div><p>Sin '+(tipo==='gasto'?'gastos':'ingresos')+' este mes</p></div>';
-    var total=items.reduce(function(a,p){return a+parseFloat(p.monto||0);},0)+(extras||[]).reduce(function(a,mv){return a+mv.amount;},0);
+    var total=items.reduce(function(a,p){
+      var pkey=(tipo==='gasto'?'g:':'i:')+p.nombre;
+      var m=_pagadosMes[pkey]?_pagadosMonto[pkey]:p.monto;
+      return a+parseFloat(m||0);
+    },0)+(extras||[]).reduce(function(a,mv){return a+mv.amount;},0);
     var pagados=items.filter(function(p){return !!_pagadosMes[(tipo==='gasto'?'g:':'i:')+p.nombre];}).length+(extras||[]).length;
     var totalItems=items.length+(extras||[]).length;
     var hb='border-bottom:2px solid #000;border-right:1px solid #000;text-align:center;';
