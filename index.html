@@ -1408,6 +1408,21 @@ function renderGraficaChart(){
     bar.addEventListener('mouseleave',function(){bar.style.opacity='1';tooltip.style.display='none';});
   });
 }
+// ORDEN MANUAL DE FILAS (persistente, estándar en toda la app, para cualquier mes/año)
+var _lastRowOrder={gasto:[],ingreso:[]};
+function _ordenStorageKey(tipo){return 'mf_orden_'+tipo+'_'+(ST.userId||'anon');}
+function _getOrdenArr(tipo){try{return JSON.parse(localStorage.getItem(_ordenStorageKey(tipo))||'[]');}catch(e){return [];}}
+function _setOrdenArr(tipo,arr){localStorage.setItem(_ordenStorageKey(tipo),JSON.stringify(arr));}
+function moveRow(tipo,key,dir){
+  var order=(_lastRowOrder[tipo]||[]).slice();
+  var idx=order.indexOf(key);
+  var swapIdx=idx+dir;
+  if(idx<0||swapIdx<0||swapIdx>=order.length)return;
+  var tmp=order[idx];order[idx]=order[swapIdx];order[swapIdx]=tmp;
+  _setOrdenArr(tipo,order);
+  renderTablasPagos();
+}
+
 var PLANTILLA_INICIO_YEAR=2026,PLANTILLA_INICIO_MES=7; // agosto 2026: único mes trabajado hasta ahora
 function _plantillaStorageKey(){return 'mf_meses_plantilla_'+(ST.userId||'anon');}
 function _mesesConPlantilla(){
@@ -1467,12 +1482,17 @@ function renderTablasPagos(){
     var amtColor=tipo==='gasto'?'#DC2626':'#16A34A';
     var mm=String(_presMes+1).padStart(2,'0');var yy=_presYear;
     var cb='border-bottom:1px solid #E2E8F0;border-right:1px solid #E2E8F0;text-align:center;';
+    function moveBtns(key){
+      return '<button class="icon-btn" title="Subir" onclick="moveRow(\''+tipo+'\',\''+key+'\',-1)" style="padding:2px;">🔼</button>'+
+             '<button class="icon-btn" title="Bajar" onclick="moveRow(\''+tipo+'\',\''+key+'\',1)" style="padding:2px;">🔽</button>';
+    }
     // Unifica plantilla + ítems puntuales del mes en una sola lista ordenada por día
     var allRows=items.map(function(p){
-      return {day:parseInt(p.dia_cobro)||31,html:(function(){
-        var key=(tipo==='gasto'?'g:':'i:')+p.nombre;
-        var pagado=!!_pagadosMes[key];
-        var movId=_pagadosMes[key]||'';
+      var key='p_'+p.id;
+      return {key:key,day:parseInt(p.dia_cobro)||31,html:(function(){
+        var pkey=(tipo==='gasto'?'g:':'i:')+p.nombre;
+        var pagado=!!_pagadosMes[pkey];
+        var movId=_pagadosMes[pkey]||'';
         var dd=p.dia_cobro?String(p.dia_cobro).padStart(2,'0'):'--';
         var fecha=dd+'/'+mm+'/'+yy;
         var estado=pagado
@@ -1485,25 +1505,35 @@ function renderTablasPagos(){
           '<td style="padding:9px 12px;font-size:13.5px;font-weight:700;color:'+amtColor+';white-space:nowrap;'+cb+'">'+fmt(p.monto)+'</td>'+
           '<td style="padding:9px 12px;'+cb+'">'+tipoBadge(p.entidad||p.nombre)+'</td>'+
           '<td style="padding:9px 8px;text-align:center;white-space:nowrap;border-bottom:1px solid #E2E8F0;">'+
+            moveBtns(key)+
             '<button class="icon-btn edit" onclick="editPago(\''+p.id+'\')">✏️</button>'+
             '<button class="icon-btn del" onclick="deletePago(\''+p.id+'\')">🗑️</button>'+
           '</td>'+
         '</tr>';
       })()};
     }).concat((extras||[]).map(function(mv){
+      var key='x_'+mv.id;
       var nombre=mv.description.replace(/^(Pago|Ingreso): /,'');
       var d=new Date(mv.date+'T12:00:00');
       var fecha=String(d.getDate()).padStart(2,'0')+'/'+mm+'/'+yy;
-      return {day:d.getDate(),html:'<tr style="background:#F0FDF4;">'+
+      return {key:key,day:d.getDate(),html:'<tr style="background:#F0FDF4;">'+
         '<td style="padding:9px 12px;width:44px;'+cb+'"><button onclick="deleteMovMes(\''+mv.id+'\')" title="Clic para eliminar" style="width:26px;height:26px;border-radius:7px;border:none;background:#16A34A;display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;margin:auto;cursor:pointer;">✓</button></td>'+
         '<td style="padding:9px 12px;font-size:12.5px;color:#64748B;white-space:nowrap;width:100px;'+cb+'">'+fecha+'</td>'+
         '<td style="padding:9px 12px;font-size:13.5px;font-weight:600;color:#1E293B;'+cb+'">'+esc(nombre)+'</td>'+
         '<td style="padding:9px 12px;font-size:13.5px;font-weight:700;color:'+amtColor+';white-space:nowrap;'+cb+'">'+fmt(mv.amount)+'</td>'+
         '<td style="padding:9px 12px;'+cb+'">'+tipoBadge(mv.category||nombre)+'</td>'+
-        '<td style="padding:9px 8px;text-align:center;border-bottom:1px solid #E2E8F0;"><button class="icon-btn edit" onclick="editMovMes(\''+mv.id+'\')">✏️</button><button class="icon-btn del" onclick="deleteMovMes(\''+mv.id+'\')">🗑️</button></td>'+
+        '<td style="padding:9px 8px;text-align:center;border-bottom:1px solid #E2E8F0;">'+moveBtns(key)+'<button class="icon-btn edit" onclick="editMovMes(\''+mv.id+'\')">✏️</button><button class="icon-btn del" onclick="deleteMovMes(\''+mv.id+'\')">🗑️</button></td>'+
       '</tr>'};
     }));
-    allRows.sort(function(a,b){return a.day-b.day;});
+    var pref=_getOrdenArr(tipo);
+    if(pref.length){
+      var known=allRows.filter(function(r){return pref.indexOf(r.key)!==-1;}).sort(function(a,b){return pref.indexOf(a.key)-pref.indexOf(b.key);});
+      var unknown=allRows.filter(function(r){return pref.indexOf(r.key)===-1;}).sort(function(a,b){return a.day-b.day;});
+      allRows=known.concat(unknown);
+    } else {
+      allRows.sort(function(a,b){return a.day-b.day;});
+    }
+    _lastRowOrder[tipo]=allRows.map(function(r){return r.key;});
     var rows=allRows.map(function(r){return r.html;}).join('');
     var extraRows='';
     if(!items.length&&!(extras||[]).length)return '<div class="empty-state"><div class="e-icon">'+(tipo==='gasto'?'💳':'💵')+'</div><p>Sin '+(tipo==='gasto'?'gastos':'ingresos')+' este mes</p></div>';
