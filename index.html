@@ -1324,7 +1324,8 @@ function renderTablasPagos(){
     if(!items.length)return '<div class="empty-state"><div class="e-icon">'+(tipo==='gasto'?'💳':'💵')+'</div><p>Sin '+(tipo==='gasto'?'gastos':'ingresos')+' fijos aún</p></div>';
     var amtColor=tipo==='gasto'?'#DC2626':'#16A34A';
     var mm=String(_presMes+1).padStart(2,'0');var yy=_presYear;
-    var rows=items.map(function(p){
+    var sorted=items.slice().sort(function(a,b){return (parseInt(a.dia)||31)-(parseInt(b.dia)||31);});
+    var rows=sorted.map(function(p){
       var key=(tipo==='gasto'?'g:':'i:')+p.nombre;
       var pagado=!!_pagadosMes[key];
       var movId=_pagadosMes[key]||'';
