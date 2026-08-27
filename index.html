@@ -782,20 +782,21 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
             </div>
           </div>
         </div>
+        <!-- Navegador de mes -->
+        <div style="display:flex;align-items:center;gap:0;margin-bottom:16px;background:#F1F5F9;border-radius:14px;padding:6px 10px;width:fit-content;">
+          <button onclick="presMesNav(-1)" style="width:32px;height:32px;border:none;background:transparent;cursor:pointer;font-size:18px;color:#475569;border-radius:8px;display:flex;align-items:center;justify-content:center;transition:background .15s;" onmouseover="this.style.background='#E2E8F0'" onmouseout="this.style.background='transparent'">‹</button>
+          <span id="pres-mes-nav-label" style="font-size:14px;font-weight:800;color:#1E293B;min-width:140px;text-align:center;"></span>
+          <button onclick="presMesNav(1)" style="width:32px;height:32px;border:none;background:transparent;cursor:pointer;font-size:18px;color:#475569;border-radius:8px;display:flex;align-items:center;justify-content:center;transition:background .15s;" onmouseover="this.style.background='#E2E8F0'" onmouseout="this.style.background='transparent'">›</button>
+          <button onclick="presMesNav(0)" style="margin-left:6px;padding:4px 12px;border:none;background:#1E40AF;color:#fff;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">Hoy</button>
+        </div>
         <!-- Tablas de pagos -->
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-          <div style="display:flex;align-items:center;gap:10px;">
-            <div class="section-head" style="margin:0;">Gastos obligatorios</div>
-            <span id="pres-mes-label-g" style="font-size:12px;font-weight:700;color:#64748B;background:#F1F5F9;padding:3px 10px;border-radius:20px;"></span>
-          </div>
+          <div class="section-head" style="margin:0;">Gastos obligatorios</div>
           <button class="btn btn-ghost" style="padding:6px 12px;font-size:12px;" onclick="openPagoModalTipo('gasto')">+ Gasto</button>
         </div>
         <div class="card" style="margin-bottom:20px;overflow:hidden;padding:0;" id="gastos-fijos-card"></div>
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-          <div style="display:flex;align-items:center;gap:10px;">
-            <div class="section-head" style="margin:0;">Ingresos fijos</div>
-            <span id="pres-mes-label-i" style="font-size:12px;font-weight:700;color:#64748B;background:#F1F5F9;padding:3px 10px;border-radius:20px;"></span>
-          </div>
+          <div class="section-head" style="margin:0;">Ingresos fijos</div>
           <button class="btn btn-ghost" style="padding:6px 12px;font-size:12px;" onclick="openPagoModalTipo('ingreso')">+ Ingreso</button>
         </div>
         <div class="card" style="overflow:hidden;padding:0;" id="ingresos-fijos-card"></div>
@@ -1327,51 +1328,33 @@ function setFilter(f){
   renderMovimientos();
 }
 
-// RENDER PRESUPUESTO
-function renderPresupuesto(){
+// MES NAVEGABLE EN PRESUPUESTO
+var _presMes=new Date().getMonth();
+var _presYear=new Date().getFullYear();
+function presMesNav(delta){
+  if(delta===0){_presMes=new Date().getMonth();_presYear=new Date().getFullYear();}
+  else{
+    _presMes+=delta;
+    if(_presMes<0){_presMes=11;_presYear--;}
+    else if(_presMes>11){_presMes=0;_presYear++;}
+  }
+  renderTablasPagos();
+}
+function renderTablasPagos(){
   var gastos=ST.pagos.filter(function(p){return p.tipo==='gasto';});
   var ingresos=ST.pagos.filter(function(p){return p.tipo==='ingreso';});
-  var totalG=gastos.reduce(function(a,p){return a+parseFloat(p.monto||0);},0);
-  var totalI=ingresos.reduce(function(a,p){return a+parseFloat(p.monto||0);},0);
-  var libre=totalI-totalG;
-  var pctComprometido=totalI>0?Math.min(100,Math.round(totalG/totalI*100)):0;
-
-  // Hero
-  var libreEl=document.getElementById('budget-libre');
-  if(libreEl){
-    libreEl.textContent=fmt(Math.abs(libre));
-    libreEl.style.color=libre>=0?'#fff':'#FCA5A5';
-    if(libre<0){libreEl.textContent='- '+fmt(Math.abs(libre));}
-  }
-  var bar=document.getElementById('budget-bar');
-  if(bar){
-    bar.style.width=pctComprometido+'%';
-    bar.style.background=pctComprometido>=90?'#F87171':pctComprometido>=70?'#FCD34D':'#4ADE80';
-  }
-  var barLbl=document.getElementById('budget-bar-label');
-  if(barLbl){
-    if(totalI===0){barLbl.textContent='Agrega tus ingresos fijos para ver el análisis';}
-    else if(libre<0){barLbl.textContent='⚠️ Los gastos fijos superan tus ingresos en '+fmt(Math.abs(libre));}
-    else{barLbl.textContent=pctComprometido+'% de tus ingresos comprometido en gastos fijos · '+fmt(libre)+' libre';}
-  }
-  document.getElementById('fixed-income-total').textContent=fmt(totalI);
-  document.getElementById('fixed-income-count').textContent=ingresos.length+(ingresos.length===1?' fuente':' fuentes');
-  document.getElementById('fixed-expense-total').textContent=fmt(totalG);
-  document.getElementById('fixed-expense-count').textContent=gastos.length+(gastos.length===1?' obligación':' obligaciones');
-
-  // Pre-compute which pagos_fijos were already registered this month
-  var _hoyPF=new Date();var _cMPF=_hoyPF.getMonth();var _cYPF=_hoyPF.getFullYear();
   var _pagadosMes={};
   ST.movements.forEach(function(mv){
     var d=new Date(mv.date+'T12:00:00');
-    if(d.getMonth()!==_cMPF||d.getFullYear()!==_cYPF)return;
+    if(d.getMonth()!==_presMes||d.getFullYear()!==_presYear)return;
     var mg=mv.description&&mv.description.match(/^Pago: (.+)$/);
     if(mg)_pagadosMes['g:'+mg[1]]=mv.id;
     var mi=mv.description&&mv.description.match(/^Ingreso: (.+)$/);
     if(mi)_pagadosMes['i:'+mi[1]]=mv.id;
   });
-
-  // Badge de color por entidad/tipo de pago
+  var _mesNombre=MONTHS_FULL[_presMes].toUpperCase()+' '+_presYear;
+  var navLbl=document.getElementById('pres-mes-nav-label');
+  if(navLbl)navLbl.textContent=_mesNombre;
   var _badgePalette=['#3B82F6','#EF4444','#F97316','#22C55E','#8B5CF6','#EC4899','#14B8A6','#EAB308','#06B6D4','#84CC16','#F43F5E','#6366F1'];
   var _badgeMap={};var _badgeIdx=0;
   function tipoBadge(label){
@@ -1380,19 +1363,19 @@ function renderPresupuesto(){
     var c=_badgeMap[label];
     return '<span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:11.5px;font-weight:700;background:'+c+'22;color:'+c+';border:1px solid '+c+'55;white-space:nowrap;">'+esc(label)+'</span>';
   }
-
   function buildTable(items,tipo){
-    if(!items.length) return '<div class="empty-state"><div class="e-icon">'+(tipo==='gasto'?'💳':'💵')+'</div><p>Sin '+(tipo==='gasto'?'gastos':'ingresos')+' fijos aún</p></div>';
+    if(!items.length)return '<div class="empty-state"><div class="e-icon">'+(tipo==='gasto'?'💳':'💵')+'</div><p>Sin '+(tipo==='gasto'?'gastos':'ingresos')+' fijos aún</p></div>';
     var amtColor=tipo==='gasto'?'#DC2626':'#16A34A';
-    var mm=String(_cMPF+1).padStart(2,'0');var yy=_cYPF;
+    var mm=String(_presMes+1).padStart(2,'0');var yy=_presYear;
     var rows=items.map(function(p){
       var key=(tipo==='gasto'?'g:':'i:')+p.nombre;
       var pagado=!!_pagadosMes[key];
+      var movId=_pagadosMes[key]||'';
       var dd=p.dia_cobro?String(p.dia_cobro).padStart(2,'0'):'--';
       var fecha=dd+'/'+mm+'/'+yy;
       var estado=pagado
-        ?'<div style="width:26px;height:26px;border-radius:7px;background:#16A34A;display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;margin:auto;">✓</div>'
-        :'<button onclick="registrarPagoFijo(\''+p.id+'\',\''+tipo+'\')" title="'+(tipo==='gasto'?'Registrar pago':'Registrar ingreso')+'" style="width:26px;height:26px;border-radius:7px;border:2px solid #CBD5E1;background:#fff;cursor:pointer;display:block;margin:auto;transition:border-color .15s;" onmouseover="this.style.borderColor=\'#2563EB\'" onmouseout="this.style.borderColor=\'#CBD5E1\'"></button>';
+        ?'<button onclick="togglePagoFijo(\''+movId+'\',\''+p.id+'\',\''+tipo+'\')" title="Clic para desmarcar" style="width:26px;height:26px;border-radius:7px;border:none;background:#16A34A;display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;margin:auto;cursor:pointer;">✓</button>'
+        :'<button onclick="registrarPagoFijo(\''+p.id+'\',\''+tipo+'\')" title="Registrar pago" style="width:26px;height:26px;border-radius:7px;border:2px solid #CBD5E1;background:#fff;cursor:pointer;display:block;margin:auto;transition:border-color .15s;" onmouseover="this.style.borderColor=\'#2563EB\'" onmouseout="this.style.borderColor=\'#CBD5E1\'"></button>';
       return '<tr style="border-bottom:1px solid #F1F5F9;'+(pagado?'background:#F0FDF4;':'')+'" >'+
         '<td style="padding:9px 12px;text-align:center;width:44px;">'+estado+'</td>'+
         '<td style="padding:9px 12px;font-size:12.5px;color:#64748B;white-space:nowrap;width:100px;">'+fecha+'</td>'+
@@ -1427,14 +1410,43 @@ function renderPresupuesto(){
       '</table>'+
     '</div>';
   }
+  var gc=document.getElementById('gastos-fijos-card');if(gc)gc.innerHTML=buildTable(gastos,'gasto');
+  var ic=document.getElementById('ingresos-fijos-card');if(ic)ic.innerHTML=buildTable(ingresos,'ingreso');
+}
 
-  var _mesNombre=MONTHS_FULL[_cMPF].toUpperCase()+' '+_cYPF;
-  var lg=document.getElementById('pres-mes-label-g');if(lg)lg.textContent=_mesNombre;
-  var li=document.getElementById('pres-mes-label-i');if(li)li.textContent=_mesNombre;
-  var gc=document.getElementById('gastos-fijos-card');
-  gc.innerHTML=buildTable(gastos,'gasto');
-  var ic=document.getElementById('ingresos-fijos-card');
-  ic.innerHTML=buildTable(ingresos,'ingreso');
+// RENDER PRESUPUESTO
+function renderPresupuesto(){
+  var gastos=ST.pagos.filter(function(p){return p.tipo==='gasto';});
+  var ingresos=ST.pagos.filter(function(p){return p.tipo==='ingreso';});
+  var totalG=gastos.reduce(function(a,p){return a+parseFloat(p.monto||0);},0);
+  var totalI=ingresos.reduce(function(a,p){return a+parseFloat(p.monto||0);},0);
+  var libre=totalI-totalG;
+  var pctComprometido=totalI>0?Math.min(100,Math.round(totalG/totalI*100)):0;
+
+  // Hero
+  var libreEl=document.getElementById('budget-libre');
+  if(libreEl){
+    libreEl.textContent=fmt(Math.abs(libre));
+    libreEl.style.color=libre>=0?'#fff':'#FCA5A5';
+    if(libre<0){libreEl.textContent='- '+fmt(Math.abs(libre));}
+  }
+  var bar=document.getElementById('budget-bar');
+  if(bar){
+    bar.style.width=pctComprometido+'%';
+    bar.style.background=pctComprometido>=90?'#F87171':pctComprometido>=70?'#FCD34D':'#4ADE80';
+  }
+  var barLbl=document.getElementById('budget-bar-label');
+  if(barLbl){
+    if(totalI===0){barLbl.textContent='Agrega tus ingresos fijos para ver el análisis';}
+    else if(libre<0){barLbl.textContent='⚠️ Los gastos fijos superan tus ingresos en '+fmt(Math.abs(libre));}
+    else{barLbl.textContent=pctComprometido+'% de tus ingresos comprometido en gastos fijos · '+fmt(libre)+' libre';}
+  }
+  document.getElementById('fixed-income-total').textContent=fmt(totalI);
+  document.getElementById('fixed-income-count').textContent=ingresos.length+(ingresos.length===1?' fuente':' fuentes');
+  document.getElementById('fixed-expense-total').textContent=fmt(totalG);
+  document.getElementById('fixed-expense-count').textContent=gastos.length+(gastos.length===1?' obligación':' obligaciones');
+
+  renderTablasPagos();
   renderRecordatorios();
   // Resumen y alertas del mes actual
   var _hoy=new Date();var _cm=_hoy.getMonth();var _cy=_hoy.getFullYear();
@@ -1470,10 +1482,21 @@ async function registrarPagoFijo(id,tipo){
       ST.movements.unshift({id:r.id,type:r.tipo,description:r.descripcion,amount:parseFloat(r.monto),category:r.categoria,date:r.fecha,icon:r.icono||'💳',createdAt:r.created_at});
       recomputeAnnual(ST.movements);
     }
-    renderPresupuesto();
+    renderTablasPagos();
   }finally{
     if(btn&&btn.isConnected){btn.disabled=false;}
   }
+}
+
+// DESMARCAR PAGO FIJO (toggle)
+async function togglePagoFijo(movId,pagoId,tipo){
+  if(!movId)return;
+  if(!confirm('¿Desmarcar este pago? Se eliminará el registro del movimiento.'))return;
+  var res=await _sb.from('movimientos').delete().eq('id',movId);
+  if(res.error){alert('Error: '+res.error.message);return;}
+  ST.movements=ST.movements.filter(function(m){return m.id!==movId;});
+  recomputeAnnual(ST.movements);
+  renderTablasPagos();
 }
 
 // RENDER RECORDATORIOS DE PAGO
