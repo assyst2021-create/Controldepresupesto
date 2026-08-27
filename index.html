@@ -839,6 +839,7 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
           <button onclick="presMesNav(1)" style="width:32px;height:32px;border:none;background:transparent;cursor:pointer;font-size:18px;color:#475569;border-radius:8px;display:flex;align-items:center;justify-content:center;transition:background .15s;" onmouseover="this.style.background='#E2E8F0'" onmouseout="this.style.background='transparent'">›</button>
           <button onclick="presMesNav(0)" style="margin-left:6px;padding:4px 12px;border:none;background:#1E40AF;color:#fff;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">Hoy</button>
           <button onclick="openGrafica()" style="margin-left:6px;padding:4px 12px;border:none;background:#fff;color:#1E40AF;border:1.5px solid #C7D2FE;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:5px;">📊 Gráfica</button>
+          <button onclick="limpiarMesesAnteriores()" style="margin-left:6px;padding:4px 12px;border:none;background:#FEF2F2;color:#DC2626;border:1.5px solid #FECACA;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">🧹 Limpiar meses anteriores</button>
         </div>
         <!-- Tablas de pagos -->
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
@@ -1312,6 +1313,25 @@ function presMesNav(delta){
     else if(_presMes>11){_presMes=0;_presYear++;}
   }
   renderTablasPagos();
+}
+
+// LIMPIEZA ÚNICA: borra todos los movimientos fuera de agosto 2026
+async function limpiarMesesAnteriores(){
+  if(!confirm('¿Eliminar TODOS los movimientos que NO sean de agosto 2026? Esta acción no se puede deshacer.'))return;
+  var aBorrar=ST.movements.filter(function(mv){
+    var d=new Date(mv.date+'T12:00:00');
+    return !(d.getMonth()===7&&d.getFullYear()===2026);
+  });
+  if(!aBorrar.length){alert('No hay movimientos fuera de agosto 2026.');return;}
+  if(!confirm('Se eliminarán '+aBorrar.length+' movimientos. ¿Confirmas?'))return;
+  var ids=aBorrar.map(function(mv){return mv.id;});
+  var res=await _sb.from('movimientos').delete().in('id',ids).select();
+  if(res.error){alert('Error: '+res.error.message);return;}
+  var borradosOk=(res.data||[]).length;
+  ST.movements=ST.movements.filter(function(mv){return !ids.includes(mv.id);});
+  recomputeAnnual(ST.movements);
+  renderPresupuesto();
+  alert('Se eliminaron '+borradosOk+' movimientos. Solo queda agosto 2026.');
 }
 
 // GRÁFICA ANUAL (independiente del mes seleccionado en la tabla)
