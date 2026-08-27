@@ -839,6 +839,7 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
           <button onclick="presMesNav(1)" style="width:32px;height:32px;border:none;background:transparent;cursor:pointer;font-size:18px;color:#475569;border-radius:8px;display:flex;align-items:center;justify-content:center;transition:background .15s;" onmouseover="this.style.background='#E2E8F0'" onmouseout="this.style.background='transparent'">›</button>
           <button onclick="presMesNav(0)" style="margin-left:6px;padding:4px 12px;border:none;background:#1E40AF;color:#fff;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">Hoy</button>
           <button onclick="openGrafica()" style="margin-left:6px;padding:4px 12px;border:none;background:#fff;color:#1E40AF;border:1.5px solid #C7D2FE;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:5px;">📊 Gráfica</button>
+          <button id="usar-plantilla-btn" onclick="usarPlantillaMesAnterior()" style="display:none;margin-left:6px;padding:4px 12px;border:none;background:#fff;color:#15803D;border:1.5px solid #BBF7D0;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">📋 Usar plantilla del mes anterior</button>
         </div>
         <!-- Tablas de pagos -->
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
@@ -1408,10 +1409,26 @@ function renderGraficaChart(){
   });
 }
 var PLANTILLA_INICIO_YEAR=2026,PLANTILLA_INICIO_MES=7; // agosto 2026: único mes trabajado hasta ahora
+function _plantillaStorageKey(){return 'mf_meses_plantilla_'+(ST.userId||'anon');}
+function _mesesConPlantilla(){
+  try{return JSON.parse(localStorage.getItem(_plantillaStorageKey())||'[]').concat([PLANTILLA_INICIO_YEAR+'-'+PLANTILLA_INICIO_MES]);}catch(e){return [PLANTILLA_INICIO_YEAR+'-'+PLANTILLA_INICIO_MES];}
+}
+function _mesTienePlantilla(y,m){return _mesesConPlantilla().indexOf(y+'-'+m)!==-1;}
+function usarPlantillaMesAnterior(){
+  var key=_presYear+'-'+_presMes;
+  var arr=_mesesConPlantilla();
+  if(arr.indexOf(key)===-1){arr.push(key);localStorage.setItem(_plantillaStorageKey(),JSON.stringify(arr));}
+  renderTablasPagos();
+}
 function renderTablasPagos(){
-  var _fueraDeInicio=!(_presYear===PLANTILLA_INICIO_YEAR&&_presMes===PLANTILLA_INICIO_MES);
+  var _fueraDeInicio=!_mesTienePlantilla(_presYear,_presMes);
   var gastos=_fueraDeInicio?[]:ST.pagos.filter(function(p){return p.tipo==='gasto';});
   var ingresos=_fueraDeInicio?[]:ST.pagos.filter(function(p){return p.tipo==='ingreso';});
+  var btnPl=document.getElementById('usar-plantilla-btn');
+  if(btnPl){
+    var pm=_presMes-1,py=_presYear;if(pm<0){pm=11;py--;}
+    btnPl.style.display=(_fueraDeInicio&&_mesTienePlantilla(py,pm))?'inline-flex':'none';
+  }
   var _pagadosMes={};
   ST.movements.forEach(function(mv){
     var d=new Date(mv.date+'T12:00:00');
