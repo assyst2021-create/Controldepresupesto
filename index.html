@@ -716,8 +716,7 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
       </div>
     </div>
     <div id="sidebar-nav">
-      <button class="nav-btn active" data-screen="panel" onclick="navigate('panel')"><span class="n-icon">🏠</span> Panel</button>
-      <button class="nav-btn" data-screen="presupuesto" onclick="navigate('presupuesto')"><span class="n-icon">💳</span> Presupuesto</button>
+      <button class="nav-btn active" data-screen="presupuesto" onclick="navigate('presupuesto')"><span class="n-icon">💳</span> Presupuesto</button>
       <button class="nav-btn" data-screen="compras" onclick="navigate('compras')"><span class="n-icon">🛒</span> Compras</button>
       <button class="nav-btn" data-screen="reportes" onclick="navigate('reportes')"><span class="n-icon">📊</span> Indicadores</button>
       <div id="admin-nav-section" style="display:none;">
@@ -737,58 +736,6 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
   </div>
 
   <div id="main-content">
-    <!-- PANEL -->
-    <div id="screen-panel" class="screen">
-      <div class="main-header">
-        <h2>Panel</h2>
-        <button id="btn-add-mov" class="btn btn-primary" onclick="openModal()">+ Movimiento</button>
-      </div>
-      <div class="main-body">
-        <!-- Selector de rango -->
-        <div class="card" style="padding:14px 16px;margin-bottom:14px;">
-          <div style="display:flex;gap:7px;flex-wrap:wrap;" id="panel-presets">
-            <button class="panel-preset active" data-preset="mes" onclick="setPanelPreset('mes')">Este mes</button>
-            <button class="panel-preset" data-preset="30d" onclick="setPanelPreset('30d')">30 días</button>
-            <button class="panel-preset" data-preset="3m" onclick="setPanelPreset('3m')">3 meses</button>
-            <button class="panel-preset" data-preset="year" onclick="setPanelPreset('year')">Este año</button>
-            <button class="panel-preset" data-preset="custom" onclick="setPanelPreset('custom')">📅 Personalizado</button>
-          </div>
-          <div id="panel-custom-row" style="display:none;margin-top:12px;display:none;gap:10px;align-items:center;flex-wrap:wrap;">
-            <div style="display:flex;align-items:center;gap:6px;flex:1;min-width:140px;">
-              <label style="font-size:12px;font-weight:700;color:var(--gray);white-space:nowrap;">Desde</label>
-              <input type="date" id="panel-from" style="flex:1;font-size:13px;border:1.5px solid var(--border);border-radius:10px;padding:8px 10px;" onchange="applyCustomRange()"/>
-            </div>
-            <div style="display:flex;align-items:center;gap:6px;flex:1;min-width:140px;">
-              <label style="font-size:12px;font-weight:700;color:var(--gray);white-space:nowrap;">Hasta</label>
-              <input type="date" id="panel-to" style="flex:1;font-size:13px;border:1.5px solid var(--border);border-radius:10px;padding:8px 10px;" onchange="applyCustomRange()"/>
-            </div>
-          </div>
-        </div>
-        <!-- Hero balance -->
-        <div class="balance-hero">
-          <div class="hero-label" id="hero-range-label">Este mes</div>
-          <div class="hero-amount" id="hero-balance">$0</div>
-          <div class="hero-stats">
-            <div class="hero-stat"><div class="hs-label">Ingresos</div><div class="hs-val inc" id="hero-income">$0</div></div>
-            <div class="hero-stat"><div class="hs-label">Gastos</div><div class="hs-val exp" id="hero-expense">$0</div></div>
-            <div class="hero-stat"><div class="hs-label">Ahorro</div><div class="hs-val sav" id="hero-savings">$0</div></div>
-          </div>
-        </div>
-        <div class="panel-grid">
-          <div class="card stat-card"><div class="sc-label">Gastos anuales</div><div class="sc-val" id="annual-expense">$0</div><div class="sc-sub" id="annual-year">Año 2025</div></div>
-          <div class="card stat-card"><div class="sc-label">Ahorro anual</div><div class="sc-val" id="annual-savings">$0</div><div class="sc-sub">Este año</div></div>
-        </div>
-        <div id="pagos-pendientes-panel" style="margin-bottom:20px;display:none;">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-            <div class="section-head" style="margin:0;">Recordatorios de pago</div>
-            <button class="btn btn-ghost" style="padding:5px 11px;font-size:12px;" onclick="navigate('presupuesto')">Ver todos</button>
-          </div>
-          <div id="pagos-pendientes-panel-list"></div>
-        </div>
-        <div class="section-head">Alertas y recomendaciones</div>
-        <div id="alerts-container" style="margin-bottom:20px;"></div>
-      </div>
-    </div>
 
     <!-- MOVIMIENTOS -->
     <div id="screen-movimientos" class="screen" style="display:none;">
@@ -852,6 +799,11 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
           <button class="btn btn-ghost" style="padding:6px 12px;font-size:12px;" onclick="openRecordatorioModal()">+ Agregar</button>
         </div>
         <div class="card" style="overflow:hidden;" id="recordatorios-card"></div>
+        <!-- Alertas y recomendaciones -->
+        <div style="display:flex;align-items:center;justify-content:space-between;margin:20px 0 10px;">
+          <div class="section-head" style="margin:0;">Alertas y recomendaciones</div>
+        </div>
+        <div id="alerts-container" style="margin-bottom:20px;"></div>
       </div>
     </div>
 
@@ -974,8 +926,7 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
 <!-- BOTTOM NAV -->
 <div id="bottom-nav">
   <div class="bnav-inner">
-    <button class="bnav-btn active" data-screen="panel" onclick="navigate('panel')"><span class="bn-icon">🏠</span>Panel</button>
-    <button class="bnav-btn" data-screen="presupuesto" onclick="navigate('presupuesto')"><span class="bn-icon">💳</span>Presupuesto</button>
+    <button class="bnav-btn active" data-screen="presupuesto" onclick="navigate('presupuesto')"><span class="bn-icon">💳</span>Presupuesto</button>
     <button class="fab" onclick="openModal()">+</button>
     <button class="bnav-btn" data-screen="compras" onclick="navigate('compras')"><span class="bn-icon">🛒</span>Compras</button>
     <button class="bnav-btn" data-screen="reportes" onclick="navigate('reportes')"><span class="bn-icon">📊</span>Indicadores</button>
@@ -1067,7 +1018,7 @@ var _sbCreate = window.supabase.createClient(
 
 // STATE
 var ST = {
-  screen:'panel', month:new Date().getMonth(), year:new Date().getFullYear(),
+  screen:'presupuesto', month:new Date().getMonth(), year:new Date().getFullYear(),
   movements:[], goals:[], pagos:[], compras:[], profiles:[],
   movFilter:'all', isAdmin:false, userId:null, userName:'', tareas:[],
   MONTHLY_DATA:Array(12).fill(null).map(function(){return{i:0,e:0,s:0};}),
@@ -1130,8 +1081,7 @@ function navigate(screen){
 }
 
 function renderScreen(screen){
-  if(screen==='panel')renderPanel();
-  else if(screen==='movimientos')renderMovimientos();
+  if(screen==='movimientos')renderMovimientos();
   else if(screen==='presupuesto')renderPresupuesto();
   else if(screen==='compras')renderCompras();
   else if(screen==='reportes')renderReportes();
@@ -1442,6 +1392,13 @@ function renderPresupuesto(){
   ic.innerHTML=ingresos.length?ingresos.map(function(p){return pagoHTML(p,'ingreso');}).join(''):
     '<div class="empty-state"><div class="e-icon">💵</div><p>Sin ingresos fijos aún</p></div>';
   renderRecordatorios();
+  // Alertas basadas en el mes actual
+  var _hoy=new Date();var _cm=_hoy.getMonth();var _cy=_hoy.getFullYear();
+  var _movMes=ST.movements.filter(function(mv){var d=new Date(mv.date+'T12:00:00');return d.getMonth()===_cm&&d.getFullYear()===_cy;});
+  var _totI=_movMes.filter(function(x){return x.type==='income';}).reduce(function(a,x){return a+x.amount;},0);
+  var _totE=_movMes.filter(function(x){return x.type==='expense';}).reduce(function(a,x){return a+x.amount;},0);
+  var _totS=_movMes.filter(function(x){return x.type==='savings';}).reduce(function(a,x){return a+x.amount;},0);
+  renderAlerts({i:_totI,e:_totE,s:_totS},_totI-_totE-_totS);
 }
 
 // REGISTRAR PAGO/INGRESO FIJO ESTE MES
