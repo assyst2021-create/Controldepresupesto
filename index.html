@@ -1063,6 +1063,7 @@ function navigate(screen){
 }
 
 function renderScreen(screen){
+  populateCurrencySels();
   if(screen==='movimientos')renderMovimientos();
   else if(screen==='presupuesto')renderPresupuesto();
   else if(screen==='compras')renderCompras();
