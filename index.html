@@ -1345,21 +1345,16 @@ function closeGrafica(){document.getElementById('modal-grafica').style.display='
 function graficaYearNav(delta){_graficaYear+=delta;document.getElementById('grafica-detalle').innerHTML='';renderGraficaChart();}
 function renderGraficaChart(){
   document.getElementById('grafica-year-label').textContent=_graficaYear;
-  var data=Array(12).fill(null).map(function(){return{i:0,e:0,s:0,_seenI:{},_seenE:{}};});
+  // Misma lógica que el hero: solo movimientos con prefijo "Ingreso: " / "Pago: ", dedup por nombre
+  var data=Array(12).fill(null).map(function(){return{i:0,e:0,_seenI:{},_seenE:{}};});
   ST.movements.forEach(function(mv){
     var d=new Date(mv.date+'T12:00:00');
     if(d.getFullYear()!==_graficaYear)return;
     var mo=d.getMonth();
-    // Deduplica por descripción (mismo criterio que el hero): un solo registro por nombre en el mes
-    if(mv.type==='income'){
-      var ki=mv.description||('id_'+mv.id);
-      data[mo]._seenI[ki]=mv.amount;
-    } else if(mv.type==='expense'){
-      var ke=mv.description||('id_'+mv.id);
-      data[mo]._seenE[ke]=mv.amount;
-    } else if(mv.type==='savings'){
-      data[mo].s+=mv.amount;
-    }
+    var mgI=mv.description&&mv.description.match(/^Ingreso: (.+)$/);
+    var mgE=mv.description&&mv.description.match(/^Pago: (.+)$/);
+    if(mgI){data[mo]._seenI[mgI[1]]=mv.amount;}
+    else if(mgE){data[mo]._seenE[mgE[1]]=mv.amount;}
   });
   data.forEach(function(x){
     x.i=Object.values(x._seenI).reduce(function(a,v){return a+v;},0);
@@ -1367,7 +1362,6 @@ function renderGraficaChart(){
   });
   var totI=data.reduce(function(a,x){return a+x.i;},0);
   var totE=data.reduce(function(a,x){return a+x.e;},0);
-  var totS=data.reduce(function(a,x){return a+x.s;},0);
   document.getElementById('grafica-tot-i').textContent=fmt(totI);
   document.getElementById('grafica-tot-e').textContent=fmt(totE);
 
@@ -1375,7 +1369,7 @@ function renderGraficaChart(){
   var tooltip=document.getElementById('grafica-tooltip');
   var W=680,H=280,padL=40,padB=30,padT=10;
   var chartW=W-padL-10,chartH=H-padT-padB;
-  var maxVal=Math.max(1,Math.max.apply(null,data.map(function(x){return Math.max(x.i,x.e,x.s);})));
+  var maxVal=Math.max(1,Math.max.apply(null,data.map(function(x){return Math.max(x.i,x.e);})));
   var groupW=chartW/12;
   var barW=Math.min(9,groupW/4.2);
   svg.setAttribute('viewBox','0 0 '+W+' '+H);
