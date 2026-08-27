@@ -421,22 +421,24 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
 
 <!-- MODAL AGREGAR AL MES -->
 <div id="modal-add-mes" class="modal-overlay" onclick="if(event.target===this)closeAddMes()">
-  <div class="modal-box" style="max-width:360px;">
+  <div class="modal-box">
     <div class="modal-header">
       <h3 id="add-mes-title">Agregar al mes</h3>
       <button class="modal-close" onclick="closeAddMes()">&#x2715;</button>
     </div>
-    <div class="modal-body">
-      <div class="form-group">
-        <label class="form-label">Nombre / Proveedor</label>
-        <input id="am-nombre" class="form-input" placeholder="Ej: Netflix, Salario extra..." />
-      </div>
-      <div class="form-group">
-        <label class="form-label">Monto</label>
-        <input id="am-monto" class="form-input" type="text" inputmode="numeric" placeholder="0" oninput="fmtNumInput(this)" />
+    <div class="modal-type-tabs">
+      <button class="mtt" id="amt-g" onclick="setAddMesTipo('gasto')">Gasto</button>
+      <button class="mtt" id="amt-i" onclick="setAddMesTipo('ingreso')">Ingreso</button>
+    </div>
+    <div class="form-group"><label>Nombre</label><input id="am-nombre" type="text" placeholder="Ej: Arriendo, Netflix, Salario..."/></div>
+    <div class="modal-row">
+      <div class="form-group"><label>Monto</label><input id="am-monto" type="text" inputmode="numeric" placeholder="0" oninput="numFmt(this)"/></div>
+      <div class="form-group"><label>¿Qué día del mes?</label>
+        <select id="am-dia"><option value="">Sin día específico</option></select>
       </div>
     </div>
-    <div class="modal-footer">
+    <div class="form-group"><label>Entidad bancaria / Empresa</label><input id="am-entidad" type="text" placeholder="Ej: Bancolombia, Claro, Empresa..."/></div>
+    <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeAddMes()">Cancelar</button>
       <button class="btn btn-primary" id="am-save-btn" onclick="submitAddMes()">Agregar</button>
     </div>
@@ -1357,7 +1359,7 @@ function renderTablasPagos(){
         '<td style="padding:9px 12px;font-size:12.5px;color:#64748B;white-space:nowrap;width:100px;">'+fecha+'</td>'+
         '<td style="padding:9px 12px;font-size:13.5px;font-weight:600;color:#1E293B;">'+esc(nombre)+'</td>'+
         '<td style="padding:9px 12px;font-size:13.5px;font-weight:700;color:'+amtColor+';text-align:right;white-space:nowrap;">'+fmt(mv.amount)+'</td>'+
-        '<td style="padding:9px 12px;font-size:11px;color:#94A3B8;font-style:italic;">Este mes</td>'+
+        '<td style="padding:9px 12px;">'+tipoBadge(mv.category||nombre)+'</td>'+
         '<td style="padding:9px 8px;text-align:right;"><button class="icon-btn del" onclick="deleteMovMes(\''+mv.id+'\')">🗑️</button></td>'+
       '</tr>';
     }).join('');
@@ -2602,11 +2604,22 @@ function buildDiaSelect(selectedVal){
 }
 // AGREGAR AL MES (movimiento puntual para _presMes/_presYear)
 var _addMesTipo='gasto',_savingAddMes=false;
+function setAddMesTipo(t){_addMesTipo=t;document.getElementById('amt-g').className='mtt'+(t==='gasto'?' active-e':'');document.getElementById('amt-i').className='mtt'+(t==='ingreso'?' active-i':'');}
+function buildAmDiaSelect(){
+  var sel=document.getElementById('am-dia');
+  if(!sel)return;
+  var opts='<option value="">Sin día específico</option>';
+  for(var d=1;d<=31;d++){opts+='<option value="'+d+'">Día '+d+' de cada mes</option>';}
+  sel.innerHTML=opts;
+}
 function openAddMes(tipo){
   _addMesTipo=tipo||'gasto';
   document.getElementById('am-nombre').value='';
   document.getElementById('am-monto').value='';
-  document.getElementById('add-mes-title').textContent=tipo==='gasto'?'Agregar gasto al mes':'Agregar ingreso al mes';
+  document.getElementById('am-entidad').value='';
+  buildAmDiaSelect();
+  document.getElementById('add-mes-title').textContent='Agregar al mes';
+  setAddMesTipo(_addMesTipo);
   document.getElementById('modal-add-mes').style.display='flex';
   setTimeout(function(){document.getElementById('am-nombre').focus();},100);
 }
@@ -2615,16 +2628,17 @@ async function submitAddMes(){
   if(_savingAddMes)return;
   var nombre=document.getElementById('am-nombre').value.trim();
   var monto=numVal('am-monto');
+  var dia=parseInt(document.getElementById('am-dia').value)||1;
+  var entidad=document.getElementById('am-entidad').value.trim();
   if(!nombre||!monto){alert('Ingresa nombre y monto.');return;}
   _savingAddMes=true;
   var btn=document.getElementById('am-save-btn');
   if(btn){btn.disabled=true;btn.textContent='Guardando...';}
   var desc=(_addMesTipo==='gasto'?'Pago: ':'Ingreso: ')+nombre;
   var tipoMov=_addMesTipo==='gasto'?'expense':'income';
-  // Fecha: día 1 del mes seleccionado
-  var d=new Date(_presYear,_presMes,1);
-  var fecha=_presYear+'-'+String(_presMes+1).padStart(2,'0')+'-01';
-  var record={user_id:ST.userId,tipo:tipoMov,descripcion:desc,monto:monto,categoria:nombre,fecha:fecha,icono:_addMesTipo==='gasto'?'💳':'💰'};
+  var diaMax=Math.min(dia,new Date(_presYear,_presMes+1,0).getDate());
+  var fecha=_presYear+'-'+String(_presMes+1).padStart(2,'0')+'-'+String(diaMax).padStart(2,'0');
+  var record={user_id:ST.userId,tipo:tipoMov,descripcion:desc,monto:monto,categoria:entidad||nombre,fecha:fecha,icono:_addMesTipo==='gasto'?'💳':'💰'};
   try{
     var res=await _sb.from('movimientos').insert(record).select();
     if(res.error){alert('Error: '+res.error.message);return;}
