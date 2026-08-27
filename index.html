@@ -1167,12 +1167,12 @@ function renderPanel(){
   }).join('')+(movs.length>15?'<div style="text-align:center;padding:12px;font-size:12.5px;color:var(--gray-light);">+' +(movs.length-15)+' más — ve a Movimientos para ver todos</div>':'');
 }
 
-function renderAlerts(m,balance){
+function renderAlerts(m,balance,curMonth,curYear){
   var alerts=[];
   var now=new Date();
   var today=now.getDate();
-  var curMonth=now.getMonth();
-  var curYear=now.getFullYear();
+  if(curMonth===undefined)curMonth=now.getMonth();
+  if(curYear===undefined)curYear=now.getFullYear();
 
   // ── Mes anterior para comparaciones ──
   var prevMonth=curMonth===0?11:curMonth-1;
@@ -1241,7 +1241,7 @@ function renderAlerts(m,balance){
   var catTotals={};var catCounts={};
   var movsConDatos=ST.movements.filter(function(mv){
     var d=new Date(mv.date+'T12:00:00');
-    return mv.type==='expense'&&!(d.getMonth()===curMonth&&d.getFullYear()===curYear);
+    return mv.type==='expense'&&!(d.getMonth()===_presMes&&d.getFullYear()===_presYear);
   });
   movsConDatos.forEach(function(mv){
     var cat=mv.category||'Otro';
@@ -1251,7 +1251,7 @@ function renderAlerts(m,balance){
   var curCatMap={};
   ST.movements.filter(function(mv){
     var d=new Date(mv.date+'T12:00:00');
-    return mv.type==='expense'&&d.getMonth()===curMonth&&d.getFullYear()===curYear;
+    return mv.type==='expense'&&d.getMonth()===_presMes&&d.getFullYear()===_presYear;
   }).forEach(function(mv){var c=mv.category||'Otro';curCatMap[c]=(curCatMap[c]||0)+mv.amount;});
   var topCat=null,topDiff=0;
   Object.keys(curCatMap).forEach(function(cat){
@@ -1313,7 +1313,7 @@ function renderAlerts(m,balance){
   // ── 11. Mejor racha de ahorro ──
   var mejorMes=-1,mejorAhorro=0;
   ST.MONTHLY_DATA.forEach(function(d,i){if(d&&d.s>mejorAhorro){mejorAhorro=d.s;mejorMes=i;}});
-  if(mejorMes>=0&&mejorAhorro>0&&mejorMes===curMonth&&m.s>0)
+  if(mejorMes>=0&&mejorAhorro>0&&mejorMes===_presMes&&m.s>0)
     alerts.push({cls:'success',icon:'⭐',title:'¡Tu mejor mes de ahorro del año!',msg:'Este mes llevas '+fmt(m.s)+' ahorrado, superando todos los meses anteriores. ¡Sigue con ese ritmo!'});
 
   // ── 12. Sin ingresos registrados ──
@@ -1459,6 +1459,22 @@ function renderTablasPagos(){
   if(feEl)feEl.textContent=fmt(regG);
   var fecEl=document.getElementById('fixed-expense-count');
   if(fecEl){var cntG=gastos.filter(function(p){return !!_pagadosMes['g:'+p.nombre];}).length;fecEl.textContent=cntG+' / '+gastos.length+' pagados';}
+
+  // Tarjetas resumen del mes seleccionado
+  var allMovsMes=ST.movements.filter(function(mv){
+    var d=new Date(mv.date+'T12:00:00');
+    return d.getMonth()===_presMes&&d.getFullYear()===_presYear;
+  });
+  var totI=allMovsMes.filter(function(x){return x.type==='income';}).reduce(function(a,x){return a+x.amount;},0);
+  var totE=allMovsMes.filter(function(x){return x.type==='expense';}).reduce(function(a,x){return a+x.amount;},0);
+  var totS=allMovsMes.filter(function(x){return x.type==='savings';}).reduce(function(a,x){return a+x.amount;},0);
+  var bal=totI-totE-totS;
+  var iEl2=document.getElementById('pres-mes-income');var eEl2=document.getElementById('pres-mes-expense');var bEl2=document.getElementById('pres-mes-balance');
+  if(iEl2)iEl2.textContent=fmt(totI);
+  if(eEl2)eEl2.textContent=fmt(totE);
+  if(bEl2){bEl2.textContent=(bal<0?'- ':'')+fmt(Math.abs(bal));bEl2.style.color=bal<0?'var(--expense)':bal>0?'var(--income)':'var(--gray)';}
+  // Alertas basadas en el mes seleccionado
+  renderAlerts({i:totI,e:totE,s:totS},bal,_presMes,_presYear);
 }
 
 // RENDER PRESUPUESTO
@@ -1466,20 +1482,6 @@ function renderPresupuesto(){
   var gastos=ST.pagos.filter(function(p){return p.tipo==='gasto';});
   var ingresos=ST.pagos.filter(function(p){return p.tipo==='ingreso';});
   renderTablasPagos(); // actualiza hero + tablas con valores reales del mes
-  // Resumen y alertas del mes actual
-  var _hoy=new Date();var _cm=_hoy.getMonth();var _cy=_hoy.getFullYear();
-  var _movMes=ST.movements.filter(function(mv){var d=new Date(mv.date+'T12:00:00');return d.getMonth()===_cm&&d.getFullYear()===_cy;});
-  var _totI=_movMes.filter(function(x){return x.type==='income';}).reduce(function(a,x){return a+x.amount;},0);
-  var _totE=_movMes.filter(function(x){return x.type==='expense';}).reduce(function(a,x){return a+x.amount;},0);
-  var _totS=_movMes.filter(function(x){return x.type==='savings';}).reduce(function(a,x){return a+x.amount;},0);
-  var _bal=_totI-_totE-_totS;
-  var iEl=document.getElementById('pres-mes-income');
-  var eEl=document.getElementById('pres-mes-expense');
-  var bEl=document.getElementById('pres-mes-balance');
-  if(iEl)iEl.textContent=fmt(_totI);
-  if(eEl)eEl.textContent=fmt(_totE);
-  if(bEl){bEl.textContent=(_bal<0?'- ':'')+fmt(Math.abs(_bal));bEl.style.color=_bal<0?'var(--expense)':_bal>0?'var(--income)':'var(--gray)';}
-  renderAlerts({i:_totI,e:_totE,s:_totS},_bal);
 }
 
 // REGISTRAR PAGO/INGRESO FIJO ESTE MES
