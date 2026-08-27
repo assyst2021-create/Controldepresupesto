@@ -742,7 +742,6 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
     <div id="sidebar-nav">
       <button class="nav-btn active" data-screen="presupuesto" onclick="navigate('presupuesto')"><span class="n-icon">💳</span> Presupuesto</button>
       <button class="nav-btn" data-screen="compras" onclick="navigate('compras')"><span class="n-icon">🛒</span> Compras</button>
-      <button class="nav-btn" data-screen="reportes" onclick="navigate('reportes')"><span class="n-icon">📊</span> Indicadores</button>
       <div id="admin-nav-section" style="display:none;">
         <div class="nav-section">Administración</div>
         <button class="nav-btn" data-screen="usuarios" onclick="navigate('usuarios')"><span class="n-icon">👥</span> Usuarios</button>
@@ -853,64 +852,6 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
       </div>
     </div>
 
-    <!-- INDICADORES -->
-    <div id="screen-reportes" class="screen" style="display:none;">
-      <div class="main-header"><h2>Indicadores</h2></div>
-      <div class="main-body">
-        <!-- Selector de rango indicadores -->
-        <div class="card" style="padding:14px 16px;margin-bottom:14px;">
-          <div style="display:flex;gap:7px;flex-wrap:wrap;" id="rep-presets">
-            <button class="panel-preset rep-preset active" data-preset="mes" onclick="setRepPreset('mes')">Este mes</button>
-            <button class="panel-preset rep-preset" data-preset="3m" onclick="setRepPreset('3m')">3 meses</button>
-            <button class="panel-preset rep-preset" data-preset="6m" onclick="setRepPreset('6m')">6 meses</button>
-            <button class="panel-preset rep-preset" data-preset="year" onclick="setRepPreset('year')">Este año</button>
-            <button class="panel-preset rep-preset" data-preset="custom" onclick="setRepPreset('custom')">📅 Personalizado</button>
-          </div>
-          <div id="rep-custom-row" style="display:none;margin-top:12px;gap:10px;align-items:center;flex-wrap:wrap;">
-            <div style="display:flex;align-items:center;gap:6px;flex:1;min-width:140px;">
-              <label style="font-size:12px;font-weight:700;color:var(--gray);white-space:nowrap;">Desde</label>
-              <input type="date" id="rep-from" style="flex:1;font-size:13px;border:1.5px solid var(--border);border-radius:10px;padding:8px 10px;" onchange="applyRepRange()"/>
-            </div>
-            <div style="display:flex;align-items:center;gap:6px;flex:1;min-width:140px;">
-              <label style="font-size:12px;font-weight:700;color:var(--gray);white-space:nowrap;">Hasta</label>
-              <input type="date" id="rep-to" style="flex:1;font-size:13px;border:1.5px solid var(--border);border-radius:10px;padding:8px 10px;" onchange="applyRepRange()"/>
-            </div>
-          </div>
-        </div>
-        <!-- Resumen del período -->
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;">
-          <div class="card stat-card"><div class="sc-label">Ingresos</div><div class="sc-val" style="color:var(--income);font-size:22px;" id="rep-income">$0</div></div>
-          <div class="card stat-card"><div class="sc-label">Gastos</div><div class="sc-val" style="color:var(--expense);font-size:22px;" id="rep-expense">$0</div></div>
-          <div class="card stat-card"><div class="sc-label">Ahorro</div><div class="sc-val" style="color:var(--savings);font-size:22px;" id="rep-savings">$0</div></div>
-          <div class="card stat-card"><div class="sc-label">Balance</div><div class="sc-val" style="font-size:22px;" id="rep-balance">$0</div></div>
-        </div>
-        <!-- Gráfica interactiva -->
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-          <div class="section-head" style="margin:0;">Resumen anual</div>
-          <div style="display:flex;align-items:center;gap:6px;">
-            <button onclick="chartNavYear(-1)" style="background:#F1F5F9;border:none;border-radius:8px;width:30px;height:30px;cursor:pointer;font-size:16px;color:#475569;display:flex;align-items:center;justify-content:center;">‹</button>
-            <span id="chart-year-label" style="font-size:14px;font-weight:700;color:var(--gray-dark);min-width:44px;text-align:center;"></span>
-            <button onclick="chartNavYear(1)" style="background:#F1F5F9;border:none;border-radius:8px;width:30px;height:30px;cursor:pointer;font-size:16px;color:#475569;display:flex;align-items:center;justify-content:center;">›</button>
-          </div>
-        </div>
-        <div class="card" style="padding:20px 16px 16px;margin-bottom:20px;position:relative;">
-          <div id="chart-wrapper" style="position:relative;width:100%;">
-            <svg id="annual-svg" style="display:block;width:100%;overflow:visible;"></svg>
-            <div id="chart-tooltip" style="display:none;position:absolute;background:#1E293B;color:#fff;border-radius:12px;padding:10px 14px;font-size:12.5px;pointer-events:none;z-index:50;min-width:160px;box-shadow:0 4px 20px rgba(0,0,0,.2);transform:translateX(-50%);">
-            </div>
-          </div>
-          <div style="display:flex;gap:16px;margin-top:14px;font-size:12px;font-weight:600;justify-content:center;">
-            <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:3px;background:#16A34A;display:inline-block;"></span>Ingresos</span>
-            <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:3px;background:#DC2626;display:inline-block;"></span>Gastos</span>
-            <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:3px;background:#F59E0B;display:inline-block;"></span>Ahorro</span>
-          </div>
-        </div>
-
-        <!-- Gastos por categoría -->
-        <div class="section-head">Gastos por categoría</div>
-        <div class="card" style="padding:20px;" id="cat-bars-card"></div>
-      </div>
-    </div>
 
     <!-- AHORRO PROGRAMADO -->
     <div id="screen-metas" class="screen" style="display:none;">
@@ -960,7 +901,6 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
     <button class="bnav-btn active" data-screen="presupuesto" onclick="navigate('presupuesto')"><span class="bn-icon">💳</span>Presupuesto</button>
     <button class="fab" onclick="openModal()">+</button>
     <button class="bnav-btn" data-screen="compras" onclick="navigate('compras')"><span class="bn-icon">🛒</span>Compras</button>
-    <button class="bnav-btn" data-screen="reportes" onclick="navigate('reportes')"><span class="bn-icon">📊</span>Indicadores</button>
   </div>
 </div>
 
@@ -1115,7 +1055,6 @@ function renderScreen(screen){
   if(screen==='movimientos')renderMovimientos();
   else if(screen==='presupuesto')renderPresupuesto();
   else if(screen==='compras')renderCompras();
-  else if(screen==='reportes')renderReportes();
   else if(screen==='metas')renderMetas();
   else if(screen==='tareas')renderTareas();
   else if(screen==='usuarios'&&ST.isAdmin)renderUsuarios();
