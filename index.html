@@ -433,9 +433,7 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
     <div class="form-group"><label>Nombre</label><input id="am-nombre" type="text" placeholder="Ej: Arriendo, Netflix, Salario..."/></div>
     <div class="modal-row">
       <div class="form-group"><label>Monto</label><input id="am-monto" type="text" inputmode="numeric" placeholder="0" oninput="numFmt(this)"/></div>
-      <div class="form-group"><label>¿Qué día del mes?</label>
-        <select id="am-dia"><option value="">Sin día específico</option></select>
-      </div>
+      <div class="form-group"><label>Fecha</label><input id="am-fecha" type="date"/></div>
     </div>
     <div class="form-group"><label>Entidad bancaria / Empresa</label><input id="am-entidad" type="text" placeholder="Ej: Bancolombia, Claro, Empresa..."/></div>
     <div class="modal-actions">
@@ -2605,19 +2603,14 @@ function buildDiaSelect(selectedVal){
 // AGREGAR AL MES (movimiento puntual para _presMes/_presYear)
 var _addMesTipo='gasto',_savingAddMes=false;
 function setAddMesTipo(t){_addMesTipo=t;document.getElementById('amt-g').className='mtt'+(t==='gasto'?' active-e':'');document.getElementById('amt-i').className='mtt'+(t==='ingreso'?' active-i':'');}
-function buildAmDiaSelect(){
-  var sel=document.getElementById('am-dia');
-  if(!sel)return;
-  var opts='<option value="">Sin día específico</option>';
-  for(var d=1;d<=31;d++){opts+='<option value="'+d+'">Día '+d+' de cada mes</option>';}
-  sel.innerHTML=opts;
-}
 function openAddMes(tipo){
   _addMesTipo=tipo||'gasto';
   document.getElementById('am-nombre').value='';
   document.getElementById('am-monto').value='';
   document.getElementById('am-entidad').value='';
-  buildAmDiaSelect();
+  var today=new Date();
+  var defDia=(today.getMonth()===_presMes&&today.getFullYear()===_presYear)?today.getDate():1;
+  document.getElementById('am-fecha').value=_presYear+'-'+String(_presMes+1).padStart(2,'0')+'-'+String(defDia).padStart(2,'0');
   document.getElementById('add-mes-title').textContent='Agregar al mes';
   setAddMesTipo(_addMesTipo);
   document.getElementById('modal-add-mes').style.display='flex';
@@ -2628,16 +2621,14 @@ async function submitAddMes(){
   if(_savingAddMes)return;
   var nombre=document.getElementById('am-nombre').value.trim();
   var monto=numVal('am-monto');
-  var dia=parseInt(document.getElementById('am-dia').value)||1;
+  var fecha=document.getElementById('am-fecha').value;
   var entidad=document.getElementById('am-entidad').value.trim();
-  if(!nombre||!monto){alert('Ingresa nombre y monto.');return;}
+  if(!nombre||!monto||!fecha){alert('Ingresa nombre, monto y fecha.');return;}
   _savingAddMes=true;
   var btn=document.getElementById('am-save-btn');
   if(btn){btn.disabled=true;btn.textContent='Guardando...';}
   var desc=(_addMesTipo==='gasto'?'Pago: ':'Ingreso: ')+nombre;
   var tipoMov=_addMesTipo==='gasto'?'expense':'income';
-  var diaMax=Math.min(dia,new Date(_presYear,_presMes+1,0).getDate());
-  var fecha=_presYear+'-'+String(_presMes+1).padStart(2,'0')+'-'+String(diaMax).padStart(2,'0');
   var record={user_id:ST.userId,tipo:tipoMov,descripcion:desc,monto:monto,categoria:entidad||nombre,fecha:fecha,icono:_addMesTipo==='gasto'?'💳':'💰'};
   try{
     var res=await _sb.from('movimientos').insert(record).select();
