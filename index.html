@@ -782,17 +782,23 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
             </div>
           </div>
         </div>
-        <!-- Listas -->
+        <!-- Tablas de pagos -->
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-          <div class="section-head" style="margin:0;">Gastos obligatorios</div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div class="section-head" style="margin:0;">Gastos obligatorios</div>
+            <span id="pres-mes-label-g" style="font-size:12px;font-weight:700;color:#64748B;background:#F1F5F9;padding:3px 10px;border-radius:20px;"></span>
+          </div>
           <button class="btn btn-ghost" style="padding:6px 12px;font-size:12px;" onclick="openPagoModalTipo('gasto')">+ Gasto</button>
         </div>
-        <div class="card" style="margin-bottom:20px;overflow:hidden;" id="gastos-fijos-card"></div>
+        <div class="card" style="margin-bottom:20px;overflow:hidden;padding:0;" id="gastos-fijos-card"></div>
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-          <div class="section-head" style="margin:0;">Ingresos fijos</div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div class="section-head" style="margin:0;">Ingresos fijos</div>
+            <span id="pres-mes-label-i" style="font-size:12px;font-weight:700;color:#64748B;background:#F1F5F9;padding:3px 10px;border-radius:20px;"></span>
+          </div>
           <button class="btn btn-ghost" style="padding:6px 12px;font-size:12px;" onclick="openPagoModalTipo('ingreso')">+ Ingreso</button>
         </div>
-        <div class="card" style="overflow:hidden;" id="ingresos-fijos-card"></div>
+        <div class="card" style="overflow:hidden;padding:0;" id="ingresos-fijos-card"></div>
         <!-- Recordatorios de pago -->
         <div style="display:flex;align-items:center;justify-content:space-between;margin:20px 0 10px;">
           <div class="section-head" style="margin:0;">Recordatorios de pago</div>
@@ -1365,38 +1371,70 @@ function renderPresupuesto(){
     if(mi)_pagadosMes['i:'+mi[1]]=mv.id;
   });
 
-  function pagoHTML(p,tipo){
-    var color=tipo==='gasto'?'var(--expense)':'var(--income)';
-    var bg=tipo==='gasto'?'#FFF5F5':'#F0FDF4';
-    var ico=tipo==='gasto'?'💳':'💵';
-    var det='';
-    if(p.entidad)det+=p.entidad;
-    if(p.dia_cobro)det+=(det?' · ':'')+'Cada mes, día '+p.dia_cobro;
-    var key=(tipo==='gasto'?'g:':'i:')+p.nombre;
-    var pagado=!!_pagadosMes[key];
-    var btnLabel=tipo==='gasto'?(pagado?'✓ Pagado':'Pagar'):(pagado?'✓ Recibido':'Registrar');
-    var btnStyle=pagado
-      ?'background:#D1FAE5;color:#065F46;border:1.5px solid #6EE7B7;cursor:default;'
-      :(tipo==='gasto'?'background:#1E40AF;color:#fff;border:1.5px solid #1E40AF;cursor:pointer;':'background:#16A34A;color:#fff;border:1.5px solid #16A34A;cursor:pointer;');
-    var btnClick=pagado?'':'onclick="registrarPagoFijo(\''+p.id+'\',\''+tipo+'\')"';
-    return '<div class="pago-item">'+
-      '<div class="pago-icon-wrap" style="background:'+bg+';font-size:18px;">'+ico+'</div>'+
-      '<div style="flex:1;min-width:0;">'+
-        '<div class="pago-name">'+esc(p.nombre)+'</div>'+
-        (det?'<div class="pago-detail">'+esc(det)+'</div>':'')+
-      '</div>'+
-      '<div class="pago-amount" style="color:'+color+';">'+fmt(p.monto)+'</div>'+
-      '<button style="padding:5px 12px;border-radius:20px;font-size:12px;font-weight:700;'+btnStyle+'" '+btnClick+' '+(pagado?'disabled':'')+'>'+btnLabel+'</button>'+
-      '<button class="icon-btn edit" onclick="editPago(\''+p.id+'\')">✏️</button>'+
-      '<button class="icon-btn del" onclick="deletePago(\''+p.id+'\')">🗑️</button>'+
+  // Badge de color por entidad/tipo de pago
+  var _badgePalette=['#3B82F6','#EF4444','#F97316','#22C55E','#8B5CF6','#EC4899','#14B8A6','#EAB308','#06B6D4','#84CC16','#F43F5E','#6366F1'];
+  var _badgeMap={};var _badgeIdx=0;
+  function tipoBadge(label){
+    label=label||'General';
+    if(!_badgeMap[label]){_badgeMap[label]=_badgePalette[_badgeIdx%_badgePalette.length];_badgeIdx++;}
+    var c=_badgeMap[label];
+    return '<span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:11.5px;font-weight:700;background:'+c+'22;color:'+c+';border:1px solid '+c+'55;white-space:nowrap;">'+esc(label)+'</span>';
+  }
+
+  function buildTable(items,tipo){
+    if(!items.length) return '<div class="empty-state"><div class="e-icon">'+(tipo==='gasto'?'💳':'💵')+'</div><p>Sin '+(tipo==='gasto'?'gastos':'ingresos')+' fijos aún</p></div>';
+    var amtColor=tipo==='gasto'?'#DC2626':'#16A34A';
+    var mm=String(_cMPF+1).padStart(2,'0');var yy=_cYPF;
+    var rows=items.map(function(p){
+      var key=(tipo==='gasto'?'g:':'i:')+p.nombre;
+      var pagado=!!_pagadosMes[key];
+      var dd=p.dia_cobro?String(p.dia_cobro).padStart(2,'0'):'--';
+      var fecha=dd+'/'+mm+'/'+yy;
+      var estado=pagado
+        ?'<div style="width:26px;height:26px;border-radius:7px;background:#16A34A;display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;margin:auto;">✓</div>'
+        :'<button onclick="registrarPagoFijo(\''+p.id+'\',\''+tipo+'\')" title="'+(tipo==='gasto'?'Registrar pago':'Registrar ingreso')+'" style="width:26px;height:26px;border-radius:7px;border:2px solid #CBD5E1;background:#fff;cursor:pointer;display:block;margin:auto;transition:border-color .15s;" onmouseover="this.style.borderColor=\'#2563EB\'" onmouseout="this.style.borderColor=\'#CBD5E1\'"></button>';
+      return '<tr style="border-bottom:1px solid #F1F5F9;'+(pagado?'background:#F0FDF4;':'')+'" >'+
+        '<td style="padding:9px 12px;text-align:center;width:44px;">'+estado+'</td>'+
+        '<td style="padding:9px 12px;font-size:12.5px;color:#64748B;white-space:nowrap;width:100px;">'+fecha+'</td>'+
+        '<td style="padding:9px 12px;font-size:13.5px;font-weight:600;color:#1E293B;">'+esc(p.nombre)+'</td>'+
+        '<td style="padding:9px 12px;font-size:13.5px;font-weight:700;color:'+amtColor+';text-align:right;white-space:nowrap;">'+fmt(p.monto)+'</td>'+
+        '<td style="padding:9px 12px;">'+tipoBadge(p.entidad||p.nombre)+'</td>'+
+        '<td style="padding:9px 8px;text-align:right;white-space:nowrap;">'+
+          '<button class="icon-btn edit" onclick="editPago(\''+p.id+'\')">✏️</button>'+
+          '<button class="icon-btn del" onclick="deletePago(\''+p.id+'\')">🗑️</button>'+
+        '</td>'+
+      '</tr>';
+    }).join('');
+    var total=items.reduce(function(a,p){return a+parseFloat(p.monto||0);},0);
+    var pagados=items.filter(function(p){return !!_pagadosMes[(tipo==='gasto'?'g:':'i:')+p.nombre];}).length;
+    return '<div style="overflow-x:auto;">'+
+      '<table style="width:100%;border-collapse:collapse;min-width:500px;">'+
+        '<thead><tr style="background:#F8FAFC;border-bottom:2px solid #E2E8F0;">'+
+          '<th style="padding:9px 12px;font-size:10.5px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.07em;text-align:center;width:44px;">Estado</th>'+
+          '<th style="padding:9px 12px;font-size:10.5px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.07em;width:100px;">Fecha</th>'+
+          '<th style="padding:9px 12px;font-size:10.5px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.07em;">Proveedor</th>'+
+          '<th style="padding:9px 12px;font-size:10.5px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.07em;text-align:right;">Cantidad</th>'+
+          '<th style="padding:9px 12px;font-size:10.5px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.07em;">Tipo de pago</th>'+
+          '<th></th>'+
+        '</tr></thead>'+
+        '<tbody>'+rows+'</tbody>'+
+        '<tfoot><tr style="border-top:2px solid #E2E8F0;background:#F8FAFC;">'+
+          '<td colspan="2" style="padding:10px 12px;font-size:12px;font-weight:600;color:#64748B;">'+pagados+' / '+items.length+' registrados</td>'+
+          '<td style="padding:10px 12px;font-size:12px;font-weight:700;color:#475569;">Total</td>'+
+          '<td style="padding:10px 12px;font-size:15px;font-weight:800;color:'+amtColor+';text-align:right;">'+fmt(total)+'</td>'+
+          '<td colspan="2"></td>'+
+        '</tr></tfoot>'+
+      '</table>'+
     '</div>';
   }
+
+  var _mesNombre=MONTHS_FULL[_cMPF].toUpperCase()+' '+_cYPF;
+  var lg=document.getElementById('pres-mes-label-g');if(lg)lg.textContent=_mesNombre;
+  var li=document.getElementById('pres-mes-label-i');if(li)li.textContent=_mesNombre;
   var gc=document.getElementById('gastos-fijos-card');
-  gc.innerHTML=gastos.length?gastos.map(function(p){return pagoHTML(p,'gasto');}).join(''):
-    '<div class="empty-state"><div class="e-icon">💳</div><p>Sin gastos fijos aún</p></div>';
+  gc.innerHTML=buildTable(gastos,'gasto');
   var ic=document.getElementById('ingresos-fijos-card');
-  ic.innerHTML=ingresos.length?ingresos.map(function(p){return pagoHTML(p,'ingreso');}).join(''):
-    '<div class="empty-state"><div class="e-icon">💵</div><p>Sin ingresos fijos aún</p></div>';
+  ic.innerHTML=buildTable(ingresos,'ingreso');
   renderRecordatorios();
   // Resumen y alertas del mes actual
   var _hoy=new Date();var _cm=_hoy.getMonth();var _cy=_hoy.getFullYear();
