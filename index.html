@@ -1430,7 +1430,6 @@ function renderGraficaDetalle(mo){
     '<div class="card" style="padding:6px 10px;max-height:260px;overflow-y:auto;">'+rows+'</div>';
 }
 async function deleteMovGrafica(id,mo){
-  if(!confirm('¿Eliminar este movimiento? Esta acción no se puede deshacer.'))return;
   var res=await _sb.from('movimientos').delete().eq('id',id).select();
   if(res.error){alert('Error: '+res.error.message);return;}
   if(!res.data||!res.data.length){alert('No se pudo eliminar (permisos).');return;}
@@ -1670,7 +1669,6 @@ async function registrarPagoFijo(id,tipo){
 
 // ELIMINAR MOVIMIENTO PUNTUAL DEL MES (agregado con "+ Agregar")
 async function deleteMovMes(movId){
-  if(!confirm('¿Eliminar este registro del mes?'))return;
   var res=await _sb.from('movimientos').delete().eq('id',movId);
   if(res.error){alert('Error: '+res.error.message);return;}
   ST.movements=ST.movements.filter(function(m){return m.id!==movId;});
@@ -1798,7 +1796,6 @@ async function despagarRecordatorio(id){
   if(!res.error&&res.data){ST.recordatorios=ST.recordatorios.map(function(r){return r.id===id?res.data[0]:r;});renderRecordatorios();}
 }
 async function deleteRecordatorio(id){
-  if(!confirm('¿Eliminar este pago?'))return;
   await _sb.from('recordatorios_pago').delete().eq('id',id);
   ST.recordatorios=ST.recordatorios.filter(function(r){return r.id!==id;});
   renderRecordatorios();
@@ -2643,7 +2640,6 @@ function editCatManager(i){
   renderCmCustomList();
 }
 function deleteCatManager(i){
-  if(!confirm('¿Eliminar la categoría "'+_customCats[i].v+'"?'))return;
   _customCats.splice(i,1);
   saveCustomCats();
   renderCmCustomList();
@@ -2802,7 +2798,6 @@ function editMovement(id){
   setModalType(m.type);document.getElementById('modal-overlay').style.display='flex';
 }
 async function deleteMovement(id){
-  if(!confirm('¿Eliminar este movimiento?'))return;
   await _sb.from('movimientos').delete().eq('id',id);
   ST.movements=ST.movements.filter(function(m){return m.id!==id;});
   recomputeAnnual(ST.movements);renderScreen(ST.screen);
@@ -2948,7 +2943,6 @@ function editPago(id){
   document.getElementById('modal-pago').style.display='flex';
 }
 async function deletePago(id){
-  if(!confirm('¿Eliminar este pago fijo?'))return;
   await _sb.from('pagos_fijos').delete().eq('id',id);
   ST.pagos=ST.pagos.filter(function(p){return p.id!==id;});renderPresupuesto();
 }
@@ -3053,7 +3047,6 @@ async function toggleCompra(id){
   if(!res.error&&res.data){ST.compras=ST.compras.map(function(x){return x.id===id?res.data[0]:x;});renderCompras();}
 }
 async function deleteCompra(id){
-  if(!confirm('¿Eliminar este artículo?'))return;
   await _sb.from('items_compras').delete().eq('id',id);
   ST.compras=ST.compras.filter(function(c){return c.id!==id;});renderCompras();
 }
@@ -3129,7 +3122,6 @@ function editMeta(id){
   setTimeout(calcMetaPreview,50);
 }
 async function deleteMeta(id){
-  if(!confirm('¿Eliminar esta meta?'))return;
   await _sb.from('metas').delete().eq('id',id);
   ST.goals=ST.goals.filter(function(g){return g.id!==id;});renderMetas();
 }
@@ -3591,7 +3583,6 @@ function editTarea(id){
 }
 
 async function deleteTarea(id){
-  if(!confirm('¿Eliminar esta tarea?'))return;
   await _sb.from('tareas').delete().eq('id',id);
   ST.tareas=ST.tareas.filter(function(t){return t.id!==id;});
   renderTareas();
