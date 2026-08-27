@@ -1681,7 +1681,6 @@ async function deleteMovMes(movId){
 // DESMARCAR PAGO FIJO (toggle)
 async function togglePagoFijo(movId,pagoId,tipo){
   if(!movId)return;
-  if(!confirm('¿Desmarcar este pago? Se eliminará el registro del movimiento.'))return;
   var res=await _sb.from('movimientos').delete().eq('id',movId);
   if(res.error){alert('Error: '+res.error.message);return;}
   ST.movements=ST.movements.filter(function(m){return m.id!==movId;});
