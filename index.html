@@ -431,10 +431,9 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
       <span id="grafica-year-label" style="font-size:15px;font-weight:800;color:#1E293B;min-width:60px;text-align:center;"></span>
       <button onclick="graficaYearNav(1)" style="width:32px;height:32px;border:none;background:#F1F5F9;border-radius:8px;cursor:pointer;font-size:16px;color:#475569;">›</button>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px;">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
       <div class="card stat-card" style="padding:10px;"><div class="sc-label">Ingresos año</div><div class="sc-val" style="color:var(--income);font-size:17px;" id="grafica-tot-i">$0</div></div>
       <div class="card stat-card" style="padding:10px;"><div class="sc-label">Gastos año</div><div class="sc-val" style="color:var(--expense);font-size:17px;" id="grafica-tot-e">$0</div></div>
-      <div class="card stat-card" style="padding:10px;"><div class="sc-label">Ahorro año</div><div class="sc-val" style="color:var(--savings);font-size:17px;" id="grafica-tot-s">$0</div></div>
     </div>
     <div class="card" style="padding:16px 12px 12px;position:relative;">
       <div style="position:relative;width:100%;">
@@ -444,7 +443,6 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
       <div style="display:flex;gap:16px;margin-top:12px;font-size:12px;font-weight:600;justify-content:center;">
         <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:3px;background:#16A34A;display:inline-block;"></span>Ingresos</span>
         <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:3px;background:#DC2626;display:inline-block;"></span>Gastos</span>
-        <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:3px;background:#F59E0B;display:inline-block;"></span>Ahorro</span>
       </div>
     </div>
   </div>
@@ -1359,7 +1357,6 @@ function renderGraficaChart(){
   var totS=data.reduce(function(a,x){return a+x.s;},0);
   document.getElementById('grafica-tot-i').textContent=fmt(totI);
   document.getElementById('grafica-tot-e').textContent=fmt(totE);
-  document.getElementById('grafica-tot-s').textContent=fmt(totS);
 
   var svg=document.getElementById('grafica-svg');
   var tooltip=document.getElementById('grafica-tooltip');
@@ -1379,8 +1376,8 @@ function renderGraficaChart(){
   }
   data.forEach(function(x,i){
     var gx=padL+groupW*i+groupW/2;
-    var bars=[{v:x.i,color:'#16A34A',label:'Ingresos'},{v:x.e,color:'#DC2626',label:'Gastos'},{v:x.s,color:'#F59E0B',label:'Ahorro'}];
-    var startX=gx-(barW*3+4)/2;
+    var bars=[{v:x.i,color:'#16A34A',label:'Ingresos'},{v:x.e,color:'#DC2626',label:'Gastos'}];
+    var startX=gx-(barW*2+2)/2;
     bars.forEach(function(b,bi){
       var bh=Math.round(chartH*b.v/maxVal);
       var bx=startX+bi*(barW+2);
@@ -1397,8 +1394,7 @@ function renderGraficaChart(){
       bar.style.opacity='0.75';
       tooltip.innerHTML='<div style="font-weight:800;margin-bottom:5px;">'+MONTHS_FULL[mo]+' '+_graficaYear+'</div>'+
         '<div style="color:#4ADE80;">Ingresos: '+fmt(x.i)+'</div>'+
-        '<div style="color:#F87171;">Gastos: '+fmt(x.e)+'</div>'+
-        '<div style="color:#FBBF24;">Ahorro: '+fmt(x.s)+'</div>';
+        '<div style="color:#F87171;">Gastos: '+fmt(x.e)+'</div>';
       tooltip.style.display='block';
       var rect=bar.getBoundingClientRect();
       var svgRect=svg.getBoundingClientRect();
