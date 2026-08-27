@@ -444,7 +444,9 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
         <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:3px;background:#16A34A;display:inline-block;"></span>Ingresos</span>
         <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:3px;background:#DC2626;display:inline-block;"></span>Gastos</span>
       </div>
+      <div style="font-size:11px;color:#94A3B8;text-align:center;margin-top:6px;">Clic en una barra para ver el detalle de ese mes</div>
     </div>
+    <div id="grafica-detalle" style="margin-top:14px;"></div>
   </div>
 </div>
 
@@ -1336,11 +1338,12 @@ async function limpiarMesesAnteriores(){
 var _graficaYear=new Date().getFullYear();
 function openGrafica(){
   _graficaYear=_presYear||new Date().getFullYear();
+  document.getElementById('grafica-detalle').innerHTML='';
   document.getElementById('modal-grafica').style.display='flex';
   renderGraficaChart();
 }
 function closeGrafica(){document.getElementById('modal-grafica').style.display='none';}
-function graficaYearNav(delta){_graficaYear+=delta;renderGraficaChart();}
+function graficaYearNav(delta){_graficaYear+=delta;document.getElementById('grafica-detalle').innerHTML='';renderGraficaChart();}
 function renderGraficaChart(){
   document.getElementById('grafica-year-label').textContent=_graficaYear;
   var data=Array(12).fill(null).map(function(){return{i:0,e:0,s:0};});
@@ -1402,7 +1405,40 @@ function renderGraficaChart(){
       tooltip.style.top=(rect.top-svgRect.top-70)+'px';
     });
     bar.addEventListener('mouseleave',function(){bar.style.opacity='1';tooltip.style.display='none';});
+    bar.addEventListener('click',function(){renderGraficaDetalle(parseInt(bar.dataset.month));});
   });
+}
+function renderGraficaDetalle(mo){
+  var movs=ST.movements.filter(function(mv){
+    var d=new Date(mv.date+'T12:00:00');
+    return d.getFullYear()===_graficaYear&&d.getMonth()===mo&&(mv.type==='income'||mv.type==='expense');
+  }).sort(function(a,b){return a.date.localeCompare(b.date);});
+  var el=document.getElementById('grafica-detalle');
+  if(!movs.length){el.innerHTML='<div style="text-align:center;font-size:12.5px;color:#94A3B8;padding:10px;">Sin movimientos en '+MONTHS_FULL[mo]+' '+_graficaYear+'.</div>';return;}
+  var rows=movs.map(function(mv){
+    var d=new Date(mv.date+'T12:00:00');
+    var fecha=String(d.getDate()).padStart(2,'0')+'/'+String(mo+1).padStart(2,'0')+'/'+_graficaYear;
+    var color=mv.type==='income'?'#16A34A':'#DC2626';
+    return '<div style="display:flex;align-items:center;gap:10px;padding:7px 4px;border-bottom:1px solid #F1F5F9;font-size:12.5px;">'+
+      '<span style="color:#94A3B8;white-space:nowrap;">'+fecha+'</span>'+
+      '<span style="flex:1;font-weight:600;color:#1E293B;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+esc(mv.description)+'</span>'+
+      '<span style="font-weight:700;color:'+color+';white-space:nowrap;">'+fmt(mv.amount)+'</span>'+
+      '<button class="icon-btn del" style="width:24px;height:24px;font-size:12px;" onclick="deleteMovGrafica(\''+mv.id+'\','+mo+')">🗑️</button>'+
+    '</div>';
+  }).join('');
+  el.innerHTML='<div style="font-size:12px;font-weight:800;color:#475569;margin-bottom:6px;">Detalle de '+MONTHS_FULL[mo]+' '+_graficaYear+' ('+movs.length+' movimientos)</div>'+
+    '<div class="card" style="padding:6px 10px;max-height:260px;overflow-y:auto;">'+rows+'</div>';
+}
+async function deleteMovGrafica(id,mo){
+  if(!confirm('¿Eliminar este movimiento? Esta acción no se puede deshacer.'))return;
+  var res=await _sb.from('movimientos').delete().eq('id',id).select();
+  if(res.error){alert('Error: '+res.error.message);return;}
+  if(!res.data||!res.data.length){alert('No se pudo eliminar (permisos).');return;}
+  ST.movements=ST.movements.filter(function(mv){return mv.id!==id;});
+  recomputeAnnual(ST.movements);
+  renderGraficaChart();
+  renderGraficaDetalle(mo);
+  renderTablasPagos();
 }
 // ORDEN MANUAL DE FILAS (persistente, estándar en toda la app, para cualquier mes/año)
 var _lastRowOrder={gasto:[],ingreso:[]};
