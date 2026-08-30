@@ -1594,8 +1594,7 @@ function renderTablasPagos(){
     if(!items.length&&!(extras||[]).length)return '<div class="empty-state"><div class="e-icon">'+(tipo==='gasto'?'💳':'💵')+'</div><p>Sin '+(tipo==='gasto'?'gastos':'ingresos')+' este mes</p></div>';
     var total=items.reduce(function(a,p){
       var pkey=(tipo==='gasto'?'g:':'i:')+p.nombre;
-      var m=_pagadosMes[pkey]?_pagadosMonto[pkey]:p.monto;
-      return a+parseFloat(m||0);
+      return a+(_pagadosMes[pkey]?parseFloat(_pagadosMonto[pkey]||0):0);
     },0)+(extras||[]).reduce(function(a,mv){return a+mv.amount;},0);
     var pagados=items.filter(function(p){return !!_pagadosMes[(tipo==='gasto'?'g:':'i:')+p.nombre];}).length+(extras||[]).length;
     var totalItems=items.length+(extras||[]).length;
@@ -1642,11 +1641,11 @@ function renderTablasPagos(){
   var fiEl=document.getElementById('fixed-income-total');
   if(fiEl)fiEl.textContent=fmt(regI);
   var fcEl=document.getElementById('fixed-income-count');
-  if(fcEl){var cntI=ingresos.filter(function(p){return !!_pagadosMes['i:'+p.nombre];}).length;fcEl.textContent=cntI+' / '+ingresos.length+' registrados';}
+  if(fcEl){var cntI=ingresos.filter(function(p){return !!_pagadosMes['i:'+p.nombre];}).length+extraI.length;fcEl.textContent=cntI+' / '+(ingresos.length+extraI.length)+' registrados';}
   var feEl=document.getElementById('fixed-expense-total');
   if(feEl)feEl.textContent=fmt(regG);
   var fecEl=document.getElementById('fixed-expense-count');
-  if(fecEl){var cntG=gastos.filter(function(p){return !!_pagadosMes['g:'+p.nombre];}).length;fecEl.textContent=cntG+' / '+gastos.length+' pagados';}
+  if(fecEl){var cntG=gastos.filter(function(p){return !!_pagadosMes['g:'+p.nombre];}).length+extraG.length;fecEl.textContent=cntG+' / '+(gastos.length+extraG.length)+' pagados';}
 
   // Tarjetas resumen del mes seleccionado
   var totI=_movsMes.filter(function(x){return x.type==='income';}).reduce(function(a,x){return a+x.amount;},0);
