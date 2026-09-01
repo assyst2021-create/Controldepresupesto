@@ -1549,10 +1549,10 @@ async function confirmarCopiarPlantilla(fromY,fromM){
   recomputeAnnual(ST.movements);
   renderTablasPagos();
 }
+function _mesTienePlantilla(){return true;}
 function renderTablasPagos(){
-  var tieneP=_mesTienePlantilla(_presYear,_presMes)||(_presYear===2026&&_presMes===7);
-  var gastos=tieneP?ST.pagos.filter(function(p){return p.tipo==='gasto';}):[];
-  var ingresos=tieneP?ST.pagos.filter(function(p){return p.tipo==='ingreso';}):[];
+  var gastos=ST.pagos.filter(function(p){return p.tipo==='gasto';});
+  var ingresos=ST.pagos.filter(function(p){return p.tipo==='ingreso';});
   var _pagadosMes={};
   var _pagadosMonto={};
   ST.movements.forEach(function(mv){
