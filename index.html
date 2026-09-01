@@ -856,7 +856,7 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
           <span id="pres-mes-nav-label" style="font-size:14px;font-weight:800;color:#1E293B;min-width:140px;text-align:center;"></span>
           <button onclick="presMesNav(1)" style="width:32px;height:32px;border:none;background:transparent;cursor:pointer;font-size:18px;color:#475569;border-radius:8px;display:flex;align-items:center;justify-content:center;transition:background .15s;" onmouseover="this.style.background='#E2E8F0'" onmouseout="this.style.background='transparent'">›</button>
           <button onclick="openGrafica()" style="margin-left:6px;padding:4px 12px;border:none;background:#fff;color:#1E40AF;border:1.5px solid #C7D2FE;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:5px;">📊 Gráfica</button>
-          <button id="usar-plantilla-btn" onclick="usarPlantillaMesAnterior()" style="display:none;margin-left:6px;padding:4px 12px;border:none;background:#fff;color:#15803D;border:1.5px solid #BBF7D0;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">📋 Usar plantilla del mes anterior</button>
+          <button id="usar-plantilla-btn" onclick="usarPlantillaMesAnterior()" style="margin-left:6px;padding:4px 12px;border:none;background:#fff;color:#15803D;border:1.5px solid #BBF7D0;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">📋 Copiar plantilla</button>
         </div>
         <!-- Tablas de pagos -->
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
@@ -1480,16 +1480,12 @@ function usarPlantillaMesAnterior(){
   var key=_presYear+'-'+_presMes;
   var arr=_mesesActivados();
   if(arr.indexOf(key)===-1){arr.push(key);localStorage.setItem(_plantillaStorageKey(),JSON.stringify(arr));}
-  var btnPl=document.getElementById('usar-plantilla-btn');
-  if(btnPl)btnPl.style.display='none';
   renderTablasPagos();
 }
 function renderTablasPagos(){
   var tieneP=_mesTienePlantilla(_presYear,_presMes)||(_presYear===2026&&_presMes===7);
   var gastos=tieneP?ST.pagos.filter(function(p){return p.tipo==='gasto';}):[];
   var ingresos=tieneP?ST.pagos.filter(function(p){return p.tipo==='ingreso';}):[];
-  var btnPl=document.getElementById('usar-plantilla-btn');
-  if(btnPl)btnPl.style.display=tieneP?'none':'inline-flex';
   var _pagadosMes={};
   var _pagadosMonto={};
   ST.movements.forEach(function(mv){
