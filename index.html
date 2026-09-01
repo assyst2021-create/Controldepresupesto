@@ -492,6 +492,19 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
   </div>
 </div>
 
+<!-- MODAL COPIAR PLANTILLA -->
+<div id="modal-copiar-plantilla" class="modal-overlay" onclick="if(event.target===this)document.getElementById('modal-copiar-plantilla').style.display='none'">
+  <div class="modal-box" style="max-width:380px;">
+    <div class="modal-header">
+      <h3>Copiar plantilla de otro mes</h3>
+      <button class="modal-close" onclick="document.getElementById('modal-copiar-plantilla').style.display='none'">&#x2715;</button>
+    </div>
+    <p style="font-size:13px;color:#64748B;margin:0 0 14px;">Elige el mes del que quieres copiar los ítems registrados al mes actual (<span id="cpt-mes-actual"></span>).</p>
+    <div id="cpt-lista" style="display:flex;flex-direction:column;gap:8px;max-height:320px;overflow-y:auto;"></div>
+    <p id="cpt-vacio" style="display:none;font-size:13px;color:#94A3B8;text-align:center;padding:20px 0;">No hay meses con datos para copiar.</p>
+  </div>
+</div>
+
 <!-- MODAL PAGO FIJO -->
 <div id="modal-pago" class="modal-overlay" onclick="if(event.target===this)closePagoModal()">
   <div class="modal-box">
@@ -1473,13 +1486,67 @@ function moveRow(tipo,key,dir){
   renderTablasPagos();
 }
 
-function _plantillaStorageKey(){return 'mf_meses_plantilla_'+(ST.userId||'anon');}
-function _mesesActivados(){try{return JSON.parse(localStorage.getItem(_plantillaStorageKey())||'[]');}catch(e){return[];}}
-function _mesTienePlantilla(y,m){return _mesesActivados().indexOf(y+'-'+m)!==-1;}
 function usarPlantillaMesAnterior(){
-  var key=_presYear+'-'+_presMes;
-  var arr=_mesesActivados();
-  if(arr.indexOf(key)===-1){arr.push(key);localStorage.setItem(_plantillaStorageKey(),JSON.stringify(arr));}
+  // Detectar meses que tienen movimientos registrados (distintos al mes actual)
+  var mesesConDatos={};
+  ST.movements.forEach(function(mv){
+    var d=new Date(mv.date+'T12:00:00');
+    var y=d.getFullYear(),m=d.getMonth();
+    if(y===_presYear&&m===_presMes)return; // excluir mes actual
+    var k=y+'-'+m;
+    if(!mesesConDatos[k])mesesConDatos[k]={y:y,m:m,count:0};
+    mesesConDatos[k].count++;
+  });
+  var lista=Object.values(mesesConDatos).sort(function(a,b){return (b.y*12+b.m)-(a.y*12+a.m);});
+  var modal=document.getElementById('modal-copiar-plantilla');
+  var mesActualEl=document.getElementById('cpt-mes-actual');
+  var listaEl=document.getElementById('cpt-lista');
+  var vacioEl=document.getElementById('cpt-vacio');
+  if(mesActualEl)mesActualEl.textContent=MONTHS_FULL[_presMes]+' '+_presYear;
+  if(listaEl){
+    if(!lista.length){
+      listaEl.innerHTML='';
+      if(vacioEl)vacioEl.style.display='block';
+    } else {
+      if(vacioEl)vacioEl.style.display='none';
+      listaEl.innerHTML=lista.map(function(x){
+        return '<button onclick="confirmarCopiarPlantilla('+x.y+','+x.m+')" style="width:100%;padding:12px 16px;border:1.5px solid #E2E8F0;border-radius:10px;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:space-between;font-size:13.5px;font-weight:600;color:#1E293B;transition:border-color .15s;" onmouseover="this.style.borderColor=\'#2563EB\'" onmouseout="this.style.borderColor=\'#E2E8F0\'">'+
+          '<span>'+MONTHS_FULL[x.m]+' '+x.y+'</span>'+
+          '<span style="font-size:12px;color:#64748B;">'+x.count+' movimientos</span>'+
+        '</button>';
+      }).join('');
+    }
+  }
+  if(modal)modal.style.display='flex';
+}
+async function confirmarCopiarPlantilla(fromY,fromM){
+  document.getElementById('modal-copiar-plantilla').style.display='none';
+  // Tomar movimientos del mes origen que sean Pago:/Ingreso: (plantilla)
+  var origen=ST.movements.filter(function(mv){
+    var d=new Date(mv.date+'T12:00:00');
+    return d.getFullYear()===fromY&&d.getMonth()===fromM&&
+      mv.description&&(mv.description.match(/^Pago: /)|| mv.description.match(/^Ingreso: /));
+  });
+  if(!origen.length){alert('Ese mes no tiene ítems de plantilla registrados.');return;}
+  // Verificar cuáles ya existen en el mes actual para no duplicar
+  var existentes={};
+  ST.movements.forEach(function(mv){
+    var d=new Date(mv.date+'T12:00:00');
+    if(d.getFullYear()===_presYear&&d.getMonth()===_presMes)existentes[mv.description]=true;
+  });
+  var nuevos=origen.filter(function(mv){return !existentes[mv.description];});
+  if(!nuevos.length){alert('Todos los ítems de ese mes ya existen en el mes actual.');return;}
+  var fecha=_presYear+'-'+String(_presMes+1).padStart(2,'0')+'-01';
+  for(var i=0;i<nuevos.length;i++){
+    var mv=nuevos[i];
+    var rec={user_id:ST.userId,tipo:mv.type,descripcion:mv.description,monto:mv.amount,categoria:mv.category,fecha:fecha,icono:mv.icon||'💳'};
+    var res=await _sb.from('movimientos').insert(rec).select();
+    if(res.data&&res.data[0]){
+      var r=res.data[0];
+      ST.movements.unshift({id:r.id,type:r.tipo,description:r.descripcion,amount:parseFloat(r.monto),category:r.categoria,date:r.fecha,icon:r.icono||'💳',createdAt:r.created_at});
+    }
+  }
+  recomputeAnnual(ST.movements);
   renderTablasPagos();
 }
 function renderTablasPagos(){
