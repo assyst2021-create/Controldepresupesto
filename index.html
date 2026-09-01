@@ -1473,25 +1473,23 @@ function moveRow(tipo,key,dir){
   renderTablasPagos();
 }
 
-var PLANTILLA_INICIO_YEAR=2026,PLANTILLA_INICIO_MES=7;
 function _plantillaStorageKey(){return 'mf_meses_plantilla_'+(ST.userId||'anon');}
 function _mesesActivados(){try{return JSON.parse(localStorage.getItem(_plantillaStorageKey())||'[]');}catch(e){return[];}}
-function _mesTienePlantilla(y,m){
-  if(y>PLANTILLA_INICIO_YEAR||(y===PLANTILLA_INICIO_YEAR&&m>=PLANTILLA_INICIO_MES))return true;
-  return _mesesActivados().indexOf(y+'-'+m)!==-1;
-}
+function _mesTienePlantilla(y,m){return _mesesActivados().indexOf(y+'-'+m)!==-1;}
 function usarPlantillaMesAnterior(){
   var key=_presYear+'-'+_presMes;
   var arr=_mesesActivados();
   if(arr.indexOf(key)===-1){arr.push(key);localStorage.setItem(_plantillaStorageKey(),JSON.stringify(arr));}
+  var btnPl=document.getElementById('usar-plantilla-btn');
+  if(btnPl)btnPl.style.display='none';
   renderTablasPagos();
 }
 function renderTablasPagos(){
-  var tieneP=_mesTienePlantilla(_presYear,_presMes);
+  var tieneP=_mesTienePlantilla(_presYear,_presMes)||(_presYear===2026&&_presMes===7);
   var gastos=tieneP?ST.pagos.filter(function(p){return p.tipo==='gasto';}):[];
   var ingresos=tieneP?ST.pagos.filter(function(p){return p.tipo==='ingreso';}):[];
   var btnPl=document.getElementById('usar-plantilla-btn');
-  if(btnPl)btnPl.style.display=(!tieneP)?'inline-flex':'none';
+  if(btnPl)btnPl.style.display=tieneP?'none':'inline-flex';
   var _pagadosMes={};
   var _pagadosMonto={};
   ST.movements.forEach(function(mv){
