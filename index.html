@@ -802,6 +802,10 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
     <div id="sidebar-nav">
       <button class="nav-btn active" data-screen="presupuesto" onclick="navigate('presupuesto')"><span class="n-icon">📄</span> Documentos</button>
       <button class="nav-btn" data-screen="compras" onclick="navigate('compras')"><span class="n-icon">📋</span> Bitácora automatizada</button>
+      <button class="nav-btn" data-screen="orientaciones" onclick="navigate('orientaciones')"><span class="n-icon">⚖️</span> Orientaciones jurídicas</button>
+      <button class="nav-btn" data-screen="archivos" onclick="navigate('archivos')"><span class="n-icon">🗂️</span> Organizador de archivos</button>
+      <button class="nav-btn" data-screen="calendario" onclick="navigate('calendario')"><span class="n-icon">📅</span> Calendario y tareas</button>
+      <button class="nav-btn" data-screen="ia" onclick="navigate('ia')"><span class="n-icon">🤖</span> IA integrada a abogados</button>
       <div id="admin-nav-section" style="display:none;">
         <div class="nav-section">Administración</div>
         <button class="nav-btn" data-screen="usuarios" onclick="navigate('usuarios')"><span class="n-icon">👥</span> Usuarios</button>
@@ -863,6 +867,54 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
     </div>
 
 
+    <!-- ORIENTACIONES JURÍDICAS -->
+    <div id="screen-orientaciones" class="screen" style="display:none;">
+      <div class="main-header"><h2>Orientaciones jurídicas</h2></div>
+      <div class="main-body">
+        <div class="empty-state" style="margin-top:60px;">
+          <div class="e-icon">⚖️</div>
+          <p style="font-size:15px;font-weight:600;color:#475569;">Módulo de Orientaciones jurídicas</p>
+          <p style="font-size:13px;color:#94A3B8;margin-top:6px;">Aquí podrás brindar y consultar orientaciones legales a tus clientes.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ORGANIZADOR DE ARCHIVOS -->
+    <div id="screen-archivos" class="screen" style="display:none;">
+      <div class="main-header"><h2>Organizador de archivos</h2></div>
+      <div class="main-body">
+        <div class="empty-state" style="margin-top:60px;">
+          <div class="e-icon">🗂️</div>
+          <p style="font-size:15px;font-weight:600;color:#475569;">Módulo de Organizador de archivos</p>
+          <p style="font-size:13px;color:#94A3B8;margin-top:6px;">Aquí podrás organizar todos los archivos de tus casos y clientes.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- CALENDARIO Y TAREAS -->
+    <div id="screen-calendario" class="screen" style="display:none;">
+      <div class="main-header"><h2>Calendario y tareas</h2></div>
+      <div class="main-body">
+        <div class="empty-state" style="margin-top:60px;">
+          <div class="e-icon">📅</div>
+          <p style="font-size:15px;font-weight:600;color:#475569;">Módulo de Calendario y tareas</p>
+          <p style="font-size:13px;color:#94A3B8;margin-top:6px;">Aquí podrás gestionar tus audiencias, citas y tareas pendientes.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- IA INTEGRADA -->
+    <div id="screen-ia" class="screen" style="display:none;">
+      <div class="main-header"><h2>IA integrada a abogados</h2></div>
+      <div class="main-body">
+        <div class="empty-state" style="margin-top:60px;">
+          <div class="e-icon">🤖</div>
+          <p style="font-size:15px;font-weight:600;color:#475569;">Módulo de IA para abogados</p>
+          <p style="font-size:13px;color:#94A3B8;margin-top:6px;">Aquí tendrás inteligencia artificial especializada en derecho colombiano.</p>
+        </div>
+      </div>
+    </div>
+
     <!-- AHORRO PROGRAMADO -->
     <div id="screen-metas" class="screen" style="display:none;">
       <div class="main-header">
@@ -923,6 +975,10 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
   <div class="sheet-section">Navegación</div>
   <button class="sheet-item" onclick="sheetNav('presupuesto')"><span class="si-icon">📄</span>Documentos</button>
   <button class="sheet-item" onclick="sheetNav('compras')"><span class="si-icon">📋</span>Bitácora automatizada</button>
+  <button class="sheet-item" onclick="sheetNav('orientaciones')"><span class="si-icon">⚖️</span>Orientaciones jurídicas</button>
+  <button class="sheet-item" onclick="sheetNav('archivos')"><span class="si-icon">🗂️</span>Organizador de archivos</button>
+  <button class="sheet-item" onclick="sheetNav('calendario')"><span class="si-icon">📅</span>Calendario y tareas</button>
+  <button class="sheet-item" onclick="sheetNav('ia')"><span class="si-icon">🤖</span>IA integrada a abogados</button>
   <button class="sheet-item" onclick="sheetNav('metas')"><span class="si-icon">🎯</span>Ahorro Programado</button>
   <button class="sheet-item" onclick="sheetNav('tareas')"><span class="si-icon">✅</span>Gestión de Tareas</button>
   <div id="sheet-admin-item" style="display:none;">
@@ -1058,6 +1114,10 @@ function renderScreen(screen){
   if(screen==='movimientos')renderMovimientos();
   else if(screen==='presupuesto')renderPresupuesto();
   else if(screen==='compras')renderCompras();
+  else if(screen==='orientaciones'){}
+  else if(screen==='archivos'){}
+  else if(screen==='calendario'){}
+  else if(screen==='ia'){}
   else if(screen==='metas')renderMetas();
   else if(screen==='tareas')renderTareas();
   else if(screen==='usuarios'&&ST.isAdmin)renderUsuarios();
