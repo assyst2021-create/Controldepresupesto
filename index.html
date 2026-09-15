@@ -805,6 +805,7 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
       <button class="nav-btn" data-screen="orientaciones" onclick="navigate('orientaciones')"><span class="n-icon">⚖️</span> Orientaciones jurídicas</button>
       <button class="nav-btn" data-screen="archivos" onclick="navigate('archivos')"><span class="n-icon">🗂️</span> Organizador de archivos</button>
       <button class="nav-btn" data-screen="calendario" onclick="navigate('calendario')"><span class="n-icon">📅</span> Calendario y tareas</button>
+      <button class="nav-btn" data-screen="normatividad" onclick="navigate('normatividad')"><span class="n-icon">📜</span> Normatividad</button>
       <button class="nav-btn" data-screen="ia" onclick="navigate('ia')"><span class="n-icon">🤖</span> IA integrada a abogados</button>
       <div id="admin-nav-section" style="display:none;">
         <div class="nav-section">Administración</div>
@@ -903,6 +904,18 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
       </div>
     </div>
 
+    <!-- NORMATIVIDAD -->
+    <div id="screen-normatividad" class="screen" style="display:none;">
+      <div class="main-header"><h2>Normatividad</h2></div>
+      <div class="main-body">
+        <div class="empty-state" style="margin-top:60px;">
+          <div class="e-icon">📜</div>
+          <p style="font-size:15px;font-weight:600;color:#475569;">Módulo de Normatividad</p>
+          <p style="font-size:13px;color:#94A3B8;margin-top:6px;">Aquí encontrarás leyes, decretos y normas relevantes para tu práctica jurídica.</p>
+        </div>
+      </div>
+    </div>
+
     <!-- IA INTEGRADA -->
     <div id="screen-ia" class="screen" style="display:none;">
       <div class="main-header"><h2>IA integrada a abogados</h2></div>
@@ -978,6 +991,7 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
   <button class="sheet-item" onclick="sheetNav('orientaciones')"><span class="si-icon">⚖️</span>Orientaciones jurídicas</button>
   <button class="sheet-item" onclick="sheetNav('archivos')"><span class="si-icon">🗂️</span>Organizador de archivos</button>
   <button class="sheet-item" onclick="sheetNav('calendario')"><span class="si-icon">📅</span>Calendario y tareas</button>
+  <button class="sheet-item" onclick="sheetNav('normatividad')"><span class="si-icon">📜</span>Normatividad</button>
   <button class="sheet-item" onclick="sheetNav('ia')"><span class="si-icon">🤖</span>IA integrada a abogados</button>
   <button class="sheet-item" onclick="sheetNav('metas')"><span class="si-icon">🎯</span>Ahorro Programado</button>
   <button class="sheet-item" onclick="sheetNav('tareas')"><span class="si-icon">✅</span>Gestión de Tareas</button>
@@ -1117,6 +1131,7 @@ function renderScreen(screen){
   else if(screen==='orientaciones'){}
   else if(screen==='archivos'){}
   else if(screen==='calendario'){}
+  else if(screen==='normatividad'){}
   else if(screen==='ia'){}
   else if(screen==='metas')renderMetas();
   else if(screen==='tareas')renderTareas();
