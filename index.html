@@ -2755,7 +2755,9 @@ _sb.auth.onAuthStateChange(async function(event,session){
   if(session&&session.user){
     var user=session.user;
     var profileCheck=await _sb.from('profiles').select('activo,role').eq('id',user.id).single();
-    if(!profileCheck.data||profileCheck.data.activo===false){
+    if(profileCheck.error)console.error('profiles:',profileCheck.error);
+    var sinPerfil=profileCheck.error&&profileCheck.error.code==='PGRST116';
+    if(sinPerfil||(profileCheck.data&&profileCheck.data.activo===false)){
       await _sb.auth.signOut();
       var e=document.getElementById('auth-error');
       e.textContent='Tu cuenta está desactivada. Contacta al administrador.';e.style.display='block';
