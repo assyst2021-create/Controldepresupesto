@@ -991,6 +991,7 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
           <div class="form-group" style="flex:2;"><label>Teléfono</label><input id="cs-telefono" type="text" placeholder="602 8986868"/></div>
           <div class="form-group" style="flex:1;"><label>Extensión</label><input id="cs-extension" type="text" placeholder="5301"/></div>
         </div>
+        <div class="form-group" id="cs-copia-wrap"><label>Última copia del expediente digital</label><input id="cs-copia" type="date"/><div style="font-size:12px;color:var(--gray-light);margin-top:4px;">La app te recordará pedir el link al juzgado 30 días después de esta fecha.</div></div>
         <div class="form-group"><label>Notas / otros datos</label><div class="voz-wrap"><textarea id="cs-notas" rows="2" placeholder="Contactos, funcionarios, datos adicionales..."></textarea><button type="button" class="voz-btn" onclick="dictar('cs-notas',this)">🎤</button></div></div>
         <label id="cs-terminado-wrap" style="display:none;align-items:center;gap:8px;font-size:14px;margin-bottom:10px;"><input type="checkbox" id="cs-terminado"/> Caso terminado</label>
         <div id="cs-error" class="error-msg" style="display:none;"></div>
@@ -2657,6 +2658,25 @@ function bitSemaforo(id){
 function bitPendientes(){return ST.actuaciones.filter(function(a){
   if(!a.fecha_vencimiento||a.cumplida)return false;
   var c=ST.casos.find(function(x){return x.id===a.caso_id;});return c&&!c.terminado;});}
+var BIT_DIAS_EXPEDIENTE=30;
+function bitExpDias(c){return c.ultima_copia_expediente?-bitDias(c.ultima_copia_expediente):null;}
+function bitExpPendiente(c){if(c.terminado||(c.categoria||'proceso')!=='proceso')return false;var d=bitExpDias(c);return d===null||d>=BIT_DIAS_EXPEDIENTE;}
+function bitExpPendientes(){return ST.casos.filter(bitExpPendiente);}
+function bitPedirLink(id){
+  var c=ST.casos.find(function(x){return x.id===id;});if(!c)return;
+  var rad=bitRadFmt(c.radicacion);
+  var cuerpo='Respetados señores\n\nReferencia: Proceso '+(c.juzgado?'que cursa en el '+c.juzgado+' ':'')+(rad?'con radicado '+rad:'')+' ('+c.cliente+')\n\n'+
+    'De manera respetuosa solicito se me comparta el link de acceso al expediente digital del proceso de la referencia, con el fin de realizar la revisión de las actuaciones surtidas.\n\nAgradezco la atención prestada.\n\nCordialmente,\n\n'+(ST.userName||'');
+  window.location.href='mailto:'+(c.correo||'')+'?subject='+encodeURIComponent('Solicitud link expediente digital - Rad. '+(rad||c.cliente))+'&body='+encodeURIComponent(cuerpo);
+}
+async function bitCopiaHoy(id){
+  var hoy=bitISO(bitHoy());
+  var r=await _sb.from('casos').update({ultima_copia_expediente:hoy}).eq('id',id);
+  if(r.error){bitToast('Error: '+r.error.message);return;}
+  ST.casos.forEach(function(c){if(c.id===id)c.ultima_copia_expediente=hoy;});
+  bitToast('Copia del expediente registrada. Próximo recordatorio en '+BIT_DIAS_EXPEDIENTE+' días.');
+  renderBitacora();bitActualizarBadge();
+}
 function bitGestionMes(c){var h=bitHoy();return ST.actuaciones.some(function(a){if(a.caso_id!==c.id)return false;var d=bitParse(a.fecha);return d&&d.getMonth()===h.getMonth()&&d.getFullYear()===h.getFullYear();});}
 
 // Detecta fechas y plazos en el texto dictado
@@ -2715,7 +2735,7 @@ async function loadBitacora(){
   bitActualizarBadge();
 }
 function bitActualizarBadge(){
-  var p=bitPendientes(),n=p.filter(function(a){return bitDias(a.fecha_vencimiento)<=3;}).length;
+  var p=bitPendientes(),n=p.filter(function(a){return bitDias(a.fecha_vencimiento)<=3;}).length+bitExpPendientes().length;
   document.querySelectorAll('[data-screen="compras"]').forEach(function(b){
     var s=b.querySelector('.bit-badge');if(s)s.remove();
     if(n){s=document.createElement('span');s.className='bit-badge';s.textContent=n;s.style.cssText='margin-left:auto;background:#DC2626;color:#fff;border-radius:10px;font-size:11px;font-weight:800;padding:1px 7px;';b.appendChild(s);}
@@ -2725,8 +2745,9 @@ function bitNotificar(){
   try{
     var hoy=bitISO(bitHoy());if(localStorage.getItem('tj_notif_'+ST.userId)===hoy)return;
     var p=bitPendientes(),venc=p.filter(function(a){return bitDias(a.fecha_vencimiento)<0;}).length,prox=p.filter(function(a){var d=bitDias(a.fecha_vencimiento);return d>=0&&d<=3;}).length;
-    if(!venc&&!prox)return;
-    var msg=(venc?venc+' vencido(s). ':'')+(prox?prox+' vence(n) en los próximos 3 días.':'');
+    var exp=bitExpPendientes().length;
+    if(!venc&&!prox&&!exp)return;
+    var msg=(venc?venc+' vencido(s). ':'')+(prox?prox+' vence(n) en los próximos 3 días. ':'')+(exp?exp+' expediente(s) para pedir link al juzgado.':'');
     var show=function(){new Notification('TuJurídico – Bitácora',{body:msg});localStorage.setItem('tj_notif_'+ST.userId,hoy);};
     if(!('Notification' in window))return;
     if(Notification.permission==='granted')show();
@@ -2748,6 +2769,7 @@ function renderBitacoraAlertas(){
     kpi('vencidos',venc.length,'Vencidos','#DC2626')+
     kpi('proximos',prox.length,'Vencen en 7 días','#F59E0B')+
     kpi('sinmes',sinMes.length,'Sin gestión en '+mesNom,'#7C3AED')+
+    kpi('expediente',bitExpPendientes().length,'Pedir link del expediente','#0891B2')+
     '<div class="bit-kpi" style="cursor:default;"><div class="k-num" style="color:#16A34A;">'+(activos.length-sinMes.length)+'<span style="font-size:15px;color:var(--gray-light);"> / '+activos.length+'</span></div><div class="k-lbl">Gestionados en '+mesNom+'</div></div>'+
     '</div>';
   var lista=venc.concat(prox).sort(function(a,b){return a.fecha_vencimiento.localeCompare(b.fecha_vencimiento);});
@@ -2775,6 +2797,7 @@ function renderBitacora(){
     else{if(c.terminado)return false;if(_bitTab!=='activos'&&c.categoria!==_bitTab)return false;}
     if(q){var txt=[c.cliente,c.juzgado,c.radicacion,c.correo,c.notas].join(' ').toLowerCase();if(txt.indexOf(q)<0&&!(qd.length>=4&&bitRadDigits(c.radicacion).indexOf(qd)>-1))return false;}
     if(_bitFiltro==='sinmes')return !bitGestionMes(c);
+    if(_bitFiltro==='expediente')return bitExpPendiente(c);
     if(_bitFiltro==='vencidos'||_bitFiltro==='proximos'){
       return bitPendientes().some(function(a){if(a.caso_id!==c.id)return false;var d=bitDias(a.fecha_vencimiento);return _bitFiltro==='vencidos'?d<0:(d>=0&&d<=7);});
     }
@@ -2804,6 +2827,7 @@ function bitFilaHTML(c){
     (c.correo?'<div class="bit-dato">✉️ <a href="mailto:'+esc(c.correo)+'?subject='+encodeURIComponent('Rad. '+(rad||'')+' - '+(c.cliente||''))+'">'+esc(c.correo)+'</a></div>':'')+
     tel+(c.notas?'<div class="bit-dato" style="color:var(--gray-light);">'+esc(c.notas)+'</div>':'')+
     '<div class="bit-dato" style="color:'+sem.c+';font-weight:700;">'+sem.t+'</div>'+
+    bitExpHTML(c)+
     (bitRadDigits(c.radicacion).length===23?'<button class="bit-mini" onclick="bitConsultarRama(\''+bitRadDigits(c.radicacion)+'\')">🔎 Rama Judicial</button>':'')+
   '</div>';
   var strip=acts.map(function(a,i){
@@ -2818,6 +2842,15 @@ function bitFilaHTML(c){
   }).join('');
   return '<div class="bit-fila">'+fijo+'<div class="bit-strip">'+strip+'<button class="bit-add" onclick="openActuacionModal(\''+c.id+'\')">+ Actuación<br><span style="font-size:18px;">🎤</span></button></div></div>';
 }
+function bitExpHTML(c){
+  if((c.categoria||'proceso')!=='proceso'||c.terminado)return '';
+  var d=bitExpDias(c),pend=bitExpPendiente(c);
+  var txt=d===null?'Sin registro de copia':'Última copia hace '+d+' día'+(d===1?'':'s')+(pend?'':' · faltan '+(BIT_DIAS_EXPEDIENTE-d));
+  return '<div style="margin-top:8px;padding:8px 10px;border-radius:10px;background:'+(pend?'#ECFEFF':'#F8FAFC')+';border:1px solid '+(pend?'#67E8F9':'#E2E8F0')+';">'+
+    '<div style="font-size:11.5px;font-weight:700;color:'+(pend?'#0E7490':'var(--gray-light)')+';">📂 Expediente: '+txt+'</div>'+
+    (pend?'<button class="bit-mini" onclick="bitPedirLink(\''+c.id+'\')">✉️ Pedir link</button>':'')+
+    '<button class="bit-mini" onclick="bitCopiaHoy(\''+c.id+'\')">✓ Copié hoy</button></div>';
+}
 function bitCopiar(t){if(navigator.clipboard)navigator.clipboard.writeText(t);bitToast('Radicación copiada: '+t);}
 function bitConsultarRama(rad){bitCopiar(rad);window.open('https://consultaprocesos.ramajudicial.gov.co/Procesos/NumeroRadicacion','_blank');}
 function bitToast(msg){var t=document.createElement('div');t.textContent=msg;t.style.cssText='position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#0F172A;color:#fff;padding:10px 18px;border-radius:12px;font-size:13px;z-index:10000;';document.body.appendChild(t);setTimeout(function(){t.remove();},2500);}
@@ -2827,6 +2860,7 @@ function openCasoModal(id){
   document.getElementById('caso-modal-titulo').textContent=id?'Editar caso':'Nuevo caso';
   document.getElementById('cs-categoria').value=c.categoria||(['proceso','tramite','curaduria'].indexOf(_bitTab)>-1?_bitTab:'proceso');
   ['cliente','juzgado','radicacion','correo','telefono','extension','notas'].forEach(function(k){document.getElementById('cs-'+k).value=c[k]||'';});
+  document.getElementById('cs-copia').value=c.ultima_copia_expediente||'';
   document.getElementById('cs-terminado').checked=!!c.terminado;
   document.getElementById('cs-terminado-wrap').style.display=id?'flex':'none';
   document.getElementById('cs-del-btn').style.display=id?'inline-flex':'none';
@@ -2838,6 +2872,7 @@ function closeCasoModal(){if(_rec)_rec.stop();document.getElementById('modal-cas
 async function submitCaso(){
   var rec={categoria:document.getElementById('cs-categoria').value,terminado:document.getElementById('cs-terminado').checked};
   ['cliente','juzgado','radicacion','correo','telefono','extension','notas'].forEach(function(k){rec[k]=document.getElementById('cs-'+k).value.trim();});
+  rec.ultima_copia_expediente=document.getElementById('cs-copia').value||null;
   var err=document.getElementById('cs-error');
   if(!rec.cliente){err.textContent='Escribe el nombre del cliente o caso.';err.style.display='block';return;}
   if(bitRadDigits(rec.radicacion).length===23)rec.radicacion=bitRadFmt(rec.radicacion);
