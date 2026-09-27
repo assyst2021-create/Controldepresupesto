@@ -183,6 +183,47 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
 .meta-fill{height:100%;border-radius:20px;background:linear-gradient(90deg,var(--blue-mid),var(--blue-light));transition:width .4s;}
 .meta-nums{display:flex;justify-content:space-between;font-size:12px;}
 
+/* BITACORA */
+.voz-wrap{position:relative;}
+.voz-wrap input,.voz-wrap textarea{padding-right:46px;width:100%;}
+.voz-btn{position:absolute;right:8px;top:8px;width:32px;height:32px;border-radius:50%;border:none;background:#EFF6FF;cursor:pointer;font-size:15px;}
+.voz-btn.rec{background:#DC2626;animation:vozpulse 1s infinite;}
+@keyframes vozpulse{0%,100%{box-shadow:0 0 0 0 rgba(220,38,38,.5);}50%{box-shadow:0 0 0 8px rgba(220,38,38,0);}}
+.bit-toolbar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:14px 0;}
+.bit-tabs{display:flex;gap:6px;flex-wrap:wrap;}
+.bit-tabs button{border:1.5px solid var(--border);background:#fff;border-radius:20px;padding:7px 14px;font-size:13px;font-weight:600;color:var(--gray);cursor:pointer;}
+.bit-tabs button.active{background:var(--blue-mid);border-color:var(--blue-mid);color:#fff;}
+#bit-buscar{flex:1;min-width:200px;padding:9px 14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;}
+.bit-alert-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;}
+.bit-kpi{background:#fff;border:1.5px solid var(--border);border-radius:14px;padding:14px 16px;cursor:pointer;}
+.bit-kpi .k-num{font-size:26px;font-weight:800;}
+.bit-kpi .k-lbl{font-size:12px;color:var(--gray-light);font-weight:600;}
+.bit-venc-list{background:#fff;border:1.5px solid var(--border);border-radius:14px;margin-top:12px;overflow:hidden;}
+.bit-venc-item{display:flex;gap:10px;align-items:center;padding:10px 16px;border-bottom:1px solid #F1F5F9;font-size:13px;}
+.bit-venc-item:last-child{border-bottom:none;}
+.bit-grid{background:#fff;border:1.5px solid var(--border);border-radius:14px;overflow:hidden;}
+.bit-fila{display:flex;border-bottom:1px solid #EEF2F7;}
+.bit-fila:last-child{border-bottom:none;}
+.bit-fijo{flex:0 0 290px;padding:12px 14px;border-right:2px solid var(--border);background:#fff;box-shadow:4px 0 8px -4px rgba(15,23,42,.08);z-index:1;}
+.bit-strip{flex:1;min-width:0;overflow-x:auto;display:flex;gap:10px;padding:12px;align-items:flex-start;scroll-behavior:smooth;}
+@media(max-width:700px){.bit-fijo{flex-basis:170px;padding:10px;}.bit-act{width:210px;min-width:210px;}}
+.bit-cliente{font-size:14px;font-weight:800;color:var(--gray-dark);display:flex;align-items:center;gap:6px;}
+.bit-dato{font-size:12px;color:var(--gray);margin-top:3px;word-break:break-all;}
+.bit-dato a{color:var(--blue-mid);text-decoration:none;}
+.bit-rad{font-family:monospace;font-size:12px;background:#F1F5F9;border-radius:6px;padding:2px 6px;cursor:pointer;}
+.bit-semaforo{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.bit-mini{font-size:11px;border:1px solid var(--border);background:#F8FAFC;border-radius:8px;padding:4px 8px;cursor:pointer;margin:6px 4px 0 0;}
+.bit-act{width:250px;min-width:250px;background:#F8FAFC;border:1.5px solid #E2E8F0;border-radius:12px;padding:10px 12px;font-size:12.5px;color:var(--gray-dark);cursor:pointer;line-height:1.5;}
+.bit-act.ultima{background:#EFF6FF;border-color:#93C5FD;}
+.bit-act .a-fecha{font-size:11px;font-weight:800;color:var(--blue-mid);margin-bottom:4px;}
+.bit-act .a-txt{display:-webkit-box;-webkit-line-clamp:6;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-wrap;}
+.bit-act .a-next{margin-top:6px;padding-top:6px;border-top:1px dashed #CBD5E1;font-weight:600;color:#7C3AED;}
+.bit-act .a-vence{margin-top:4px;font-size:11px;font-weight:700;}
+.bit-add{width:120px;min-width:120px;border:2px dashed #CBD5E1;border-radius:12px;background:none;color:var(--gray-light);font-weight:700;cursor:pointer;font-size:13px;min-height:90px;}
+.bit-add:hover{border-color:var(--blue-mid);color:var(--blue-mid);}
+.bit-row-acts{display:flex;gap:10px;align-items:stretch;}
+.bit-sep{background:#F1F5F9;font-size:11px;font-weight:800;letter-spacing:.08em;color:var(--gray);text-transform:uppercase;padding:8px 14px;border-bottom:1px solid #E2E8F0;}
+
 /* DOCUMENTOS */
 .carpeta-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;padding:4px 0;}
 .carpeta-card{background:#fff;border:1.5px solid var(--border);border-radius:16px;padding:20px 18px;cursor:pointer;transition:all .15s;display:flex;flex-direction:column;gap:8px;position:relative;}
@@ -924,14 +965,54 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
     <div id="screen-compras" class="screen" style="display:none;">
       <div class="main-header">
         <h2>Bitácora automatizada</h2>
-        <button class="btn btn-primary" onclick="">+ Nueva entrada</button>
+        <button class="btn btn-primary" onclick="openCasoModal()">+ Nuevo caso</button>
       </div>
       <div class="main-body">
-        <div class="empty-state" style="margin-top:60px;">
-          <div class="e-icon">📋</div>
-          <p style="font-size:15px;font-weight:600;color:#475569;">Módulo de Bitácora</p>
-          <p style="font-size:13px;color:#94A3B8;margin-top:6px;">Aquí podrás registrar y automatizar las bitácoras de tus procesos legales.</p>
+        <div id="bit-alertas"></div>
+        <div class="bit-toolbar">
+          <div class="bit-tabs" id="bit-tabs"></div>
+          <input id="bit-buscar" type="search" placeholder="Buscar cliente, juzgado o radicación..." oninput="renderBitacora()"/>
         </div>
+        <div id="bit-tabla"></div>
+      </div>
+    </div>
+
+    <!-- MODAL CASO -->
+    <div id="modal-caso" class="modal-overlay" onclick="if(event.target===this)closeCasoModal()">
+      <div class="modal-box" style="max-width:520px;">
+        <div class="modal-header"><h3 id="caso-modal-titulo">Nuevo caso</h3><button class="modal-close" onclick="closeCasoModal()">&#x2715;</button></div>
+        <div class="form-group"><label>Tipo</label>
+          <select id="cs-categoria"><option value="proceso">Proceso judicial</option><option value="tramite">Trámite (no proceso)</option><option value="curaduria">Curaduría</option></select></div>
+        <div class="form-group"><label>Cliente / nombre del caso</label><div class="voz-wrap"><input id="cs-cliente" type="text" placeholder="Ej: Magaly Insuasty"/><button type="button" class="voz-btn" onclick="dictar('cs-cliente',this)">🎤</button></div></div>
+        <div class="form-group"><label>Juzgado / entidad</label><div class="voz-wrap"><input id="cs-juzgado" type="text" placeholder="Ej: Juzgado 4 de Pequeñas Causas de Popayán"/><button type="button" class="voz-btn" onclick="dictar('cs-juzgado',this)">🎤</button></div></div>
+        <div class="form-group"><label>Radicación (23 dígitos)</label><input id="cs-radicacion" type="text" placeholder="76001-31-10-011-2016-00149-00" oninput="bitCheckRad()"/><div id="cs-rad-info" style="font-size:12px;margin-top:4px;"></div></div>
+        <div class="form-group"><label>Correo del juzgado</label><input id="cs-correo" type="email" placeholder="j04prpcppn@cendoj.ramajudicial.gov.co"/></div>
+        <div style="display:flex;gap:10px;">
+          <div class="form-group" style="flex:2;"><label>Teléfono</label><input id="cs-telefono" type="text" placeholder="602 8986868"/></div>
+          <div class="form-group" style="flex:1;"><label>Extensión</label><input id="cs-extension" type="text" placeholder="5301"/></div>
+        </div>
+        <div class="form-group"><label>Notas / otros datos</label><div class="voz-wrap"><textarea id="cs-notas" rows="2" placeholder="Contactos, funcionarios, datos adicionales..."></textarea><button type="button" class="voz-btn" onclick="dictar('cs-notas',this)">🎤</button></div></div>
+        <label id="cs-terminado-wrap" style="display:none;align-items:center;gap:8px;font-size:14px;margin-bottom:10px;"><input type="checkbox" id="cs-terminado"/> Caso terminado</label>
+        <div id="cs-error" class="error-msg" style="display:none;"></div>
+        <div class="modal-actions">
+          <button class="btn btn-ghost" id="cs-del-btn" style="margin-right:auto;color:#DC2626;display:none;" onclick="deleteCaso()">Eliminar</button>
+          <button class="btn btn-ghost" onclick="closeCasoModal()">Cancelar</button><button class="btn btn-primary" onclick="submitCaso()">Guardar</button></div>
+      </div>
+    </div>
+
+    <!-- MODAL ACTUACION -->
+    <div id="modal-actuacion" class="modal-overlay" onclick="if(event.target===this)closeActuacionModal()">
+      <div class="modal-box" style="max-width:520px;">
+        <div class="modal-header"><h3 id="act-modal-titulo">Nueva actuación</h3><button class="modal-close" onclick="closeActuacionModal()">&#x2715;</button></div>
+        <div id="act-caso-nombre" style="font-size:13px;color:var(--gray-light);margin:-6px 0 12px;"></div>
+        <div class="form-group"><label>Fecha</label><input id="ac-fecha" type="date"/></div>
+        <div class="form-group"><label>¿Qué pasó? (seguimiento)</label><div class="voz-wrap"><textarea id="ac-descripcion" rows="5" oninput="bitAutoVence()"placeholder="Pulsa 🎤 y dicta el seguimiento del caso..."></textarea><button type="button" class="voz-btn" onclick="dictar('ac-descripcion',this)">🎤</button></div></div>
+        <div class="form-group"><label>¿Qué sigue? (próxima acción)</label><div class="voz-wrap"><textarea id="ac-proxima" rows="2" oninput="bitAutoVence()"placeholder="Ej: Radicar memorial de impulso"></textarea><button type="button" class="voz-btn" onclick="dictar('ac-proxima',this)">🎤</button></div></div>
+        <div class="form-group"><label>Fecha de vencimiento / recordatorio (opcional)</label><input id="ac-vence" type="date" onchange="_venceAuto=false;document.getElementById('ac-vence-hint').textContent='';"/><div id="ac-vence-hint" style="font-size:12px;color:#16A34A;margin-top:4px;font-weight:600;"></div></div>
+        <div id="ac-error" class="error-msg" style="display:none;"></div>
+        <div class="modal-actions">
+          <button class="btn btn-ghost" id="ac-del-btn" style="margin-right:auto;color:#DC2626;display:none;" onclick="deleteActuacion()">Eliminar</button>
+          <button class="btn btn-ghost" onclick="closeActuacionModal()">Cancelar</button><button class="btn btn-primary" onclick="submitActuacion()">Guardar</button></div>
       </div>
     </div>
 
@@ -1135,7 +1216,7 @@ var _sbCreate = window.supabase.createClient(
 // STATE
 var ST = {
   screen:'presupuesto', month:new Date().getMonth(), year:new Date().getFullYear(),
-  movements:[], goals:[], pagos:[], compras:[], profiles:[], carpetas:[], documentos:[],
+  movements:[], goals:[], pagos:[], compras:[], profiles:[], carpetas:[], documentos:[], casos:[], actuaciones:[],
   movFilter:'all', isAdmin:false, userId:null, userName:'', tareas:[],
   MONTHLY_DATA:Array(12).fill(null).map(function(){return{i:0,e:0,s:0};}),
 };
@@ -1195,7 +1276,7 @@ function renderScreen(screen){
   populateCurrencySels();
   if(screen==='movimientos')renderMovimientos();
   else if(screen==='presupuesto'){loadDocumentosData().then(renderDocumentosScreen);}
-  else if(screen==='compras')renderCompras();
+  else if(screen==='compras'){renderBitacora();loadBitacora().then(renderBitacora);}
   else if(screen==='orientaciones'){}
   else if(screen==='archivos'){}
   else if(screen==='calendario'){}
@@ -2548,6 +2629,296 @@ async function submitAbono(){
   }
 }
 
+// ===== BITACORA =====
+var _bitTab='activos',_bitFiltro=null,_casoEditId=null,_actEditId=null,_actCasoId=null,_venceAuto=false;
+var MESES_ES=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+function bitHoy(){var d=new Date();d.setHours(0,0,0,0);return d;}
+function bitISO(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function bitParse(s){return s?new Date(s+'T00:00:00'):null;}
+function bitFechaTxt(s){var d=bitParse(s);return d?d.getDate()+' '+MESES_ES[d.getMonth()].slice(0,3)+' '+d.getFullYear():'';}
+function bitDias(s){var d=bitParse(s);return d?Math.round((d-bitHoy())/86400000):null;}
+function bitRadDigits(r){return String(r||'').replace(/\D/g,'');}
+function bitRadFmt(r){var d=bitRadDigits(r);if(d.length!==23)return r||'';return d.slice(0,5)+'-'+d.slice(5,7)+'-'+d.slice(7,9)+'-'+d.slice(9,12)+'-'+d.slice(12,16)+'-'+d.slice(16,21)+'-'+d.slice(21);}
+function bitCheckRad(){
+  var v=document.getElementById('cs-radicacion').value,n=bitRadDigits(v).length,el=document.getElementById('cs-rad-info');
+  if(!n){el.textContent='';return;}
+  el.style.color=n===23?'#16A34A':'#D97706';
+  el.textContent=n===23?'✓ '+bitRadFmt(v)+' (año '+bitRadDigits(v).slice(12,16)+')':n+' de 23 dígitos';
+}
+function bitActsDe(id){return ST.actuaciones.filter(function(a){return a.caso_id===id;}).sort(function(a,b){return (a.fecha||'').localeCompare(b.fecha||'')||(a.created_at||'').localeCompare(b.created_at||'');});}
+function bitUltima(id){var a=bitActsDe(id);return a.length?a[a.length-1]:null;}
+function bitSemaforo(id){
+  var u=bitUltima(id);if(!u)return{c:'#CBD5E1',t:'Sin actuaciones'};
+  var d=-bitDias(u.fecha);
+  if(d<=30)return{c:'#16A34A',t:'Última gestión hace '+d+' días'};
+  if(d<=60)return{c:'#F59E0B',t:'Última gestión hace '+d+' días'};
+  return{c:'#DC2626',t:'Sin gestión hace '+d+' días'};
+}
+function bitPendientes(){return ST.actuaciones.filter(function(a){
+  if(!a.fecha_vencimiento||a.cumplida)return false;
+  var c=ST.casos.find(function(x){return x.id===a.caso_id;});return c&&!c.terminado;});}
+function bitGestionMes(c){var h=bitHoy();return ST.actuaciones.some(function(a){if(a.caso_id!==c.id)return false;var d=bitParse(a.fecha);return d&&d.getMonth()===h.getMonth()&&d.getFullYear()===h.getFullYear();});}
+
+// Detecta fechas y plazos en el texto dictado
+var NUM_ES={uno:1,un:1,una:1,dos:2,tres:3,cuatro:4,cinco:5,seis:6,siete:7,ocho:8,nueve:9,diez:10,once:11,doce:12,trece:13,catorce:14,quince:15,veinte:20,treinta:30};
+function bitSumarHabiles(base,n){var d=new Date(base);while(n>0){d.setDate(d.getDate()+1);var w=d.getDay();if(w!==0&&w!==6)n--;}return d;}
+function bitDetectarFecha(texto,base){
+  var t=(texto||'').toLowerCase();base=base||bitHoy();
+  var m=t.match(/(\d{1,2})\s+de\s+(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|setiembre|octubre|noviembre|diciembre)(?:\s+(?:de|del)\s+(\d{4}))?/);
+  if(m){var mes=m[2]==='setiembre'?8:MESES_ES.indexOf(m[2]);var y=m[3]?parseInt(m[3]):base.getFullYear();var d=new Date(y,mes,parseInt(m[1]));if(!m[3]&&d<base)d.setFullYear(y+1);return{fecha:d,motivo:'fecha mencionada'};}
+  m=t.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if(m)return{fecha:new Date(parseInt(m[3]),parseInt(m[2])-1,parseInt(m[1])),motivo:'fecha mencionada'};
+  m=t.match(/(\d+|[a-záéí]+)\s+d[ií]as\s+h[aá]biles/);
+  if(m){var n=parseInt(m[1])||NUM_ES[m[1]];if(n)return{fecha:bitSumarHabiles(base,n),motivo:n+' días hábiles (sin contar festivos)'};}
+  m=t.match(/(\d+|[a-záéí]+)\s+d[ií]as/);
+  if(m){var n2=parseInt(m[1])||NUM_ES[m[1]];if(n2){var d2=new Date(base);d2.setDate(d2.getDate()+n2);return{fecha:d2,motivo:n2+' días calendario'};}}
+  m=t.match(/(\d+|[a-záéí]+)\s+mes(?:es)?/);
+  if(m&&!/\d{1,2}\s+de\s+/.test(t)){var n3=parseInt(m[1])||NUM_ES[m[1]];if(n3){var d3=new Date(base);d3.setMonth(d3.getMonth()+n3);return{fecha:d3,motivo:n3+' mes(es)'};}}
+  return null;
+}
+function bitAutoVence(){
+  var venceEl=document.getElementById('ac-vence');
+  if(venceEl.value&&!_venceAuto)return;
+  var base=bitParse(document.getElementById('ac-fecha').value)||bitHoy();
+  var r=bitDetectarFecha(document.getElementById('ac-proxima').value,base)||bitDetectarFecha(document.getElementById('ac-descripcion').value,base);
+  var hint=document.getElementById('ac-vence-hint');
+  if(r&&r.fecha>=base){venceEl.value=bitISO(r.fecha);_venceAuto=true;hint.textContent='📅 Detectado automáticamente: '+r.motivo;}
+  else if(_venceAuto){venceEl.value='';_venceAuto=false;hint.textContent='';}
+}
+
+// Dictado por voz
+var _rec=null,_recBtn=null;
+function dictar(fieldId,btn){
+  var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){alert('Tu navegador no soporta dictado por voz. Usa Google Chrome o Microsoft Edge.');return;}
+  if(_rec){_rec.stop();if(_recBtn===btn)return;}
+  var el=document.getElementById(fieldId),baseTxt=el.value?el.value.replace(/\s*$/,' '):'';
+  var rec=new SR();rec.lang='es-CO';rec.continuous=true;rec.interimResults=true;
+  _rec=rec;_recBtn=btn;btn.classList.add('rec');btn.textContent='⏹';
+  rec.onresult=function(e){
+    var fin='',tmp='';
+    for(var i=0;i<e.results.length;i++){var tx=e.results[i][0].transcript;if(e.results[i].isFinal)fin+=tx;else tmp+=tx;}
+    fin=fin.trim();if(fin)fin=fin.charAt(0).toUpperCase()+fin.slice(1);
+    el.value=baseTxt+fin+(tmp?' '+tmp:'');
+  };
+  rec.onerror=function(e){if(e.error==='not-allowed')alert('Debes permitir el acceso al micrófono.');};
+  rec.onend=function(){btn.classList.remove('rec');btn.textContent='🎤';if(_rec===rec){_rec=null;_recBtn=null;}
+    if(fieldId==='ac-descripcion'||fieldId==='ac-proxima')bitAutoVence();};
+  rec.start();
+}
+
+async function loadBitacora(){
+  var r1=await _sb.from('casos').select('*').eq('user_id',ST.userId).order('created_at',{ascending:true});
+  var r2=await _sb.from('actuaciones').select('*').eq('user_id',ST.userId);
+  if(!r1.error)ST.casos=r1.data||[];
+  if(!r2.error)ST.actuaciones=r2.data||[];
+  bitActualizarBadge();
+}
+function bitActualizarBadge(){
+  var p=bitPendientes(),n=p.filter(function(a){return bitDias(a.fecha_vencimiento)<=3;}).length;
+  document.querySelectorAll('[data-screen="compras"]').forEach(function(b){
+    var s=b.querySelector('.bit-badge');if(s)s.remove();
+    if(n){s=document.createElement('span');s.className='bit-badge';s.textContent=n;s.style.cssText='margin-left:auto;background:#DC2626;color:#fff;border-radius:10px;font-size:11px;font-weight:800;padding:1px 7px;';b.appendChild(s);}
+  });
+}
+function bitNotificar(){
+  try{
+    var hoy=bitISO(bitHoy());if(localStorage.getItem('tj_notif_'+ST.userId)===hoy)return;
+    var p=bitPendientes(),venc=p.filter(function(a){return bitDias(a.fecha_vencimiento)<0;}).length,prox=p.filter(function(a){var d=bitDias(a.fecha_vencimiento);return d>=0&&d<=3;}).length;
+    if(!venc&&!prox)return;
+    var msg=(venc?venc+' vencido(s). ':'')+(prox?prox+' vence(n) en los próximos 3 días.':'');
+    var show=function(){new Notification('TuJurídico – Bitácora',{body:msg});localStorage.setItem('tj_notif_'+ST.userId,hoy);};
+    if(!('Notification' in window))return;
+    if(Notification.permission==='granted')show();
+    else if(Notification.permission!=='denied')Notification.requestPermission().then(function(r){if(r==='granted')show();});
+  }catch(e){}
+}
+
+function bitSetTab(t){_bitTab=t;_bitFiltro=null;renderBitacora();}
+function bitSetFiltro(f){_bitFiltro=_bitFiltro===f?null:f;renderBitacora();}
+function renderBitacoraAlertas(){
+  var p=bitPendientes(),h=bitHoy();
+  var venc=p.filter(function(a){return bitDias(a.fecha_vencimiento)<0;});
+  var prox=p.filter(function(a){var d=bitDias(a.fecha_vencimiento);return d>=0&&d<=7;});
+  var activos=ST.casos.filter(function(c){return !c.terminado;});
+  var sinMes=activos.filter(function(c){return !bitGestionMes(c);});
+  var mesNom=MESES_ES[h.getMonth()];
+  var kpi=function(f,num,lbl,color){return '<div class="bit-kpi" style="'+(_bitFiltro===f?'border-color:'+color+';box-shadow:0 0 0 2px '+color+'33;':'')+'" onclick="bitSetFiltro(\''+f+'\')"><div class="k-num" style="color:'+color+';">'+num+'</div><div class="k-lbl">'+lbl+'</div></div>';};
+  var html='<div class="bit-alert-grid">'+
+    kpi('vencidos',venc.length,'Vencidos','#DC2626')+
+    kpi('proximos',prox.length,'Vencen en 7 días','#F59E0B')+
+    kpi('sinmes',sinMes.length,'Sin gestión en '+mesNom,'#7C3AED')+
+    '<div class="bit-kpi" style="cursor:default;"><div class="k-num" style="color:#16A34A;">'+(activos.length-sinMes.length)+'<span style="font-size:15px;color:var(--gray-light);"> / '+activos.length+'</span></div><div class="k-lbl">Gestionados en '+mesNom+'</div></div>'+
+    '</div>';
+  var lista=venc.concat(prox).sort(function(a,b){return a.fecha_vencimiento.localeCompare(b.fecha_vencimiento);});
+  if(lista.length){
+    html+='<div class="bit-venc-list">'+lista.map(function(a){
+      var c=ST.casos.find(function(x){return x.id===a.caso_id;})||{};var d=bitDias(a.fecha_vencimiento);
+      var col=d<0?'#DC2626':d<=3?'#F59E0B':'#2563EB';
+      var txt=d<0?'Venció hace '+(-d)+' día'+(-d===1?'':'s'):d===0?'Vence HOY':'Vence en '+d+' día'+(d===1?'':'s');
+      return '<div class="bit-venc-item"><span style="color:'+col+';font-weight:800;min-width:120px;">'+txt+'</span>'+
+        '<span style="flex:1;min-width:0;"><b>'+esc(c.cliente)+'</b> — '+esc(a.proxima_accion||a.descripcion||'').slice(0,120)+'</span>'+
+        '<span style="color:var(--gray-light);white-space:nowrap;">'+bitFechaTxt(a.fecha_vencimiento)+'</span>'+
+        '<button class="bit-mini" style="margin:0;" onclick="bitCumplir(\''+a.id+'\')">✓ Cumplido</button></div>';
+    }).join('')+'</div>';
+  }
+  document.getElementById('bit-alertas').innerHTML=html;
+}
+function renderBitacora(){
+  renderBitacoraAlertas();
+  var tabs=[['activos','Todos'],['proceso','Procesos'],['tramite','Trámites'],['curaduria','Curadurías'],['terminados','Terminados']];
+  document.getElementById('bit-tabs').innerHTML=tabs.map(function(t){return '<button class="'+(_bitTab===t[0]?'active':'')+'" onclick="bitSetTab(\''+t[0]+'\')">'+t[1]+'</button>';}).join('')+
+    '<button onclick="bitExportar()" title="Exportar a Excel">⬇ Excel</button>';
+  var q=(document.getElementById('bit-buscar').value||'').toLowerCase().trim(),qd=bitRadDigits(q);
+  var casos=ST.casos.filter(function(c){
+    if(_bitTab==='terminados'){if(!c.terminado)return false;}
+    else{if(c.terminado)return false;if(_bitTab!=='activos'&&c.categoria!==_bitTab)return false;}
+    if(q){var txt=[c.cliente,c.juzgado,c.radicacion,c.correo,c.notas].join(' ').toLowerCase();if(txt.indexOf(q)<0&&!(qd.length>=4&&bitRadDigits(c.radicacion).indexOf(qd)>-1))return false;}
+    if(_bitFiltro==='sinmes')return !bitGestionMes(c);
+    if(_bitFiltro==='vencidos'||_bitFiltro==='proximos'){
+      return bitPendientes().some(function(a){if(a.caso_id!==c.id)return false;var d=bitDias(a.fecha_vencimiento);return _bitFiltro==='vencidos'?d<0:(d>=0&&d<=7);});
+    }
+    return true;
+  });
+  var el=document.getElementById('bit-tabla');
+  if(!ST.casos.length){el.innerHTML='<div class="empty-state" style="margin-top:40px;"><div class="e-icon">📋</div><p style="font-size:15px;font-weight:600;color:#475569;">Aún no tienes casos</p><p style="font-size:13px;color:#94A3B8;margin-top:6px;">Crea tu primer caso con “+ Nuevo caso”.</p></div>';return;}
+  if(!casos.length){el.innerHTML='<div class="empty-state" style="margin-top:30px;"><p>No hay casos con este filtro.</p></div>';return;}
+  var grupos=_bitTab==='activos'?[['proceso','Procesos judiciales'],['tramite','Trámites (no procesos)'],['curaduria','Curadurías activas']]:[[null,null]];
+  var html='<div class="bit-grid">';
+  grupos.forEach(function(g){
+    var lista=g[0]?casos.filter(function(c){return (c.categoria||'proceso')===g[0];}):casos;
+    if(!lista.length)return;
+    if(g[1])html+='<div class="bit-sep">'+g[1]+' ('+lista.length+')</div>';
+    lista.forEach(function(c){html+=bitFilaHTML(c);});
+  });
+  el.innerHTML=html+'</div>';
+  el.querySelectorAll('.bit-strip').forEach(function(s){s.scrollLeft=s.scrollWidth;});
+}
+function bitFilaHTML(c){
+  var sem=bitSemaforo(c.id),acts=bitActsDe(c.id),rad=bitRadFmt(c.radicacion);
+  var tel=c.telefono?'<div class="bit-dato">📞 <a href="tel:'+esc(String(c.telefono).replace(/[^\d+]/g,''))+'">'+esc(c.telefono)+'</a>'+(c.extension?' ext. '+esc(c.extension):'')+'</div>':'';
+  var fijo='<div class="bit-fijo">'+
+    '<div class="bit-cliente"><span class="bit-semaforo" style="background:'+sem.c+';" title="'+sem.t+'"></span><span style="flex:1;">'+esc(c.cliente)+'</span><button class="bit-mini" style="margin:0;" onclick="openCasoModal(\''+c.id+'\')">✏️</button></div>'+
+    (c.juzgado?'<div class="bit-dato">🏛️ '+esc(c.juzgado)+'</div>':'')+
+    (rad?'<div class="bit-dato"><span class="bit-rad" title="Copiar" onclick="bitCopiar(\''+bitRadDigits(c.radicacion)+'\')">'+esc(rad)+'</span></div>':'')+
+    (c.correo?'<div class="bit-dato">✉️ <a href="mailto:'+esc(c.correo)+'?subject='+encodeURIComponent('Rad. '+(rad||'')+' - '+(c.cliente||''))+'">'+esc(c.correo)+'</a></div>':'')+
+    tel+(c.notas?'<div class="bit-dato" style="color:var(--gray-light);">'+esc(c.notas)+'</div>':'')+
+    '<div class="bit-dato" style="color:'+sem.c+';font-weight:700;">'+sem.t+'</div>'+
+    (bitRadDigits(c.radicacion).length===23?'<button class="bit-mini" onclick="bitConsultarRama(\''+bitRadDigits(c.radicacion)+'\')">🔎 Rama Judicial</button>':'')+
+  '</div>';
+  var strip=acts.map(function(a,i){
+    var ult=i===acts.length-1,v='';
+    if(a.fecha_vencimiento){var d=bitDias(a.fecha_vencimiento);
+      v=a.cumplida?'<div class="a-vence" style="color:#16A34A;">✓ Cumplido ('+bitFechaTxt(a.fecha_vencimiento)+')</div>'
+        :'<div class="a-vence" style="color:'+(d<0?'#DC2626':d<=7?'#D97706':'#2563EB')+';">⏰ '+(d<0?'Vencido':'Vence')+' '+bitFechaTxt(a.fecha_vencimiento)+'</div>';}
+    return '<div class="bit-act'+(ult?' ultima':'')+'" onclick="openActuacionModal(\''+c.id+'\',\''+a.id+'\')">'+
+      '<div class="a-fecha">'+(ult?'★ ÚLTIMA · ':'')+bitFechaTxt(a.fecha)+'</div>'+
+      '<div class="a-txt">'+esc(a.descripcion)+'</div>'+
+      (a.proxima_accion?'<div class="a-next">→ '+esc(a.proxima_accion)+'</div>':'')+v+'</div>';
+  }).join('');
+  return '<div class="bit-fila">'+fijo+'<div class="bit-strip">'+strip+'<button class="bit-add" onclick="openActuacionModal(\''+c.id+'\')">+ Actuación<br><span style="font-size:18px;">🎤</span></button></div></div>';
+}
+function bitCopiar(t){if(navigator.clipboard)navigator.clipboard.writeText(t);bitToast('Radicación copiada: '+t);}
+function bitConsultarRama(rad){bitCopiar(rad);window.open('https://consultaprocesos.ramajudicial.gov.co/Procesos/NumeroRadicacion','_blank');}
+function bitToast(msg){var t=document.createElement('div');t.textContent=msg;t.style.cssText='position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#0F172A;color:#fff;padding:10px 18px;border-radius:12px;font-size:13px;z-index:10000;';document.body.appendChild(t);setTimeout(function(){t.remove();},2500);}
+
+function openCasoModal(id){
+  _casoEditId=id||null;var c=id?ST.casos.find(function(x){return x.id===id;}):{};
+  document.getElementById('caso-modal-titulo').textContent=id?'Editar caso':'Nuevo caso';
+  document.getElementById('cs-categoria').value=c.categoria||(['proceso','tramite','curaduria'].indexOf(_bitTab)>-1?_bitTab:'proceso');
+  ['cliente','juzgado','radicacion','correo','telefono','extension','notas'].forEach(function(k){document.getElementById('cs-'+k).value=c[k]||'';});
+  document.getElementById('cs-terminado').checked=!!c.terminado;
+  document.getElementById('cs-terminado-wrap').style.display=id?'flex':'none';
+  document.getElementById('cs-del-btn').style.display=id?'inline-flex':'none';
+  document.getElementById('cs-error').style.display='none';
+  bitCheckRad();
+  document.getElementById('modal-caso').style.display='flex';
+}
+function closeCasoModal(){if(_rec)_rec.stop();document.getElementById('modal-caso').style.display='none';}
+async function submitCaso(){
+  var rec={categoria:document.getElementById('cs-categoria').value,terminado:document.getElementById('cs-terminado').checked};
+  ['cliente','juzgado','radicacion','correo','telefono','extension','notas'].forEach(function(k){rec[k]=document.getElementById('cs-'+k).value.trim();});
+  var err=document.getElementById('cs-error');
+  if(!rec.cliente){err.textContent='Escribe el nombre del cliente o caso.';err.style.display='block';return;}
+  if(bitRadDigits(rec.radicacion).length===23)rec.radicacion=bitRadFmt(rec.radicacion);
+  var res;
+  if(_casoEditId)res=await _sb.from('casos').update(rec).eq('id',_casoEditId).select().single();
+  else{rec.user_id=ST.userId;res=await _sb.from('casos').insert(rec).select().single();}
+  if(res.error){err.textContent='Error: '+res.error.message;err.style.display='block';return;}
+  if(_casoEditId)ST.casos=ST.casos.map(function(x){return x.id===_casoEditId?res.data:x;});else ST.casos.push(res.data);
+  closeCasoModal();renderBitacora();bitActualizarBadge();
+  if(!_casoEditId)openActuacionModal(res.data.id);
+}
+async function deleteCaso(){
+  if(!confirm('¿Eliminar este caso y TODO su historial? Si solo terminó, mejor marca "Caso terminado".'))return;
+  await _sb.from('casos').delete().eq('id',_casoEditId);
+  ST.actuaciones=ST.actuaciones.filter(function(a){return a.caso_id!==_casoEditId;});
+  ST.casos=ST.casos.filter(function(c){return c.id!==_casoEditId;});
+  closeCasoModal();renderBitacora();bitActualizarBadge();
+}
+function openActuacionModal(casoId,actId){
+  _actCasoId=casoId;_actEditId=actId||null;_venceAuto=false;
+  var c=ST.casos.find(function(x){return x.id===casoId;})||{},a=actId?ST.actuaciones.find(function(x){return x.id===actId;}):{};
+  var ult=bitUltima(casoId);
+  document.getElementById('act-modal-titulo').textContent=actId?'Editar actuación':'Nueva actuación';
+  document.getElementById('act-caso-nombre').innerHTML='<b>'+esc(c.cliente)+'</b>'+(!actId&&ult&&ult.proxima_accion?'<br>Pendiente anterior: <span style="color:#7C3AED;font-weight:600;">'+esc(ult.proxima_accion)+'</span>':'');
+  document.getElementById('ac-fecha').value=a.fecha||bitISO(bitHoy());
+  document.getElementById('ac-descripcion').value=a.descripcion||'';
+  document.getElementById('ac-proxima').value=a.proxima_accion||'';
+  document.getElementById('ac-vence').value=a.fecha_vencimiento||'';
+  document.getElementById('ac-vence-hint').textContent='';
+  document.getElementById('ac-del-btn').style.display=actId?'inline-flex':'none';
+  document.getElementById('ac-error').style.display='none';
+  document.getElementById('modal-actuacion').style.display='flex';
+}
+function closeActuacionModal(){if(_rec)_rec.stop();document.getElementById('modal-actuacion').style.display='none';}
+async function submitActuacion(){
+  var rec={fecha:document.getElementById('ac-fecha').value||bitISO(bitHoy()),descripcion:document.getElementById('ac-descripcion').value.trim(),
+    proxima_accion:document.getElementById('ac-proxima').value.trim(),fecha_vencimiento:document.getElementById('ac-vence').value||null};
+  var err=document.getElementById('ac-error');
+  if(!rec.descripcion){err.textContent='Escribe o dicta qué pasó en el caso.';err.style.display='block';return;}
+  var res;
+  if(_actEditId)res=await _sb.from('actuaciones').update(rec).eq('id',_actEditId).select().single();
+  else{
+    rec.caso_id=_actCasoId;rec.user_id=ST.userId;rec.cumplida=false;
+    res=await _sb.from('actuaciones').insert(rec).select().single();
+    if(!res.error){
+      // Al registrar una nueva actuación, el pendiente anterior del caso se da por cumplido
+      var prev=ST.actuaciones.filter(function(a){return a.caso_id===_actCasoId&&a.fecha_vencimiento&&!a.cumplida;});
+      if(prev.length){var ids=prev.map(function(a){return a.id;});await _sb.from('actuaciones').update({cumplida:true}).in('id',ids);
+        prev.forEach(function(a){a.cumplida=true;});}
+    }
+  }
+  if(res.error){err.textContent='Error: '+res.error.message;err.style.display='block';return;}
+  if(_actEditId)ST.actuaciones=ST.actuaciones.map(function(x){return x.id===_actEditId?res.data:x;});else ST.actuaciones.push(res.data);
+  closeActuacionModal();renderBitacora();bitActualizarBadge();
+}
+async function deleteActuacion(){
+  if(!confirm('¿Eliminar esta actuación?'))return;
+  await _sb.from('actuaciones').delete().eq('id',_actEditId);
+  ST.actuaciones=ST.actuaciones.filter(function(a){return a.id!==_actEditId;});
+  closeActuacionModal();renderBitacora();bitActualizarBadge();
+}
+async function bitCumplir(id){
+  await _sb.from('actuaciones').update({cumplida:true}).eq('id',id);
+  ST.actuaciones.forEach(function(a){if(a.id===id)a.cumplida=true;});
+  renderBitacora();bitActualizarBadge();
+}
+function bitExportar(){
+  var casos=ST.casos.slice().sort(function(a,b){return (a.terminado?1:0)-(b.terminado?1:0);});
+  var max=0;casos.forEach(function(c){max=Math.max(max,bitActsDe(c.id).length);});
+  var q=function(s){return '"'+String(s||'').replace(/"/g,'""')+'"';};
+  var head=['Tipo','Estado','Cliente','Juzgado','Radicación','Correo','Teléfono','Ext.','Notas'];for(var i=1;i<=max;i++)head.push('Actuación '+i);
+  var rows=[head.map(q).join(';')];
+  casos.forEach(function(c){
+    var r=[c.categoria,c.terminado?'Terminado':'Activo',c.cliente,c.juzgado,c.radicacion,c.correo,c.telefono,c.extension,c.notas];
+    bitActsDe(c.id).forEach(function(a){r.push(bitFechaTxt(a.fecha)+': '+(a.descripcion||'')+(a.proxima_accion?' | SIGUE: '+a.proxima_accion:'')+(a.fecha_vencimiento?' | VENCE: '+bitFechaTxt(a.fecha_vencimiento):''));});
+    rows.push(r.map(q).join(';'));
+  });
+  var blob=new Blob(['﻿'+rows.join('\r\n')],{type:'text/csv;charset=utf-8'});
+  var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='Bitacora_'+bitISO(bitHoy())+'.csv';a.click();
+}
+
 // DOCUMENTOS
 var _carpetaActualId=null;
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
@@ -2782,6 +3153,7 @@ _sb.auth.onAuthStateChange(async function(event,session){
     renderScreen(ST.screen);
     populateCurrencySels();
     localStorage.setItem('mf_tour_done','1');
+    loadBitacora().then(bitNotificar);
   } else {
     document.getElementById('auth-overlay').style.display='flex';
     ST.movements=[];ST.goals=[];ST.pagos=[];ST.compras=[];ST.profiles=[];ST.recordatorios=[];ST.isAdmin=false;
