@@ -183,6 +183,27 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
 .meta-fill{height:100%;border-radius:20px;background:linear-gradient(90deg,var(--blue-mid),var(--blue-light));transition:width .4s;}
 .meta-nums{display:flex;justify-content:space-between;font-size:12px;}
 
+/* DOCUMENTOS */
+.carpeta-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;padding:4px 0;}
+.carpeta-card{background:#fff;border:1.5px solid var(--border);border-radius:16px;padding:20px 18px;cursor:pointer;transition:all .15s;display:flex;flex-direction:column;gap:8px;position:relative;}
+.carpeta-card:hover{border-color:var(--blue-mid);box-shadow:0 4px 16px rgba(59,130,246,.12);}
+.carpeta-icon{font-size:28px;}
+.carpeta-nombre{font-size:14px;font-weight:700;color:var(--gray-dark);}
+.carpeta-count{font-size:12px;color:var(--gray-light);}
+.carpeta-del{position:absolute;top:10px;right:10px;background:none;border:none;cursor:pointer;font-size:14px;opacity:.4;padding:4px;}
+.carpeta-del:hover{opacity:1;}
+.doc-list{display:flex;flex-direction:column;gap:0;}
+.doc-item{display:flex;align-items:center;gap:14px;padding:14px 18px;border-bottom:1px solid #F1F5F9;cursor:pointer;transition:background .1s;}
+.doc-item:last-child{border-bottom:none;}
+.doc-item:hover{background:#F8FAFC;}
+.doc-file-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.doc-info{flex:1;min-width:0;}
+.doc-nombre{font-size:14px;font-weight:600;color:var(--gray-dark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.doc-meta{font-size:12px;color:var(--gray-light);margin-top:2px;}
+.doc-badge{padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;flex-shrink:0;}
+.doc-badge-link{background:#EFF6FF;color:var(--blue-mid);}
+.doc-badge-archivo{background:#F0FDF4;color:#16A34A;}
+
 /* USUARIOS */
 .user-item{display:flex;align-items:center;gap:13px;padding:14px 18px;border-bottom:1px solid #F1F5F9;}
 .user-item:last-child{border-bottom:none;}
@@ -813,6 +834,7 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
       </div>
     </div>
     <div class="sidebar-footer">
+      <button id="btn-gestionar-usuarios" class="btn btn-primary" style="justify-content:center;display:none;" onclick="navigate('usuarios')">👥 Gestionar usuarios</button>
       <button class="btn btn-primary" style="justify-content:center;" onclick="openCambiarPass()">🔑 Cambiar contraseña</button>
       <button class="btn btn-ghost" style="justify-content:center;" onclick="doSignOut()">Cerrar sesión</button>
     </div>
@@ -839,15 +861,61 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
 
     <!-- DOCUMENTOS -->
     <div id="screen-presupuesto" class="screen">
-      <div class="main-header">
+      <div class="main-header" id="docs-header-carpetas">
         <h2>Documentos</h2>
-        <button class="btn btn-primary" onclick="">+ Nuevo documento</button>
+        <button class="btn btn-primary" onclick="openNuevaCarpetaModal()">+ Nueva carpeta</button>
+      </div>
+      <div class="main-header" id="docs-header-docs" style="display:none;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <button class="btn btn-ghost" style="padding:6px 10px;" onclick="docsVolverCarpetas()">← Carpetas</button>
+          <h2 id="docs-carpeta-titulo">Carpeta</h2>
+        </div>
+        <button class="btn btn-primary" onclick="openNuevoDocModal()">+ Nuevo documento</button>
       </div>
       <div class="main-body">
-        <div class="empty-state" style="margin-top:60px;">
-          <div class="e-icon">📄</div>
-          <p style="font-size:15px;font-weight:600;color:#475569;">Módulo de Documentos</p>
-          <p style="font-size:13px;color:#94A3B8;margin-top:6px;">Aquí podrás gestionar todos los documentos legales de tus casos.</p>
+        <div id="docs-view-carpetas"></div>
+        <div id="docs-view-docs" style="display:none;"></div>
+      </div>
+    </div>
+
+    <!-- MODAL NUEVA CARPETA -->
+    <div id="modal-nueva-carpeta" class="modal-overlay" onclick="if(event.target===this)closeNuevaCarpetaModal()">
+      <div class="modal-box" style="max-width:400px;">
+        <div class="modal-header"><h3>Nueva carpeta</h3><button class="modal-close" onclick="closeNuevaCarpetaModal()">&#x2715;</button></div>
+        <div class="form-group"><label>Nombre de la carpeta</label><input id="nc-nombre" type="text" placeholder="Ej: Contratos 2026"/></div>
+        <div id="nc-error" class="error-msg" style="display:none;"></div>
+        <div class="modal-actions"><button class="btn btn-ghost" onclick="closeNuevaCarpetaModal()">Cancelar</button><button class="btn btn-primary" onclick="submitCarpeta()">Crear carpeta</button></div>
+      </div>
+    </div>
+
+    <!-- MODAL NUEVO DOCUMENTO -->
+    <div id="modal-nuevo-doc" class="modal-overlay" onclick="if(event.target===this)closeNuevoDocModal()">
+      <div class="modal-box" style="max-width:460px;">
+        <div class="modal-header"><h3>Nuevo documento</h3><button class="modal-close" onclick="closeNuevoDocModal()">&#x2715;</button></div>
+        <div class="form-group"><label>Nombre del documento</label><input id="nd-nombre" type="text" placeholder="Ej: Contrato de trabajo v1"/></div>
+        <div class="form-group"><label>Fecha de publicación</label><input id="nd-fecha" type="date"/></div>
+        <div class="form-group">
+          <label>Tipo de documento</label>
+          <div style="display:flex;gap:10px;margin-top:6px;">
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:14px;"><input type="radio" name="nd-tipo" value="link" onchange="docsToggleTipo('link')" checked/> Link (Google Drive, etc.)</label>
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:14px;"><input type="radio" name="nd-tipo" value="archivo" onchange="docsToggleTipo('archivo')"/> Subir archivo</label>
+          </div>
+        </div>
+        <div id="nd-link-group" class="form-group"><label>URL del documento</label><input id="nd-url" type="url" placeholder="https://docs.google.com/..."/></div>
+        <div id="nd-file-group" class="form-group" style="display:none;"><label>Archivo (Word, Excel, PDF, PowerPoint...)</label><input id="nd-file" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.png,.jpg,.jpeg" style="padding:8px;border:1.5px solid var(--border);border-radius:10px;width:100%;font-size:13px;"/></div>
+        <div id="nd-progress" style="display:none;font-size:13px;color:var(--blue-mid);padding:6px 0;">Subiendo archivo...</div>
+        <div id="nd-error" class="error-msg" style="display:none;"></div>
+        <div class="modal-actions"><button class="btn btn-ghost" onclick="closeNuevoDocModal()">Cancelar</button><button class="btn btn-primary" id="nd-submit-btn" onclick="submitDocumento()">Guardar</button></div>
+      </div>
+    </div>
+
+    <!-- MODAL VISOR DOCUMENTO -->
+    <div id="modal-visor-doc" class="modal-overlay" onclick="if(event.target===this)closeVisorDoc()">
+      <div class="modal-box" style="max-width:900px;width:95vw;height:85vh;display:flex;flex-direction:column;padding:0;overflow:hidden;">
+        <div class="modal-header" style="padding:16px 20px;flex-shrink:0;"><h3 id="visor-titulo">Documento</h3><button class="modal-close" onclick="closeVisorDoc()">&#x2715;</button></div>
+        <div style="flex:1;overflow:hidden;"><iframe id="visor-frame" src="" style="width:100%;height:100%;border:none;"></iframe></div>
+        <div style="padding:12px 20px;border-top:1px solid var(--border);display:flex;gap:8px;flex-shrink:0;">
+          <a id="visor-link-ext" href="#" target="_blank" class="btn btn-ghost" style="font-size:13px;">Abrir en nueva pestaña ↗</a>
         </div>
       </div>
     </div>
@@ -1067,7 +1135,7 @@ var _sbCreate = window.supabase.createClient(
 // STATE
 var ST = {
   screen:'presupuesto', month:new Date().getMonth(), year:new Date().getFullYear(),
-  movements:[], goals:[], pagos:[], compras:[], profiles:[],
+  movements:[], goals:[], pagos:[], compras:[], profiles:[], carpetas:[], documentos:[],
   movFilter:'all', isAdmin:false, userId:null, userName:'', tareas:[],
   MONTHLY_DATA:Array(12).fill(null).map(function(){return{i:0,e:0,s:0};}),
 };
@@ -1126,7 +1194,7 @@ function navigate(screen){
 function renderScreen(screen){
   populateCurrencySels();
   if(screen==='movimientos')renderMovimientos();
-  else if(screen==='presupuesto')renderPresupuesto();
+  else if(screen==='presupuesto'){loadDocumentosData().then(renderDocumentosScreen);}
   else if(screen==='compras')renderCompras();
   else if(screen==='orientaciones'){}
   else if(screen==='archivos'){}
@@ -2480,6 +2548,165 @@ async function submitAbono(){
   }
 }
 
+// DOCUMENTOS
+var _carpetaActualId=null;
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function docsFileIcon(nombre,tipo){
+  if(tipo==='link')return{icon:'🔗',bg:'#EFF6FF'};
+  var ext=(nombre||'').split('.').pop().toLowerCase();
+  if(ext==='pdf')return{icon:'📄',bg:'#FEF2F2'};
+  if(['doc','docx'].indexOf(ext)>-1)return{icon:'📝',bg:'#EFF6FF'};
+  if(['xls','xlsx'].indexOf(ext)>-1)return{icon:'📊',bg:'#F0FDF4'};
+  if(['ppt','pptx'].indexOf(ext)>-1)return{icon:'📋',bg:'#FFF7ED'};
+  if(['png','jpg','jpeg','gif'].indexOf(ext)>-1)return{icon:'🖼️',bg:'#FDF4FF'};
+  return{icon:'📎',bg:'#F8FAFC'};
+}
+function renderDocumentosScreen(){
+  if(!_carpetaActualId){
+    document.getElementById('docs-header-carpetas').style.display='flex';
+    document.getElementById('docs-header-docs').style.display='none';
+    document.getElementById('docs-view-carpetas').style.display='block';
+    document.getElementById('docs-view-docs').style.display='none';
+    var el=document.getElementById('docs-view-carpetas');
+    if(!ST.carpetas.length){
+      el.innerHTML='<div class="empty-state" style="margin-top:60px;"><div class="e-icon">📁</div><p style="font-size:15px;font-weight:600;color:#475569;">No hay carpetas</p><p style="font-size:13px;color:#94A3B8;margin-top:6px;">Crea una carpeta para organizar tus documentos.</p></div>';
+      return;
+    }
+    el.innerHTML='<div class="carpeta-grid">'+ST.carpetas.map(function(c){
+      var cnt=ST.documentos.filter(function(d){return d.carpeta_id===c.id;}).length;
+      return '<div class="carpeta-card" onclick="docsAbrirCarpeta(\''+c.id+'\',\''+esc(c.nombre)+'\')">'+
+        '<button class="carpeta-del" onclick="event.stopPropagation();deleteCarpeta(\''+c.id+'\')" title="Eliminar carpeta">🗑️</button>'+
+        '<div class="carpeta-icon">📁</div>'+
+        '<div class="carpeta-nombre">'+esc(c.nombre)+'</div>'+
+        '<div class="carpeta-count">'+cnt+' documento'+(cnt===1?'':'s')+'</div>'+
+      '</div>';
+    }).join('')+'</div>';
+  } else {
+    document.getElementById('docs-header-carpetas').style.display='none';
+    document.getElementById('docs-header-docs').style.display='flex';
+    document.getElementById('docs-view-carpetas').style.display='none';
+    document.getElementById('docs-view-docs').style.display='block';
+    var docs=ST.documentos.filter(function(d){return d.carpeta_id===_carpetaActualId;});
+    var el=document.getElementById('docs-view-docs');
+    if(!docs.length){
+      el.innerHTML='<div class="empty-state" style="margin-top:60px;"><div class="e-icon">📄</div><p style="font-size:15px;font-weight:600;color:#475569;">Sin documentos</p><p style="font-size:13px;color:#94A3B8;margin-top:6px;">Agrega el primer documento a esta carpeta.</p></div>';
+      return;
+    }
+    el.innerHTML='<div class="card" style="overflow:hidden;"><div class="doc-list">'+docs.map(function(d){
+      var fi=docsFileIcon(d.nombre,d.tipo);
+      var fecha=d.fecha_publicacion?d.fecha_publicacion.slice(0,10):'';
+      var badge=d.tipo==='link'?'<span class="doc-badge doc-badge-link">Link</span>':'<span class="doc-badge doc-badge-archivo">Archivo</span>';
+      return '<div class="doc-item" onclick="verDocumento(\''+d.id+'\')" >'+
+        '<div class="doc-file-icon" style="background:'+fi.bg+';">'+fi.icon+'</div>'+
+        '<div class="doc-info"><div class="doc-nombre">'+esc(d.nombre)+'</div><div class="doc-meta">'+(fecha?fecha:'Sin fecha')+'</div></div>'+
+        badge+
+        '<button onclick="event.stopPropagation();deleteDocumento(\''+d.id+'\')" style="background:none;border:none;cursor:pointer;font-size:16px;opacity:.4;margin-left:8px;padding:4px;" title="Eliminar">🗑️</button>'+
+      '</div>';
+    }).join('')+'</div></div>';
+  }
+}
+function docsAbrirCarpeta(id,nombre){
+  _carpetaActualId=id;
+  document.getElementById('docs-carpeta-titulo').textContent=nombre;
+  renderDocumentosScreen();
+}
+function docsVolverCarpetas(){_carpetaActualId=null;renderDocumentosScreen();}
+function openNuevaCarpetaModal(){document.getElementById('nc-nombre').value='';document.getElementById('nc-error').style.display='none';document.getElementById('modal-nueva-carpeta').style.display='flex';setTimeout(function(){document.getElementById('nc-nombre').focus();},100);}
+function closeNuevaCarpetaModal(){document.getElementById('modal-nueva-carpeta').style.display='none';}
+async function submitCarpeta(){
+  var nombre=document.getElementById('nc-nombre').value.trim();
+  var errEl=document.getElementById('nc-error');
+  if(!nombre){errEl.textContent='Escribe un nombre para la carpeta.';errEl.style.display='block';return;}
+  var res=await _sb.from('carpetas').insert({nombre:nombre,user_id:ST.userId}).select().single();
+  if(res.error){errEl.textContent='Error: '+res.error.message;errEl.style.display='block';return;}
+  ST.carpetas.push(res.data);
+  closeNuevaCarpetaModal();
+  renderDocumentosScreen();
+}
+async function deleteCarpeta(id){
+  if(!confirm('¿Eliminar esta carpeta y todos sus documentos?'))return;
+  await _sb.from('carpetas').delete().eq('id',id);
+  ST.carpetas=ST.carpetas.filter(function(c){return c.id!==id;});
+  ST.documentos=ST.documentos.filter(function(d){return d.carpeta_id!==id;});
+  renderDocumentosScreen();
+}
+function docsToggleTipo(t){
+  document.getElementById('nd-link-group').style.display=t==='link'?'block':'none';
+  document.getElementById('nd-file-group').style.display=t==='archivo'?'block':'none';
+}
+function openNuevoDocModal(){
+  document.getElementById('nd-nombre').value='';
+  document.getElementById('nd-fecha').value=new Date().toISOString().slice(0,10);
+  document.getElementById('nd-url').value='';
+  document.getElementById('nd-error').style.display='none';
+  document.getElementById('nd-progress').style.display='none';
+  document.getElementById('nd-file').value='';
+  document.querySelector('input[name="nd-tipo"][value="link"]').checked=true;
+  docsToggleTipo('link');
+  document.getElementById('modal-nuevo-doc').style.display='flex';
+}
+function closeNuevoDocModal(){document.getElementById('modal-nuevo-doc').style.display='none';}
+async function submitDocumento(){
+  var nombre=document.getElementById('nd-nombre').value.trim();
+  var fecha=document.getElementById('nd-fecha').value;
+  var tipo=document.querySelector('input[name="nd-tipo"]:checked').value;
+  var errEl=document.getElementById('nd-error');
+  var progEl=document.getElementById('nd-progress');
+  var btnEl=document.getElementById('nd-submit-btn');
+  errEl.style.display='none';
+  if(!nombre){errEl.textContent='Escribe el nombre del documento.';errEl.style.display='block';return;}
+  if(!_carpetaActualId){errEl.textContent='Selecciona una carpeta primero.';errEl.style.display='block';return;}
+  var url='';
+  if(tipo==='link'){
+    url=document.getElementById('nd-url').value.trim();
+    if(!url){errEl.textContent='Ingresa la URL del documento.';errEl.style.display='block';return;}
+  } else {
+    var file=document.getElementById('nd-file').files[0];
+    if(!file){errEl.textContent='Selecciona un archivo.';errEl.style.display='block';return;}
+    progEl.style.display='block';btnEl.disabled=true;
+    var filePath=ST.userId+'/'+Date.now()+'_'+file.name;
+    var upRes=await _sb.storage.from('documentos').upload(filePath,file,{upsert:true});
+    progEl.style.display='none';btnEl.disabled=false;
+    if(upRes.error){errEl.textContent='Error subiendo archivo: '+upRes.error.message;errEl.style.display='block';return;}
+    var urlRes=_sb.storage.from('documentos').getPublicUrl(filePath);
+    url=urlRes.data.publicUrl;
+    nombre=nombre||(file.name);
+  }
+  var res=await _sb.from('documentos').insert({carpeta_id:_carpetaActualId,nombre:nombre,fecha_publicacion:fecha||null,tipo:tipo,url:url}).select().single();
+  if(res.error){errEl.textContent='Error: '+res.error.message;errEl.style.display='block';return;}
+  ST.documentos.push(res.data);
+  closeNuevoDocModal();
+  renderDocumentosScreen();
+}
+async function deleteDocumento(id){
+  if(!confirm('¿Eliminar este documento?'))return;
+  await _sb.from('documentos').delete().eq('id',id);
+  ST.documentos=ST.documentos.filter(function(d){return d.id!==id;});
+  renderDocumentosScreen();
+}
+function verDocumento(id){
+  var doc=ST.documentos.find(function(d){return d.id===id;});
+  if(!doc||!doc.url)return;
+  document.getElementById('visor-titulo').textContent=doc.nombre;
+  document.getElementById('visor-link-ext').href=doc.url;
+  var viewUrl=doc.url;
+  var ext=(doc.nombre||'').split('.').pop().toLowerCase();
+  if(['doc','docx','xls','xlsx','ppt','pptx'].indexOf(ext)>-1){
+    viewUrl='https://view.officeapps.live.com/op/view.aspx?src='+encodeURIComponent(doc.url);
+  } else if(doc.tipo==='link'){
+    viewUrl=doc.url;
+  }
+  document.getElementById('visor-frame').src=viewUrl;
+  document.getElementById('modal-visor-doc').style.display='flex';
+}
+function closeVisorDoc(){document.getElementById('modal-visor-doc').style.display='none';document.getElementById('visor-frame').src='';}
+async function loadDocumentosData(){
+  var cr=await _sb.from('carpetas').select('*').order('created_at',{ascending:true});
+  if(!cr.error)ST.carpetas=cr.data||[];
+  var dr=await _sb.from('documentos').select('*').order('created_at',{ascending:false});
+  if(!dr.error)ST.documentos=dr.data||[];
+}
+
 // RENDER USUARIOS
 function renderUsuarios(){
   if(!ST.isAdmin){navigate('panel');return;}
@@ -2540,6 +2767,7 @@ _sb.auth.onAuthStateChange(async function(event,session){
     document.getElementById('sb-username').textContent=ST.userName;
     document.getElementById('sb-role').textContent=isAdmin?'Administrador':'Usuario';
     document.getElementById('admin-nav-section').style.display=isAdmin?'block':'none';
+    document.getElementById('btn-gestionar-usuarios').style.display=isAdmin?'flex':'none';
     document.getElementById('auth-overlay').style.display='none';
     // Resetear rango del panel para que cada usuario empiece en "Este mes"
     var _rn=new Date();
