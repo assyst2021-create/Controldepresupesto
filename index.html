@@ -2709,7 +2709,7 @@ async function loadDocumentosData(){
 
 // RENDER USUARIOS
 function renderUsuarios(){
-  if(!ST.isAdmin){navigate('panel');return;}
+  if(!ST.isAdmin){navigate('presupuesto');return;}
   var card=document.getElementById('usuarios-card');
   if(!ST.profiles.length){card.innerHTML='<div class="empty-state"><div class="e-icon">👥</div><p>No hay usuarios registrados</p></div>';return;}
   card.innerHTML=ST.profiles.map(function(p){
@@ -2755,7 +2755,7 @@ _sb.auth.onAuthStateChange(async function(event,session){
   if(session&&session.user){
     var user=session.user;
     var profileCheck=await _sb.from('profiles').select('activo,role').eq('id',user.id).single();
-    if(profileCheck.data&&profileCheck.data.activo===false){
+    if(!profileCheck.data||profileCheck.data.activo===false){
       await _sb.auth.signOut();
       var e=document.getElementById('auth-error');
       e.textContent='Tu cuenta está desactivada. Contacta al administrador.';e.style.display='block';
@@ -3522,6 +3522,7 @@ async function submitUsuario(){
   if(!pr.error){ST.profiles=pr.data||[];renderUsuarios();}
 }
 async function deleteUsuario(id){
+  if(!confirm('¿Eliminar este usuario? Ya no podrá ingresar a la aplicación.'))return;
   var res=await _sb.from('profiles').delete().eq('id',id).select();
   if(res.error||!res.data||!res.data.length)return;
   ST.profiles=ST.profiles.filter(function(p){return p.id!==id;});
