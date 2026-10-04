@@ -309,6 +309,7 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
 .gcal-chip.exp{background:#FEE2E2;color:#B91C1C;}
 .gcal-chip.sav{background:#FEF9C3;color:#92400E;}
 .gcal-chip.cre{background:#E0E7FF;color:#3730A3;}
+.gcal-chip.cum{background:#FCE7F3;color:#9D174D;}
 .gcal-more{font-size:11px;color:var(--blue-mid);font-weight:700;cursor:pointer;}
 /* Side panel */
 .gcal-side{width:260px;flex-shrink:0;border-left:1px solid var(--border);display:none;flex-direction:column;}
@@ -1016,6 +1017,7 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
         <div class="form-group"><label>Tipo</label>
           <select id="cs-categoria"><option value="proceso">Proceso judicial</option><option value="tramite">Trámite (no proceso)</option><option value="curaduria">Curaduría</option></select></div>
         <div class="form-group"><label>Cliente / nombre del caso</label><div class="voz-wrap"><input id="cs-cliente" type="text" placeholder="Ej: Juan Pérez"/><button type="button" class="voz-btn" onclick="dictar('cs-cliente',this)">🎤</button></div></div>
+        <div class="form-group"><label>🎂 Cumpleaños del cliente (opcional)</label><input id="cs-cumple" type="date"/><div style="font-size:12px;color:var(--gray-light);margin-top:4px;">La app te recordará saludarlo y lo mostrará en el calendario cada año.</div></div>
         <div class="form-group"><label>Juzgado / entidad</label><div class="voz-wrap"><input id="cs-juzgado" type="text" placeholder="Ej: Juzgado 1 Civil Municipal"/><button type="button" class="voz-btn" onclick="dictar('cs-juzgado',this)">🎤</button></div></div>
         <div class="form-group"><label>Radicación (23 dígitos)</label><div class="voz-wrap"><input id="cs-radicacion" type="text" placeholder="00000-00-00-000-0000-00000-00" oninput="bitCheckRad()"/><button type="button" class="voz-btn" onclick="dictar('cs-radicacion',this)">🎤</button></div><div id="cs-rad-info" style="font-size:12px;margin-top:4px;"></div></div>
         <div class="form-group"><label>Correo del juzgado</label><div class="voz-wrap"><input id="cs-correo" type="email" placeholder="juzgado@cendoj.ramajudicial.gov.co"/><button type="button" class="voz-btn" onclick="dictar('cs-correo',this)">🎤</button></div></div>
@@ -3113,6 +3115,11 @@ function tjAlertas(){
     out.push({k:'ev_'+ev.id,d:d,ico:'📌',color:d<=1?'#DC2626':'#7C3AED',t:ev.titulo,s:ev.descripcion||'Evento del calendario',
       when:(d===0?'HOY':d===1?'MAÑANA':'En '+d+' días')+' · '+bitFechaTxt(ev.fecha),go:'orientaciones'});
   });
+  ST.casos.forEach(function(c){
+    var d=bitCumpleDias(c);if(d===null||d>3)return;
+    out.push({k:'cum_'+c.id+'_'+new Date().getFullYear(),d:d,cum:true,ico:'🎂',color:'#DB2777',t:c.cliente||'Cliente',s:'Cumpleaños del cliente: buen momento para saludarlo',
+      when:(d===0?'¡HOY cumple años!':d===1?'Cumple MAÑANA':'Cumple en '+d+' días')+' · '+bitCumpleTxt(c),go:'compras'});
+  });
   bitExpPendientes().forEach(function(c){
     var n=bitExpDias(c);
     out.push({k:'exp_'+c.id,d:99,ico:'📂',color:'#0891B2',t:c.cliente||c.radicacion||'Caso',s:'Pedir al juzgado el link del expediente digital',
@@ -3121,7 +3128,7 @@ function tjAlertas(){
   return out.sort(function(x,y){return x.d-y.d;});
 }
 function tjRenderAlertas(){
-  var al=tjAlertas(),urg=al.filter(function(a){return a.d<=3;}).length,n=al.length;
+  var al=tjAlertas(),urg=al.filter(function(a){return a.d<=3&&!a.cum;}).length,n=al.length;
   ['tj-bell-n','tj-bell-n2'].forEach(function(id){var e=document.getElementById(id);if(!e)return;e.textContent=n;e.style.display=n?'block':'none';e.style.background=urg?'#DC2626':'#0891B2';});
   var p=document.getElementById('tj-alertas');if(!p)return;
   var perm=('Notification' in window)&&Notification.permission!=='granted'
@@ -3217,6 +3224,19 @@ function renderBitacora(){
   el.innerHTML=html+'</div>';
   el.querySelectorAll('.bit-strip').forEach(function(s){s.scrollLeft=s.scrollWidth;});
 }
+function bitCumpleDias(c){
+  if(!c.cumpleanos)return null;
+  var p=c.cumpleanos.split('-'),h=bitHoy(),d=new Date(h.getFullYear(),+p[1]-1,+p[2]);
+  if(d<h)d=new Date(h.getFullYear()+1,+p[1]-1,+p[2]);
+  return Math.round((d-h)/86400000);
+}
+function bitCumpleTxt(c){var p=c.cumpleanos.split('-');return (+p[2])+' de '+MESES_ES[+p[1]-1];}
+function bitCumpleHTML(c){
+  var d=bitCumpleDias(c);if(d===null)return '';
+  if(d===0)return '<div class="bit-dato" style="color:#DB2777;font-weight:800;">🎉 ¡Hoy cumple años! Salúdalo</div>';
+  if(d<=7)return '<div class="bit-dato" style="color:#DB2777;font-weight:700;">🎂 Cumple '+(d===1?'mañana':'en '+d+' días')+' ('+bitCumpleTxt(c)+')</div>';
+  return '<div class="bit-dato">🎂 '+bitCumpleTxt(c)+'</div>';
+}
 function bitFilaHTML(c){
   var sem=bitSemaforo(c.id),acts=bitActsDe(c.id),rad=bitRadFmt(c.radicacion);
   var tel=c.telefono?'<div class="bit-dato">📞 <a href="tel:'+esc(String(c.telefono).replace(/[^\d+]/g,''))+'">'+esc(c.telefono)+'</a>'+(c.extension?' ext. '+esc(c.extension):'')+'</div>':'';
@@ -3225,7 +3245,7 @@ function bitFilaHTML(c){
     (c.juzgado?'<div class="bit-dato">🏛️ '+esc(c.juzgado)+'</div>':'')+
     (rad?'<div class="bit-dato"><span class="bit-rad" title="Copiar" onclick="bitCopiar(\''+bitRadDigits(c.radicacion)+'\')">'+esc(rad)+'</span></div>':'')+
     (c.correo?'<div class="bit-dato">✉️ <a href="mailto:'+esc(c.correo)+'?subject='+encodeURIComponent('Rad. '+(rad||'')+' - '+(c.cliente||''))+'">'+esc(c.correo)+'</a></div>':'')+
-    tel+(c.notas?'<div class="bit-dato" style="color:var(--gray-light);">'+esc(c.notas)+'</div>':'')+
+    tel+bitCumpleHTML(c)+(c.notas?'<div class="bit-dato" style="color:var(--gray-light);">'+esc(c.notas)+'</div>':'')+
     '<div class="bit-dato" style="color:'+sem.c+';font-weight:700;">'+sem.t+'</div>'+
     bitExpHTML(c)+
     (bitRadDigits(c.radicacion).length===23?'<button class="bit-mini" onclick="bitConsultarRama(\''+bitRadDigits(c.radicacion)+'\')">🔎 Rama Judicial</button>':'')+
@@ -3261,6 +3281,7 @@ function openCasoModal(id){
   document.getElementById('cs-categoria').value=c.categoria||(['proceso','tramite','curaduria'].indexOf(_bitTab)>-1?_bitTab:'proceso');
   ['cliente','juzgado','radicacion','correo','telefono','extension','notas'].forEach(function(k){document.getElementById('cs-'+k).value=c[k]||'';});
   document.getElementById('cs-copia').value=c.ultima_copia_expediente||'';
+  document.getElementById('cs-cumple').value=c.cumpleanos||'';
   document.getElementById('cs-terminado').checked=!!c.terminado;
   document.getElementById('cs-terminado-wrap').style.display=id?'flex':'none';
   document.getElementById('cs-del-btn').style.display=id?'inline-flex':'none';
@@ -3273,6 +3294,8 @@ async function submitCaso(){
   var rec={categoria:document.getElementById('cs-categoria').value,terminado:document.getElementById('cs-terminado').checked};
   ['cliente','juzgado','radicacion','correo','telefono','extension','notas'].forEach(function(k){rec[k]=document.getElementById('cs-'+k).value.trim();});
   rec.ultima_copia_expediente=document.getElementById('cs-copia').value||null;
+  var cu=document.getElementById('cs-cumple').value,prev=_casoEditId?ST.casos.find(function(x){return x.id===_casoEditId;}):null;
+  if(cu||(prev&&prev.cumpleanos))rec.cumpleanos=cu||null;
   var err=document.getElementById('cs-error');
   if(!rec.cliente){err.textContent='Escribe el nombre del cliente o caso.';err.style.display='block';return;}
   if(bitRadDigits(rec.radicacion).length===23)rec.radicacion=bitRadFmt(rec.radicacion);
@@ -3632,6 +3655,8 @@ function tjCalEvMap(){
   function nom(c){return c.cliente||c.radicacion||'Caso';}
   ST.casos.forEach(function(c){
     if(c.created_at)addEv(c.created_at,{tipo:'creado',label:'📁 Creado: '+nom(c),a:{descripcion:'Caso creado'+(c.juzgado?' · '+c.juzgado:'')},c:c});
+    if(c.cumpleanos){var p=c.cumpleanos.split('-');
+      [_tjCalYear-1,_tjCalYear,_tjCalYear+1].forEach(function(y){addEv(bitISO(new Date(y,+p[1]-1,+p[2])),{tipo:'cumple',label:'🎂 '+nom(c),a:{descripcion:'Cumpleaños del cliente'},c:c});});}
   });
   ST.actuaciones.forEach(function(a){
     var c=ST.casos.find(function(x){return x.id===a.caso_id;})||{};
@@ -3680,7 +3705,7 @@ function renderTjCal(){
     if(fest)html+='<div class="gcal-fest">🎌 '+fest+'</div>';
     else if(diaPrecaucion(dt))html+='<div class="gcal-fest" style="background:#FEF3C7;color:#92400E;">⚠️ Términos corren</div>';
     evs.slice(0,3).forEach(function(ev){
-      var cls=ev.tipo==='vencido'?'exp':(ev.tipo==='proximo'||ev.tipo==='pendiente')?'sav':ev.tipo==='creado'?'cre':'inc';
+      var cls=ev.tipo==='vencido'?'exp':(ev.tipo==='proximo'||ev.tipo==='pendiente')?'sav':ev.tipo==='creado'?'cre':ev.tipo==='cumple'?'cum':'inc';
       html+='<div class="gcal-chip '+cls+'" title="'+esc(ev.label)+'">'+esc(ev.label)+'</div>';
     });
     if(evs.length>3)html+='<div class="gcal-more">+' +(evs.length-3)+' más</div>';
@@ -3725,7 +3750,7 @@ function tjCalRenderSemana(map){
     html+='<div class="gcal-day'+(isT?' today':'')+(nohab?' nohabil':'')+sel+'" style="min-height:200px;" onclick="tjCalSelDay(\''+key+'\')">';
     if(fest)html+='<div class="gcal-fest">🎌 '+fest+'</div>';
     evs.forEach(function(ev){
-      var cls=ev.tipo==='vencido'?'exp':(ev.tipo==='proximo'||ev.tipo==='pendiente')?'sav':ev.tipo==='creado'?'cre':'inc';
+      var cls=ev.tipo==='vencido'?'exp':(ev.tipo==='proximo'||ev.tipo==='pendiente')?'sav':ev.tipo==='creado'?'cre':ev.tipo==='cumple'?'cum':'inc';
       html+='<div class="gcal-chip '+cls+'">'+esc(ev.label)+'</div>';
     });
     html+='</div>';
@@ -3746,7 +3771,7 @@ function tjCalRenderSide(map){
   document.getElementById('tj-cal-side-date').textContent=dateLabel;
   document.getElementById('tj-cal-side-sub').textContent=evs.length+' evento'+(evs.length!==1?'s':'');
   document.getElementById('tj-cal-side-list').innerHTML=evs.length?evs.map(function(ev){
-    var bg=ev.tipo==='vencido'?'#FEE2E2':ev.tipo==='proximo'?'#FEF9C3':ev.tipo==='cumplida'?'#DCFCE7':ev.tipo==='manual'?'#F3E8FF':'#EFF6FF';
+    var bg=ev.tipo==='vencido'?'#FEE2E2':ev.tipo==='proximo'?'#FEF9C3':ev.tipo==='cumplida'?'#DCFCE7':ev.tipo==='manual'?'#F3E8FF':ev.tipo==='cumple'?'#FCE7F3':'#EFF6FF';
     var link=ev.tipo!=='manual'?'onclick="navigate(\'compras\')" style="cursor:pointer;"':'';
     return '<div class="gcal-side-mov" style="background:'+bg+';" '+link+'>'
       +'<div style="font-size:12px;font-weight:700;color:#1E293B;">'+esc(ev.c.cliente||ev.c.radicacion||ev.label)+'</div>'
