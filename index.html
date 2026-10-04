@@ -953,7 +953,7 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
       <button id="btn-gestionar-usuarios" class="btn btn-primary" style="justify-content:center;display:none;" onclick="navigate('usuarios')">👥 Gestionar usuarios</button>
       <button class="btn btn-primary" style="justify-content:center;" onclick="openCambiarPass()">🔑 Cambiar contraseña</button>
       <button class="btn btn-ghost" style="justify-content:center;" onclick="doSignOut()">Cerrar sesión</button>
-      <a href="#" onclick="tjVerAviso();return false;" style="text-align:center;font-size:11px;color:var(--gray-light);text-decoration:none;">⚖️ Aviso legal y términos de uso</a>
+      <a href="#" id="aviso-link" onclick="tjVerAviso();return false;" style="text-align:center;font-size:11px;color:var(--gray-light);text-decoration:none;">⚖️ Aviso legal y términos de uso</a>
     </div>
   </div>
 
@@ -1279,7 +1279,7 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
   <div class="sheet-divider"></div>
   <div class="sheet-section">Cuenta</div>
   <button class="sheet-item" onclick="closeMoreSheet();openCambiarPass()"><span class="si-icon">🔑</span>Cambiar contraseña</button>
-  <button class="sheet-item" onclick="closeMoreSheet();tjVerAviso()"><span class="si-icon">⚖️</span>Aviso legal y términos</button>
+  <button class="sheet-item" id="aviso-sheet" onclick="closeMoreSheet();tjVerAviso()"><span class="si-icon">⚖️</span>Aviso legal y términos</button>
   <button class="btn-install-all sheet-item" onclick="closeMoreSheet();installApp()" style="display:none;color:#16A34A;"><span class="si-icon">📲</span>Instalar aplicación</button>
 <button class="sheet-item danger" onclick="closeMoreSheet();doSignOut()"><span class="si-icon">🚪</span>Cerrar sesión</button>
   <div style="height:8px;"></div>
@@ -3434,16 +3434,38 @@ function tjCerrarAviso(){if(_avisoModo!=='registro')document.getElementById('mod
 function tjRegistrarAceptacion(tipo,casoId,detalle){
   return _sb.from('aceptaciones').insert({user_id:ST.userId,email:ST.userEmail||null,tipo:tipo,caso_id:casoId||null,detalle:detalle||null,version:TJ_TERMINOS_VER,navegador:(navigator.userAgent||'').slice(0,250)});
 }
+function tjAvisoKey(){return 'tj_aviso_'+ST.userId+'_'+TJ_TERMINOS_VER;}
+function tjMarcarAceptado(fechaIso){
+  var txt=fechaIso?' (aceptado el '+bitFechaTxt(fechaIso.slice(0,10))+')':'';
+  var a=document.getElementById('aviso-link');
+  if(a){a.innerHTML='⚖️ Aviso legal y términos de uso <span style="color:#16A34A;font-weight:800;font-size:13px;">✅</span>';a.title='Ya leíste y aceptaste el aviso legal'+txt;}
+  var s=document.getElementById('aviso-sheet');
+  if(s)s.innerHTML='<span class="si-icon">⚖️</span>Aviso legal y términos <span style="color:#16A34A;margin-left:6px;">✅</span>';
+}
+var _tjAvisoRevisando=false;
 async function tjAceptarAviso(){
   if(!document.getElementById('aviso-check').checked)return;
+  var b=document.getElementById('aviso-btn');b.disabled=true;
   var r=await tjRegistrarAceptacion('registro');
-  if(r.error){var e=document.getElementById('aviso-error');e.textContent='No se pudo registrar la aceptación: '+r.error.message;e.style.display='block';return;}
+  if(r.error){b.disabled=false;var e=document.getElementById('aviso-error');e.textContent='No se pudo registrar la aceptación: '+r.error.message;e.style.display='block';return;}
+  var ahora=new Date().toISOString();
+  try{localStorage.setItem(tjAvisoKey(),ahora);}catch(x){}
+  tjMarcarAceptado(ahora);
   _avisoModo='ver';document.getElementById('modal-aviso').style.display='none';
 }
 async function tjVerificarAceptacion(){
-  var r=await _sb.from('aceptaciones').select('id').eq('user_id',ST.userId).eq('tipo','registro').eq('version',TJ_TERMINOS_VER).limit(1);
-  if(r.error){console.error('aceptaciones:',r.error);return;}
-  if(!r.data||!r.data.length)tjMostrarAviso('registro');
+  if(_tjAvisoRevisando||document.getElementById('modal-aviso').style.display==='flex')return;
+  _tjAvisoRevisando=true;
+  try{
+    var local=null;try{local=localStorage.getItem(tjAvisoKey());}catch(x){}
+    if(local)tjMarcarAceptado(local);
+    var r=await _sb.from('aceptaciones').select('aceptado_at').eq('user_id',ST.userId).eq('tipo','registro').eq('version',TJ_TERMINOS_VER).order('aceptado_at',{ascending:false}).limit(1);
+    if(r.error){console.error('aceptaciones:',r.error);return;}
+    if(r.data&&r.data.length){
+      try{localStorage.setItem(tjAvisoKey(),r.data[0].aceptado_at);}catch(x){}
+      tjMarcarAceptado(r.data[0].aceptado_at);
+    } else tjMostrarAviso('registro');
+  } finally {_tjAvisoRevisando=false;}
 }
 
 // REVISIÓN DE DATOS ANTES DE GUARDAR
