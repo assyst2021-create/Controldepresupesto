@@ -431,6 +431,9 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
 #tour-bubble .tb-next{font-size:13px;font-weight:800;color:#fff;background:#1E40AF;border:2px solid #1E40AF;border-radius:10px;cursor:pointer;padding:10px 22px;white-space:nowrap;letter-spacing:.01em;}
 .tour-replay-btn{display:flex;align-items:center;gap:7px;width:100%;background:none;border:1.5px solid var(--border);border-radius:10px;padding:9px 14px;font-size:13px;font-weight:700;color:var(--gray);cursor:pointer;transition:border-color .2s,color .2s;}
 .tour-replay-btn:hover{border-color:var(--primary);color:var(--primary);}
+.gcal-day.nohabil{background:#FAFAFA;}
+.gcal-day.nohabil .gcal-dn{color:#DC2626;}
+.gcal-fest{font-size:10px;font-weight:700;color:#B91C1C;background:#FEE2E2;border-radius:6px;padding:1px 6px;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 /* ALERTAS */
 .tj-bell{margin-left:auto;position:relative;width:38px;height:38px;flex-shrink:0;border:1.5px solid var(--border);border-radius:12px;background:#fff;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;transition:background .15s;}
 .tj-bell:hover{background:#F8FAFC;}
@@ -1038,7 +1041,7 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
         <div class="form-group"><label>Fecha</label><input id="ac-fecha" type="date"/></div>
         <div class="form-group"><label>¿Qué pasó? (seguimiento)</label><div class="voz-wrap"><textarea id="ac-descripcion" rows="5" oninput="bitAutoVence()"placeholder="Pulsa 🎤 y dicta el seguimiento del caso..."></textarea><button type="button" class="voz-btn" onclick="dictar('ac-descripcion',this)">🎤</button></div></div>
         <div class="form-group"><label>¿Qué sigue? (próxima acción)</label><div class="voz-wrap"><textarea id="ac-proxima" rows="2" oninput="bitAutoVence()"placeholder="Ej: Radicar memorial de impulso"></textarea><button type="button" class="voz-btn" onclick="dictar('ac-proxima',this)">🎤</button></div></div>
-        <div class="form-group"><label>Fecha de vencimiento / recordatorio (opcional)</label><input id="ac-vence" type="date" onchange="_venceAuto=false;document.getElementById('ac-vence-hint').textContent='';"/><div id="ac-vence-hint" style="font-size:12px;color:#16A34A;margin-top:4px;font-weight:600;"></div></div>
+        <div class="form-group"><label>Fecha de vencimiento / recordatorio (opcional)</label><input id="ac-vence" type="date" onchange="bitVenceManual()"/><div id="ac-vence-hint" style="font-size:12px;color:#16A34A;margin-top:4px;font-weight:600;"></div></div>
         <div id="ac-error" class="error-msg" style="display:none;"></div>
         <div class="modal-actions">
           <button class="btn btn-ghost" id="ac-del-btn" style="margin-right:auto;color:#DC2626;display:none;" onclick="deleteActuacion()">Eliminar</button>
@@ -2741,7 +2744,26 @@ function bitGestionMes(c){var h=bitHoy();return ST.actuaciones.some(function(a){
 
 // Detecta fechas y plazos en el texto dictado
 var NUM_ES={uno:1,un:1,una:1,dos:2,tres:3,cuatro:4,cinco:5,seis:6,siete:7,ocho:8,nueve:9,diez:10,once:11,doce:12,trece:13,catorce:14,quince:15,veinte:20,treinta:30};
-function bitSumarHabiles(base,n){var d=new Date(base);while(n>0){d.setDate(d.getDate()+1);var w=d.getDay();if(w!==0&&w!==6)n--;}return d;}
+var _festCache={};
+function festivosCO(y){
+  if(_festCache[y])return _festCache[y];
+  var f={};
+  function iso(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+  function fijo(m,d,n){f[iso(new Date(y,m-1,d))]=n;}
+  function lunes(d,n){var w=d.getDay();if(w!==1)d.setDate(d.getDate()+((8-w)%7));f[iso(d)]=n;}
+  var a=y%19,b=Math.floor(y/100),c=y%100,dd=Math.floor(b/4),e=b%4,g=Math.floor((8*b+13)/25),h=(19*a+b-dd-g+15)%30,i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7,m=Math.floor((a+11*h+19*l)/433);
+  var mes=Math.floor((h+l-7*m+90)/25),dia=(h+l-7*m+33*mes+19)%32;
+  function pascua(off){var d=new Date(y,mes-1,dia);d.setDate(d.getDate()+off);return d;}
+  fijo(1,1,'Año Nuevo');fijo(5,1,'Día del Trabajo');fijo(7,20,'Independencia de Colombia');fijo(8,7,'Batalla de Boyacá');fijo(12,8,'Inmaculada Concepción');fijo(12,25,'Navidad');
+  lunes(new Date(y,0,6),'Reyes Magos');lunes(new Date(y,2,19),'San José');lunes(new Date(y,5,29),'San Pedro y San Pablo');lunes(new Date(y,7,15),'Asunción de la Virgen');
+  lunes(new Date(y,9,12),'Día de la Raza');lunes(new Date(y,10,1),'Todos los Santos');lunes(new Date(y,10,11),'Independencia de Cartagena');
+  f[iso(pascua(-3))]='Jueves Santo';f[iso(pascua(-2))]='Viernes Santo';
+  f[iso(pascua(43))]='Ascensión del Señor';f[iso(pascua(64))]='Corpus Christi';f[iso(pascua(71))]='Sagrado Corazón';
+  return _festCache[y]=f;
+}
+function festivoNombre(d){var k=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');return festivosCO(d.getFullYear())[k]||null;}
+function esHabil(d){var w=d.getDay();return w!==0&&w!==6&&!festivoNombre(d);}
+function bitSumarHabiles(base,n){var d=new Date(base);while(n>0){d.setDate(d.getDate()+1);if(esHabil(d))n--;}return d;}
 function bitDetectarFecha(texto,base){
   var t=(texto||'').toLowerCase();base=base||bitHoy();
   var m=t.match(/(\d{1,2})\s+de\s+(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|setiembre|octubre|noviembre|diciembre)(?:\s+(?:de|del)\s+(\d{4}))?/);
@@ -2762,8 +2784,21 @@ function bitAutoVence(){
   var base=bitParse(document.getElementById('ac-fecha').value)||bitHoy();
   var r=bitDetectarFecha(document.getElementById('ac-proxima').value,base)||bitDetectarFecha(document.getElementById('ac-descripcion').value,base);
   var hint=document.getElementById('ac-vence-hint');
-  if(r&&r.fecha>=base){venceEl.value=bitISO(r.fecha);_venceAuto=true;hint.textContent='📅 Detectado automáticamente: '+r.motivo;}
+  if(r&&r.fecha>=base){
+    var f=new Date(r.fecha),movido='';
+    if(!esHabil(f)){var orig=bitFechaTxt(bitISO(f)),causa=festivoNombre(f)||'fin de semana';while(!esHabil(f))f.setDate(f.getDate()+1);movido=' · caía '+orig+' ('+causa+'), se corre al siguiente día hábil';}
+    venceEl.value=bitISO(f);_venceAuto=true;hint.style.color='#16A34A';hint.textContent='📅 Detectado automáticamente: '+r.motivo+movido;
+  }
   else if(_venceAuto){venceEl.value='';_venceAuto=false;hint.textContent='';}
+}
+function bitVenceManual(){
+  _venceAuto=false;
+  var v=document.getElementById('ac-vence').value,hint=document.getElementById('ac-vence-hint');
+  hint.textContent='';if(!v)return;
+  var f=bitParse(v);if(esHabil(f))return;
+  var g=new Date(f);while(!esHabil(g))g.setDate(g.getDate()+1);
+  hint.style.color='#D97706';
+  hint.innerHTML='⚠️ Ese día no es hábil ('+esc(festivoNombre(f)||'fin de semana')+'). <a href="#" style="color:#D97706;font-weight:800;" onclick="document.getElementById(\'ac-vence\').value=\''+bitISO(g)+'\';bitVenceManual();return false;">Pasar al '+bitFechaTxt(bitISO(g))+'</a>';
 }
 
 // Dictado por voz
@@ -3381,8 +3416,10 @@ function renderTjCal(){
     var key=yr+'-'+String(mo+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
     var evs=map[key]||[];
     var sel=_tjCalSelDay===key?' selected':'';
-    html+='<div class="gcal-day'+(isToday?' today':'')+sel+'" onclick="tjCalSelDay(\''+key+'\')">';
+    var fest=festivoNombre(dt),nohab=fest||dt.getDay()===0||dt.getDay()===6;
+    html+='<div class="gcal-day'+(isToday?' today':'')+(nohab?' nohabil':'')+sel+'" onclick="tjCalSelDay(\''+key+'\')">';
     html+='<div class="gcal-dn-wrap"><span class="gcal-dn">'+d+'</span></div>';
+    if(fest)html+='<div class="gcal-fest">🎌 '+fest+'</div>';
     evs.slice(0,3).forEach(function(ev){
       var cls=ev.tipo==='vencido'?'exp':(ev.tipo==='proximo'||ev.tipo==='pendiente')?'sav':ev.tipo==='creado'?'cre':'inc';
       html+='<div class="gcal-chip '+cls+'" title="'+esc(ev.label)+'">'+esc(ev.label)+'</div>';
@@ -3425,7 +3462,9 @@ function tjCalRenderSemana(map){
     var evs=map[key]||[];
     var isT=d.getTime()===today.getTime();
     var sel=_tjCalSelDay===key?' selected':'';
-    html+='<div class="gcal-day'+(isT?' today':'')+sel+'" style="min-height:200px;" onclick="tjCalSelDay(\''+key+'\')">';
+    var fest=festivoNombre(d),nohab=fest||d.getDay()===0||d.getDay()===6;
+    html+='<div class="gcal-day'+(isT?' today':'')+(nohab?' nohabil':'')+sel+'" style="min-height:200px;" onclick="tjCalSelDay(\''+key+'\')">';
+    if(fest)html+='<div class="gcal-fest">🎌 '+fest+'</div>';
     evs.forEach(function(ev){
       var cls=ev.tipo==='vencido'?'exp':(ev.tipo==='proximo'||ev.tipo==='pendiente')?'sav':ev.tipo==='creado'?'cre':'inc';
       html+='<div class="gcal-chip '+cls+'">'+esc(ev.label)+'</div>';
