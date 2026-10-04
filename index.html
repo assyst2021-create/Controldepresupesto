@@ -1041,6 +1041,18 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
         <div class="form-group"><label>Fecha</label><input id="ac-fecha" type="date"/></div>
         <div class="form-group"><label>¿Qué pasó? (seguimiento)</label><div class="voz-wrap"><textarea id="ac-descripcion" rows="5" oninput="bitAutoVence()"placeholder="Pulsa 🎤 y dicta el seguimiento del caso..."></textarea><button type="button" class="voz-btn" onclick="dictar('ac-descripcion',this)">🎤</button></div></div>
         <div class="form-group"><label>¿Qué sigue? (próxima acción)</label><div class="voz-wrap"><textarea id="ac-proxima" rows="2" oninput="bitAutoVence()"placeholder="Ej: Radicar memorial de impulso"></textarea><button type="button" class="voz-btn" onclick="dictar('ac-proxima',this)">🎤</button></div></div>
+        <div style="border:1.5px solid #BFDBFE;background:#F8FBFF;border-radius:14px;padding:12px 14px;margin-bottom:14px;">
+          <div style="font-size:13px;font-weight:800;color:#1E40AF;margin-bottom:10px;">⚖️ Contador de términos</div>
+          <div class="modal-row">
+            <div class="form-group" style="margin-bottom:8px;"><label>Fecha de notificación / envío</label><input id="ac-t-notif" type="date" onchange="tjTerminoCalcular()"/></div>
+            <div class="form-group" style="margin-bottom:8px;"><label>¿Cómo te notificaron?</label><select id="ac-t-medio" onchange="tjTerminoCalcular()"><option value="estado">Por estado</option><option value="personal">Personal</option><option value="correo">Por correo electrónico (Ley 2213)</option></select></div>
+          </div>
+          <div class="modal-row">
+            <div class="form-group" style="margin-bottom:8px;"><label>Término</label><input id="ac-t-n" type="number" min="1" placeholder="Ej: 10" oninput="tjTerminoCalcular()"/></div>
+            <div class="form-group" style="margin-bottom:8px;"><label>Unidad</label><select id="ac-t-unidad" onchange="tjTerminoCalcular()"><option value="habiles">Días hábiles</option><option value="meses">Meses</option><option value="anios">Años</option></select></div>
+          </div>
+          <div id="ac-t-res"></div>
+        </div>
         <div class="form-group"><label>Fecha de vencimiento / recordatorio (opcional)</label><input id="ac-vence" type="date" onchange="bitVenceManual()"/><div id="ac-vence-hint" style="font-size:12px;color:#16A34A;margin-top:4px;font-weight:600;"></div></div>
         <div id="ac-error" class="error-msg" style="display:none;"></div>
         <div class="modal-actions">
@@ -1341,7 +1353,7 @@ function renderScreen(screen){
   if(screen==='movimientos')renderMovimientos();
   else if(screen==='presupuesto'){loadDocumentosData().then(renderDocumentosScreen);}
   else if(screen==='compras'){renderBitacora();loadBitacora().then(renderBitacora);}
-  else if(screen==='orientaciones'){renderTjCal();Promise.all([loadBitacora(),loadTjCalEventos()]).then(renderTjCal);}
+  else if(screen==='orientaciones'){renderTjCal();Promise.all([loadBitacora(),loadTjCalEventos(),loadInhabiles()]).then(renderTjCal);}
   else if(screen==='archivos'){}
   else if(screen==='calendario'){}
   else if(screen==='normatividad'){initChat();}
@@ -2766,7 +2778,62 @@ function festivoNombre(d){
   var f=festivosCO(d.getFullYear())[k];if(f)return f;
   var m=d.getMonth()+1,dd=d.getDate();
   if((m===12&&dd>=20)||(m===1&&dd<=10))return 'Vacancia judicial';
+  if(ST.inhabiles&&ST.inhabiles[k])return ST.inhabiles[k];
   return null;
+}
+var TJ_MARGEN_HABILES=2;
+function bitRestarHabiles(base,n){var d=new Date(base);while(n>0){d.setDate(d.getDate()-1);if(esHabil(d))n--;}return d;}
+function bitSiguienteHabil(d){d=new Date(d);while(!esHabil(d))d.setDate(d.getDate()+1);return d;}
+function bitRadicarAntes(venceIso){var v=bitParse(venceIso);return v?bitISO(bitRestarHabiles(v,TJ_MARGEN_HABILES)):null;}
+// notif: fecha ISO; medio: estado|personal|correo; n: número; unidad: habiles|meses|anios
+function tjContarTermino(notif,medio,n,unidad){
+  var N=bitParse(notif);if(!N||!n||n<1)return null;
+  var pasos=[],surtida=new Date(N);
+  if(medio==='correo'){surtida=bitSumarHabiles(N,2);pasos.push('Notificación por correo enviada el '+bitFechaTxt(notif)+' → se entiende surtida el '+bitFechaTxt(bitISO(surtida))+' (2 días hábiles, Ley 2213 art. 8)');}
+  else pasos.push('Notificado ('+(medio==='estado'?'por estado':'personalmente')+') el '+bitFechaTxt(bitISO(surtida)));
+  var inicio=bitSumarHabiles(surtida,1),vence;
+  pasos.push('El término empieza a correr el '+bitFechaTxt(bitISO(inicio))+' (día hábil siguiente)');
+  if(unidad==='habiles'){
+    vence=bitSumarHabiles(surtida,n);
+    pasos.push(n+' días hábiles, sin contar fines de semana, festivos, vacancia judicial ni días de cierre marcados');
+  } else {
+    vence=new Date(surtida);
+    if(unidad==='meses')vence.setMonth(vence.getMonth()+n);else vence.setFullYear(vence.getFullYear()+n);
+    pasos.push(n+(unidad==='meses'?' mes(es)':' año(s)')+' calendario (CGP art. 118)');
+    if(!esHabil(vence)){var o=bitISO(vence),c=festivoNombre(vence)||'fin de semana';vence=bitSiguienteHabil(vence);pasos.push('Caía el '+bitFechaTxt(o)+' ('+c+') → pasa al '+bitFechaTxt(bitISO(vence)));}
+  }
+  var rad=bitRestarHabiles(vence,TJ_MARGEN_HABILES);if(rad<inicio)rad=inicio;
+  return {vence:bitISO(vence),radicar:bitISO(rad),pasos:pasos};
+}
+function tjTerminoCalcular(){
+  var r=tjContarTermino(document.getElementById('ac-t-notif').value,document.getElementById('ac-t-medio').value,parseInt(document.getElementById('ac-t-n').value),document.getElementById('ac-t-unidad').value);
+  var box=document.getElementById('ac-t-res');
+  if(!r){box.innerHTML='';return;}
+  box.innerHTML='<ol style="margin:0 0 8px 18px;padding:0;font-size:12px;color:#475569;line-height:1.6;">'+r.pasos.map(function(p){return '<li>'+esc(p)+'</li>';}).join('')+'</ol>'
+    +'<div style="display:flex;gap:8px;flex-wrap:wrap;">'
+    +'<div style="flex:1;min-width:140px;background:#FEE2E2;border-radius:10px;padding:8px 10px;"><div style="font-size:11px;color:#B91C1C;font-weight:700;">VENCE</div><div style="font-size:15px;font-weight:800;color:#991B1B;">'+bitFechaTxt(r.vence)+'</div></div>'
+    +'<div style="flex:1;min-width:140px;background:#DCFCE7;border-radius:10px;padding:8px 10px;"><div style="font-size:11px;color:#15803D;font-weight:700;">RADICAR A MÁS TARDAR</div><div style="font-size:15px;font-weight:800;color:#166534;">'+bitFechaTxt(r.radicar)+'</div></div></div>';
+  var v=document.getElementById('ac-vence');v.value=r.vence;_venceAuto=false;
+  var h=document.getElementById('ac-vence-hint');h.style.color='#16A34A';h.textContent='⚖️ Calculado con el contador de términos.';
+}
+async function loadInhabiles(){
+  var r=await _sb.from('dias_inhabiles').select('*').eq('user_id',ST.userId);
+  ST.inhabiles={};if(!r.error)(r.data||[]).forEach(function(x){ST.inhabiles[x.fecha]=x.motivo||'Día inhábil';});
+}
+async function tjToggleInhabil(key){
+  if(ST.inhabiles&&ST.inhabiles[key]){
+    if(!confirm('¿Quitar este día como inhábil? Los términos volverán a contarlo.'))return;
+    var r=await _sb.from('dias_inhabiles').delete().eq('user_id',ST.userId).eq('fecha',key);
+    if(r.error){alert('Error: '+r.error.message);return;}
+    delete ST.inhabiles[key];
+  } else {
+    var motivo=prompt('Motivo del cierre (ej: paro judicial, suspensión de términos, falla de la plataforma):','Suspensión de términos');
+    if(motivo===null)return;
+    var r2=await _sb.from('dias_inhabiles').insert({user_id:ST.userId,fecha:key,motivo:motivo||'Día inhábil'});
+    if(r2.error){alert('Error: '+r2.error.message);return;}
+    ST.inhabiles=ST.inhabiles||{};ST.inhabiles[key]=motivo||'Día inhábil';
+  }
+  renderTjCal();
 }
 function diaPrecaucion(d){var m=d.getMonth()+1,dd=d.getDate();return (m===12&&dd>=17&&dd<=19)||(m===1&&dd>=11&&dd<=15);}
 function esHabil(d){var w=d.getDay();return w!==0&&w!==6&&!festivoNombre(d);}
@@ -2860,11 +2927,16 @@ function bitActualizarBadge(){
 function tjAlertas(){
   var out=[];
   bitPendientes().forEach(function(a){
-    var d=bitDias(a.fecha_vencimiento);if(d>7)return;
+    var dv=bitDias(a.fecha_vencimiento),rad=bitRadicarAntes(a.fecha_vencimiento),dr=bitDias(rad);
+    if(dr>7)return;
+    var d=dv<0?dv:dr;
     var c=ST.casos.find(function(x){return x.id===a.caso_id;})||{};
-    var when=d<0?'Vencido hace '+(-d)+' día'+(d===-1?'':'s'):d===0?'Vence HOY':d===1?'Vence MAÑANA':'Vence en '+d+' días';
-    out.push({k:'act_'+a.id,d:d,ico:d<0?'🔴':d<=1?'🚨':d<=3?'⚠️':'⏰',color:d<=1?'#DC2626':d<=3?'#D97706':'#2563EB',
-      t:c.cliente||c.radicacion||'Caso',s:a.proxima_accion||a.descripcion||'',when:when+' · '+bitFechaTxt(a.fecha_vencimiento),go:'compras'});
+    var when;
+    if(dv<0)when='VENCIDO hace '+(-dv)+' día'+(dv===-1?'':'s')+' · '+bitFechaTxt(a.fecha_vencimiento);
+    else if(dr<0)when='¡Margen agotado! Vence '+(dv===0?'HOY':dv===1?'MAÑANA':'el '+bitFechaTxt(a.fecha_vencimiento));
+    else when='Radicar '+(dr===0?'HOY':dr===1?'MAÑANA':'en '+dr+' días')+' ('+bitFechaTxt(rad)+') · vence '+bitFechaTxt(a.fecha_vencimiento);
+    out.push({k:'act_'+a.id,d:d,ico:dv<0?'🔴':d<=1?'🚨':d<=3?'⚠️':'⏰',color:d<=1?'#DC2626':d<=3?'#D97706':'#2563EB',
+      t:c.cliente||c.radicacion||'Caso',s:a.proxima_accion||a.descripcion||'',when:when,go:'compras'});
   });
   _tjCalEventos.forEach(function(ev){
     var d=bitDias(ev.fecha);if(d===null||d<0||d>7)return;
@@ -2892,7 +2964,7 @@ function tjToggleAlertas(e){if(e)e.stopPropagation();var p=document.getElementBy
 function tjCerrarAlertas(){document.getElementById('tj-alertas').classList.remove('open');}
 document.addEventListener('click',tjCerrarAlertas);
 function tjPedirPermiso(){if('Notification' in window)Notification.requestPermission().then(function(){tjRenderAlertas();bitNotificar();});}
-async function tjRefrescarAlertas(){await Promise.all([loadBitacora(),loadTjCalEventos()]);tjRenderAlertas();bitNotificar();}
+async function tjRefrescarAlertas(){await Promise.all([loadBitacora(),loadTjCalEventos(),loadInhabiles()]);tjRenderAlertas();bitNotificar();}
 function bitNotificar(){
   try{
     var al=tjAlertas().filter(function(a){return a.d<=7;}),nuevas=[];
@@ -3060,6 +3132,11 @@ function openActuacionModal(casoId,actId){
   document.getElementById('ac-proxima').value=a.proxima_accion||'';
   document.getElementById('ac-vence').value=a.fecha_vencimiento||'';
   document.getElementById('ac-vence-hint').textContent='';
+  document.getElementById('ac-t-notif').value=a.fecha||bitISO(bitHoy());
+  document.getElementById('ac-t-medio').value='estado';
+  document.getElementById('ac-t-n').value='';
+  document.getElementById('ac-t-unidad').value='habiles';
+  document.getElementById('ac-t-res').innerHTML='';
   document.getElementById('ac-del-btn').style.display=actId?'inline-flex':'none';
   document.getElementById('ac-error').style.display='none';
   document.getElementById('modal-actuacion').style.display='flex';
@@ -3391,6 +3468,7 @@ function tjCalEvMap(){
       var tipo=a.cumplida?'cumplida':(diff<0?'vencido':(diff<=7?'proximo':'normal'));
       var ico=a.cumplida?'✅ Cumplido: ':(diff<0?'🔴 Vencido: ':'⚠️ Vence: ');
       addEv(a.fecha_vencimiento,{tipo:tipo,label:ico+nom(c),a:a,c:c});
+      if(!a.cumplida&&diff>=0){var rad=bitRadicarAntes(a.fecha_vencimiento);if(rad!==a.fecha_vencimiento)addEv(rad,{tipo:'proximo',label:'📤 Radicar: '+nom(c),a:a,c:c});}
     }
     if(a.proxima_accion&&!a.cumplida&&a.fecha&&a.fecha!==a.fecha_vencimiento){
       addEv(a.fecha,{tipo:'pendiente',label:'⏳ Pendiente: '+nom(c),a:a,c:c});
@@ -3506,6 +3584,10 @@ function tjCalRenderSide(map){
       +(ev.tipo==='manual'?'<button onclick="tjCalDelEvento(\''+((ev.ev&&ev.ev.id)||'')+'\');event.stopPropagation();" style="margin-top:6px;font-size:10px;color:#DC2626;border:none;background:transparent;cursor:pointer;padding:0;">✕ Eliminar</button>':'')
       +'</div>';
   }).join(''):'<div style="text-align:center;padding:20px;color:#94A3B8;font-size:13px;">Sin eventos</div>';
+  var dSel=bitParse(_tjCalSelDay),manual=ST.inhabiles&&ST.inhabiles[_tjCalSelDay],fn=festivoNombre(dSel);
+  var info=fn?'<div style="font-size:12px;font-weight:700;color:#B91C1C;margin-bottom:8px;">🚫 Día inhábil: '+esc(fn)+'</div>':(dSel.getDay()%6===0?'<div style="font-size:12px;font-weight:700;color:#B91C1C;margin-bottom:8px;">🚫 Fin de semana</div>':'<div style="font-size:12px;font-weight:700;color:#15803D;margin-bottom:8px;">✅ Día hábil: corren términos</div>');
+  var btn=(manual||!fn)&&dSel.getDay()%6!==0?'<button class="btn btn-ghost" style="width:100%;justify-content:center;font-size:12px;padding:8px;" onclick="tjToggleInhabil(\''+_tjCalSelDay+'\')">'+(manual?'↩️ Quitar día inhábil':'🚫 Marcar como día inhábil (cierre del juzgado)')+'</button>':'';
+  document.getElementById('tj-cal-side-list').insertAdjacentHTML('beforeend','<div style="margin-top:auto;padding-top:10px;border-top:1px solid var(--border);">'+info+btn+'</div>');
 }
 
 function tjCalSelDay(key){_tjCalSelDay=_tjCalSelDay===key?null:key;renderTjCal();}
