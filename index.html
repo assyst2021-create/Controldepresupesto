@@ -3139,7 +3139,7 @@ function verDocumento(id){
   if((m=u.match(/drive\.google\.com\/drive\/(?:u\/\d+\/)?folders\/([^\/?#]+)/)))viewUrl='https://drive.google.com/embeddedfolderview?id='+m[1]+'#list';
   else if((m=u.match(/drive\.google\.com\/file\/d\/([^\/?#]+)/)))viewUrl='https://drive.google.com/file/d/'+m[1]+'/preview';
   else if((m=u.match(/drive\.google\.com\/(?:open|uc)\?.*id=([^&#]+)/)))viewUrl='https://drive.google.com/file/d/'+m[1]+'/preview';
-  else if((m=u.match(/docs\.google\.com\/(document|spreadsheets|presentation)\/d\/([^\/?#]+)/)))viewUrl='https://docs.google.com/'+m[1]+'/d/'+m[2]+'/preview';
+  else if((m=u.match(/docs\.google\.com\/(document|spreadsheets|presentation)\/d\/([^\/?#]+)/)))viewUrl='https://drive.google.com/file/d/'+m[2]+'/preview';
   else if(['doc','docx','xls','xlsx','ppt','pptx'].indexOf(ext)>-1)viewUrl='https://view.officeapps.live.com/op/view.aspx?src='+encodeURIComponent(u);
   document.getElementById('visor-frame').src=viewUrl;
   document.getElementById('modal-visor-doc').style.display='flex';
