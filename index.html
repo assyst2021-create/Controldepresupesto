@@ -2747,12 +2747,11 @@ function bitPedirLink(id){
   var firma=(ST.userName&&ST.userName.indexOf('@')<0)?ST.userName:'';
   var cuerpo='Señores\n'+(c.juzgado?c.juzgado.toUpperCase()+'\n':'')+'E. S. D.\n\n'+
     'REFERENCIA: Solicitud de link del expediente digital\n'+
-    (rad?'RADICADO: '+rad+'\n':'')+
-    (c.cliente?'PROCESO / CLIENTE: '+c.cliente+'\n':'')+'\n'+
+    (rad?'RADICADO: '+rad+'\n':'')+'\n'+
     'Comedidamente y con el acostumbrado respeto, me permito solicitar el link del expediente digital del proceso de la referencia. Lo anterior, a fin de consultar algunas piezas procesales.\n\n'+
     'Agradezco de antemano la atención prestada.\n\n'+
     'Atentamente,\n\n\n'+(firma?firma+'\n':'')+'C.C. No. \nT.P. No. ';
-  window.location.href='mailto:'+(c.correo||'')+'?subject='+encodeURIComponent('Solicitud link expediente digital - Rad. '+(rad||c.cliente))+'&body='+encodeURIComponent(cuerpo);
+  window.location.href='mailto:'+(c.correo||'')+'?subject='+encodeURIComponent('Solicitud link expediente digital'+(rad?' - Rad. '+rad:''))+'&body='+encodeURIComponent(cuerpo);
 }
 async function bitCopiaHoy(id){
   var hoy=bitISO(bitHoy());
