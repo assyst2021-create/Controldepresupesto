@@ -431,6 +431,23 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
 #tour-bubble .tb-next{font-size:13px;font-weight:800;color:#fff;background:#1E40AF;border:2px solid #1E40AF;border-radius:10px;cursor:pointer;padding:10px 22px;white-space:nowrap;letter-spacing:.01em;}
 .tour-replay-btn{display:flex;align-items:center;gap:7px;width:100%;background:none;border:1.5px solid var(--border);border-radius:10px;padding:9px 14px;font-size:13px;font-weight:700;color:var(--gray);cursor:pointer;transition:border-color .2s,color .2s;}
 .tour-replay-btn:hover{border-color:var(--primary);color:var(--primary);}
+/* ALERTAS */
+.tj-bell{margin-left:auto;position:relative;width:38px;height:38px;flex-shrink:0;border:1.5px solid var(--border);border-radius:12px;background:#fff;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;transition:background .15s;}
+.tj-bell:hover{background:#F8FAFC;}
+.tj-bell.ring{animation:tjRing 1.2s ease-in-out 2;}
+@keyframes tjRing{0%,100%{transform:rotate(0)}20%{transform:rotate(14deg)}40%{transform:rotate(-12deg)}60%{transform:rotate(8deg)}80%{transform:rotate(-4deg)}}
+.tj-bell-n{position:absolute;top:-6px;right:-6px;background:#DC2626;color:#fff;border-radius:10px;font-size:10px;font-weight:800;padding:1px 6px;min-width:18px;text-align:center;}
+#tj-alertas{position:fixed;top:70px;left:16px;width:380px;max-width:calc(100vw - 32px);max-height:75vh;overflow-y:auto;background:#fff;border-radius:18px;box-shadow:0 20px 60px rgba(0,0,0,.2);z-index:7500;display:none;}
+#tj-alertas.open{display:block;}
+.tja-head{padding:16px 18px 10px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.tja-head b{font-size:15px;}
+.tja-item{display:flex;gap:10px;padding:12px 18px;border-bottom:1px solid #F1F5F9;cursor:pointer;}
+.tja-item:hover{background:#F8FAFC;}
+.tja-ico{font-size:18px;flex-shrink:0;}
+.tja-t{font-size:13px;font-weight:700;color:var(--gray-dark);}
+.tja-s{font-size:12px;color:var(--gray);margin-top:2px;}
+.tja-when{font-size:11px;font-weight:800;margin-top:3px;}
+.tja-perm{margin:12px 18px;padding:10px 12px;background:#FEF9C3;border-radius:12px;font-size:12px;color:#92400E;}
 /* CHAT */
 .chat-msg{display:flex;flex-direction:column;max-width:70%;}
 .chat-msg.mine{align-self:flex-end;align-items:flex-end;}
@@ -863,6 +880,7 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
       <div class="sidebar-logo">
         <div class="s-icon">⚖️</div>
         <span>Comunidad TuJurídico</span>
+        <button id="tj-bell" class="tj-bell" onclick="tjToggleAlertas(event)" title="Alertas de vencimientos">🔔<span id="tj-bell-n" class="tj-bell-n" style="display:none;"></span></button>
       </div>
     </div>
     <div class="sidebar-user">
@@ -1159,9 +1177,12 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
   </div>
 </div>
 
+<div id="tj-alertas" onclick="event.stopPropagation()"></div>
+
 <!-- BOTTOM NAV -->
 <div id="bottom-nav">
   <div class="bnav-inner">
+    <button class="bnav-btn" onclick="tjToggleAlertas(event)" style="position:relative;"><span class="bn-icon">🔔</span>Alertas<span id="tj-bell-n2" class="tj-bell-n" style="display:none;top:0;right:4px;"></span></button>
     <button class="bnav-btn active" data-screen="presupuesto" onclick="navigate('presupuesto')"><span class="bn-icon">📚</span>Biblioteca</button>
     <button class="bnav-btn" data-screen="compras" onclick="navigate('compras')"><span class="bn-icon">📋</span>Bitácora</button>
     <button class="bnav-btn" onclick="openMoreSheet()"><span class="bn-icon">☰</span>Más</button>
@@ -2785,23 +2806,66 @@ async function loadBitacora(){
   bitActualizarBadge();
 }
 function bitActualizarBadge(){
+  if(typeof tjRenderAlertas==="function")tjRenderAlertas();
   var p=bitPendientes(),n=p.filter(function(a){return bitDias(a.fecha_vencimiento)<=3;}).length+bitExpPendientes().length;
   document.querySelectorAll('[data-screen="compras"]').forEach(function(b){
     var s=b.querySelector('.bit-badge');if(s)s.remove();
     if(n){s=document.createElement('span');s.className='bit-badge';s.textContent=n;s.style.cssText='margin-left:auto;background:#DC2626;color:#fff;border-radius:10px;font-size:11px;font-weight:800;padding:1px 7px;';b.appendChild(s);}
   });
 }
+// ALERTAS (por usuario: bitácora + calendario)
+function tjAlertas(){
+  var out=[];
+  bitPendientes().forEach(function(a){
+    var d=bitDias(a.fecha_vencimiento);if(d>7)return;
+    var c=ST.casos.find(function(x){return x.id===a.caso_id;})||{};
+    var when=d<0?'Vencido hace '+(-d)+' día'+(d===-1?'':'s'):d===0?'Vence HOY':d===1?'Vence MAÑANA':'Vence en '+d+' días';
+    out.push({k:'act_'+a.id,d:d,ico:d<0?'🔴':d<=1?'🚨':d<=3?'⚠️':'⏰',color:d<=1?'#DC2626':d<=3?'#D97706':'#2563EB',
+      t:c.cliente||c.radicacion||'Caso',s:a.proxima_accion||a.descripcion||'',when:when+' · '+bitFechaTxt(a.fecha_vencimiento),go:'compras'});
+  });
+  _tjCalEventos.forEach(function(ev){
+    var d=bitDias(ev.fecha);if(d===null||d<0||d>7)return;
+    out.push({k:'ev_'+ev.id,d:d,ico:'📌',color:d<=1?'#DC2626':'#7C3AED',t:ev.titulo,s:ev.descripcion||'Evento del calendario',
+      when:(d===0?'HOY':d===1?'MAÑANA':'En '+d+' días')+' · '+bitFechaTxt(ev.fecha),go:'orientaciones'});
+  });
+  bitExpPendientes().forEach(function(c){
+    var n=bitExpDias(c);
+    out.push({k:'exp_'+c.id,d:99,ico:'📂',color:'#0891B2',t:c.cliente||c.radicacion||'Caso',s:'Pedir al juzgado el link del expediente digital',
+      when:n===null?'Sin registro de copia':'Última copia hace '+n+' días',go:'compras'});
+  });
+  return out.sort(function(x,y){return x.d-y.d;});
+}
+function tjRenderAlertas(){
+  var al=tjAlertas(),urg=al.filter(function(a){return a.d<=3;}).length,n=al.length;
+  ['tj-bell-n','tj-bell-n2'].forEach(function(id){var e=document.getElementById(id);if(!e)return;e.textContent=n;e.style.display=n?'block':'none';e.style.background=urg?'#DC2626':'#0891B2';});
+  var p=document.getElementById('tj-alertas');if(!p)return;
+  var perm=('Notification' in window)&&Notification.permission!=='granted'
+    ?'<div class="tja-perm">🔕 Los avisos de escritorio están apagados. <a href="#" onclick="tjPedirPermiso();return false;" style="color:#92400E;font-weight:800;">Activarlos</a> para que la app te avise aunque estés en otra pestaña.</div>':'';
+  p.innerHTML='<div class="tja-head"><b>🔔 Alertas ('+n+')</b><button class="modal-close" onclick="tjCerrarAlertas()">×</button></div>'+perm+
+    (n?al.map(function(a){return '<div class="tja-item" onclick="tjCerrarAlertas();navigate(\''+a.go+'\')"><div class="tja-ico">'+a.ico+'</div><div style="min-width:0;"><div class="tja-t">'+esc(a.t)+'</div><div class="tja-s">'+esc(a.s.length>90?a.s.slice(0,90)+'…':a.s)+'</div><div class="tja-when" style="color:'+a.color+';">'+esc(a.when)+'</div></div></div>';}).join('')
+      :'<div style="padding:30px 18px;text-align:center;color:#94A3B8;font-size:13px;">✅ Todo al día. No tienes vencimientos en los próximos 7 días.</div>');
+}
+function tjToggleAlertas(e){if(e)e.stopPropagation();var p=document.getElementById('tj-alertas');tjRenderAlertas();p.classList.toggle('open');}
+function tjCerrarAlertas(){document.getElementById('tj-alertas').classList.remove('open');}
+document.addEventListener('click',tjCerrarAlertas);
+function tjPedirPermiso(){if('Notification' in window)Notification.requestPermission().then(function(){tjRenderAlertas();bitNotificar();});}
+async function tjRefrescarAlertas(){await Promise.all([loadBitacora(),loadTjCalEventos()]);tjRenderAlertas();bitNotificar();}
 function bitNotificar(){
   try{
-    var hoy=bitISO(bitHoy());if(localStorage.getItem('tj_notif_'+ST.userId)===hoy)return;
-    var p=bitPendientes(),venc=p.filter(function(a){return bitDias(a.fecha_vencimiento)<0;}).length,prox=p.filter(function(a){var d=bitDias(a.fecha_vencimiento);return d>=0&&d<=3;}).length;
-    var exp=bitExpPendientes().length;
-    if(!venc&&!prox&&!exp)return;
-    var msg=(venc?venc+' vencido(s). ':'')+(prox?prox+' vence(n) en los próximos 3 días. ':'')+(exp?exp+' expediente(s) para pedir link al juzgado.':'');
-    var show=function(){new Notification('TuJurídico – Bitácora',{body:msg});localStorage.setItem('tj_notif_'+ST.userId,hoy);};
-    if(!('Notification' in window))return;
-    if(Notification.permission==='granted')show();
-    else if(Notification.permission!=='denied')Notification.requestPermission().then(function(r){if(r==='granted')show();});
+    var al=tjAlertas().filter(function(a){return a.d<=7;}),nuevas=[];
+    al.forEach(function(a){
+      var hito=a.d<0?'venc':a.d===0?'d0':a.d===1?'d1':a.d<=3?'d3':'d7';
+      var key='tj_al_'+ST.userId+'_'+a.k+'_'+hito+(a.d<0?'_'+bitISO(bitHoy()):'');
+      if(localStorage.getItem(key))return;
+      nuevas.push({a:a,key:key});
+    });
+    if(!nuevas.length)return;
+    var b=document.getElementById('tj-bell');if(b){b.classList.remove('ring');void b.offsetWidth;b.classList.add('ring');}
+    if(!('Notification' in window)||Notification.permission!=='granted')return;
+    nuevas.slice(0,5).forEach(function(x){
+      new Notification(x.a.ico+' '+x.a.when,{body:x.a.t+(x.a.s?' — '+x.a.s.slice(0,120):''),tag:x.key});
+      localStorage.setItem(x.key,'1');
+    });
   }catch(e){}
 }
 
@@ -2837,6 +2901,7 @@ function renderBitacoraAlertas(){
   document.getElementById('bit-alertas').innerHTML=html;
 }
 function renderBitacora(){
+  bitActualizarBadge();
   renderBitacoraAlertas();
   var tabs=[['activos','Todos'],['proceso','Procesos'],['tramite','Trámites'],['curaduria','Curadurías'],['terminados','Terminados']];
   document.getElementById('bit-tabs').innerHTML=tabs.map(function(t){return '<button class="'+(_bitTab===t[0]?'active':'')+'" onclick="bitSetTab(\''+t[0]+'\')">'+t[1]+'</button>';}).join('')+
@@ -3332,7 +3397,7 @@ function renderTjCal(){
   }
   html+='</div>';
   cont.innerHTML=html;
-  tjCalRenderSide(map);
+  tjCalRenderSide(map);tjRenderAlertas();
 }
 
 function tjCalRenderSemana(map){
@@ -3369,7 +3434,7 @@ function tjCalRenderSemana(map){
   });
   html+='</div>';
   document.getElementById('tj-cal-body').innerHTML=html;
-  tjCalRenderSide(map);
+  tjCalRenderSide(map);tjRenderAlertas();
 }
 
 function tjCalRenderSide(map){
@@ -3503,7 +3568,7 @@ _sb.auth.onAuthStateChange(async function(event,session){
     renderScreen(ST.screen);
     populateCurrencySels();
     localStorage.setItem('mf_tour_done','1');
-    loadBitacora().then(bitNotificar);
+    tjRefrescarAlertas();if(!window._tjAlInt)window._tjAlInt=setInterval(tjRefrescarAlertas,30*60*1000);
   } else {
     document.getElementById('auth-overlay').style.display='flex';
     ST.movements=[];ST.goals=[];ST.pagos=[];ST.compras=[];ST.profiles=[];ST.recordatorios=[];ST.isAdmin=false;
