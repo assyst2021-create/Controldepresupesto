@@ -786,11 +786,36 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
         <button type="button" onclick="toggleVis('u-pass','u-eye')" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:19px;color:var(--gray-light);" id="u-eye">👁️</button>
       </div>
     </div>
+    <div style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:12px;padding:10px 12px;font-size:12px;color:#92400E;margin-bottom:14px;line-height:1.5;">
+      ⚖️ <b>Importante:</b> en su primer ingreso, la persona deberá leer y aceptar el <a href="#" onclick="tjVerAviso();return false;" style="color:#92400E;font-weight:700;">Aviso legal y términos de uso</a>. Sin aceptarlos no podrá usar la app. Cada caso nuevo que cree también exige su aceptación. Las aceptaciones quedan registradas con fecha y hora.
+    </div>
     <div id="u-error" class="auth-error"></div>
     <div id="u-success" style="background:#F0FDF4;color:#15803D;padding:11px 14px;border-radius:12px;font-size:13px;margin-bottom:14px;display:none;font-weight:600;"></div>
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeUsuarioModal()">Cancelar</button>
       <button class="btn btn-primary" onclick="submitUsuario()">Crear usuario</button>
+    </div>
+  </div>
+</div>
+
+<!-- AVISO LEGAL -->
+<div id="modal-aviso" class="modal-overlay" style="z-index:9500;">
+  <div class="modal-box" style="max-width:640px;display:flex;flex-direction:column;max-height:92vh;">
+    <div class="modal-header" style="margin-bottom:12px;">
+      <h3>⚖️ Aviso legal y términos de uso</h3>
+      <button class="modal-close" id="aviso-cerrar" onclick="tjCerrarAviso()">&#x2715;</button>
+    </div>
+    <div id="aviso-texto" style="flex:1;overflow-y:auto;font-size:13px;line-height:1.6;color:#334155;border:1px solid var(--border);border-radius:12px;padding:14px 16px;background:#F8FAFC;"></div>
+    <div id="aviso-aceptar-wrap" style="margin-top:14px;">
+      <label style="display:flex;gap:10px;align-items:flex-start;font-size:13px;font-weight:600;color:#1E293B;cursor:pointer;">
+        <input type="checkbox" id="aviso-check" style="width:18px;height:18px;margin-top:2px;flex-shrink:0;" onchange="document.getElementById('aviso-btn').disabled=!this.checked;document.getElementById('aviso-btn').style.opacity=this.checked?1:.5;"/>
+        <span>He leído y acepto el Aviso legal y los términos de uso. Entiendo que soy el único responsable de verificar y cumplir los términos de mis procesos, y que la app es solo una herramienta de apoyo.</span>
+      </label>
+      <div id="aviso-error" class="auth-error" style="margin-top:10px;"></div>
+      <div class="modal-actions" style="margin-top:12px;">
+        <button class="btn btn-ghost" onclick="doSignOut()">No acepto · Salir</button>
+        <button class="btn btn-primary" id="aviso-btn" disabled style="opacity:.5;" onclick="tjAceptarAviso()">Aceptar y continuar</button>
+      </div>
     </div>
   </div>
 </div>
@@ -911,6 +936,7 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
       <button id="btn-gestionar-usuarios" class="btn btn-primary" style="justify-content:center;display:none;" onclick="navigate('usuarios')">👥 Gestionar usuarios</button>
       <button class="btn btn-primary" style="justify-content:center;" onclick="openCambiarPass()">🔑 Cambiar contraseña</button>
       <button class="btn btn-ghost" style="justify-content:center;" onclick="doSignOut()">Cerrar sesión</button>
+      <a href="#" onclick="tjVerAviso();return false;" style="text-align:center;font-size:11px;color:var(--gray-light);text-decoration:none;">⚖️ Aviso legal y términos de uso</a>
     </div>
   </div>
 
@@ -1016,9 +1042,9 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
         <div class="modal-header"><h3 id="caso-modal-titulo">Nuevo caso</h3><button class="modal-close" onclick="closeCasoModal()">&#x2715;</button></div>
         <div class="form-group"><label>Tipo</label>
           <select id="cs-categoria"><option value="proceso">Proceso judicial</option><option value="tramite">Trámite (no proceso)</option><option value="curaduria">Curaduría</option></select></div>
-        <div class="form-group"><label>Cliente / nombre del caso</label><div class="voz-wrap"><input id="cs-cliente" type="text" placeholder="Ej: Juan Pérez"/><button type="button" class="voz-btn" onclick="dictar('cs-cliente',this)">🎤</button></div></div>
+        <div class="form-group"><label>Cliente / nombre del caso</label><div class="voz-wrap"><input id="cs-cliente" spellcheck="true" lang="es" type="text" placeholder="Ej: Juan Pérez"/><button type="button" class="voz-btn" onclick="dictar('cs-cliente',this)">🎤</button></div></div>
         <div class="form-group"><label>🎂 Cumpleaños del cliente (opcional)</label><input id="cs-cumple" type="date"/><div style="font-size:12px;color:var(--gray-light);margin-top:4px;">La app te recordará saludarlo y lo mostrará en el calendario cada año.</div></div>
-        <div class="form-group"><label>Juzgado / entidad</label><div class="voz-wrap"><input id="cs-juzgado" type="text" placeholder="Ej: Juzgado 1 Civil Municipal"/><button type="button" class="voz-btn" onclick="dictar('cs-juzgado',this)">🎤</button></div></div>
+        <div class="form-group"><label>Juzgado / entidad</label><div class="voz-wrap"><input id="cs-juzgado" spellcheck="true" lang="es" type="text" placeholder="Ej: Juzgado 1 Civil Municipal"/><button type="button" class="voz-btn" onclick="dictar('cs-juzgado',this)">🎤</button></div></div>
         <div class="form-group"><label>Radicación (23 dígitos)</label><div class="voz-wrap"><input id="cs-radicacion" type="text" placeholder="00000-00-00-000-0000-00000-00" oninput="bitCheckRad()"/><button type="button" class="voz-btn" onclick="dictar('cs-radicacion',this)">🎤</button></div><div id="cs-rad-info" style="font-size:12px;margin-top:4px;"></div></div>
         <div class="form-group"><label>Correo del juzgado</label><div class="voz-wrap"><input id="cs-correo" type="email" placeholder="juzgado@cendoj.ramajudicial.gov.co"/><button type="button" class="voz-btn" onclick="dictar('cs-correo',this)">🎤</button></div></div>
         <div style="display:flex;gap:10px;">
@@ -1026,8 +1052,13 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
           <div class="form-group" style="flex:1;"><label>Extensión</label><div class="voz-wrap"><input id="cs-extension" type="text" placeholder="0000"/><button type="button" class="voz-btn" onclick="dictar('cs-extension',this)">🎤</button></div></div>
         </div>
         <div class="form-group" id="cs-copia-wrap"><label>Última copia del expediente digital</label><input id="cs-copia" type="date"/><div style="font-size:12px;color:var(--gray-light);margin-top:4px;">La app te recordará pedir el link al juzgado 30 días después de esta fecha.</div></div>
-        <div class="form-group"><label>Notas / otros datos</label><div class="voz-wrap"><textarea id="cs-notas" rows="2" placeholder="Contactos, funcionarios, datos adicionales..."></textarea><button type="button" class="voz-btn" onclick="dictar('cs-notas',this)">🎤</button></div></div>
+        <div class="form-group"><label>Notas / otros datos</label><div class="voz-wrap"><textarea id="cs-notas" spellcheck="true" lang="es" rows="2" placeholder="Contactos, funcionarios, datos adicionales..."></textarea><button type="button" class="voz-btn" onclick="dictar('cs-notas',this)">🎤</button></div></div>
         <label id="cs-terminado-wrap" style="display:none;align-items:center;gap:8px;font-size:14px;margin-bottom:10px;"><input type="checkbox" id="cs-terminado"/> Caso terminado</label>
+        <div id="cs-aviso" style="display:none;background:#FFFBEB;border:1px solid #FDE68A;border-radius:12px;padding:10px 12px;font-size:12.5px;color:#92400E;margin-bottom:12px;line-height:1.5;"></div>
+        <label id="cs-acepto-wrap" style="display:none;gap:10px;align-items:flex-start;font-size:12.5px;color:#334155;background:#F8FAFC;border:1.5px solid #CBD5E1;border-radius:12px;padding:10px 12px;margin-bottom:12px;cursor:pointer;line-height:1.5;">
+          <input type="checkbox" id="cs-acepto" style="width:18px;height:18px;margin-top:2px;flex-shrink:0;"/>
+          <span><b>Declaro</b> que los datos de este caso son correctos y que soy el único responsable de vigilar el proceso, verificar sus términos y radicar a tiempo. Los cálculos y alertas de la app son solo de apoyo. Acepto el <a href="#" onclick="tjVerAviso();return false;" style="color:var(--blue-mid);font-weight:700;">Aviso legal</a>.</span>
+        </label>
         <div id="cs-error" class="error-msg" style="display:none;"></div>
         <div class="modal-actions">
           <button class="btn btn-ghost" id="cs-del-btn" style="margin-right:auto;color:#DC2626;display:none;" onclick="deleteCaso()">Eliminar</button>
@@ -1041,8 +1072,8 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
         <div class="modal-header"><h3 id="act-modal-titulo">Nueva actuación</h3><button class="modal-close" onclick="closeActuacionModal()">&#x2715;</button></div>
         <div id="act-caso-nombre" style="font-size:13px;color:var(--gray-light);margin:-6px 0 12px;"></div>
         <div class="form-group"><label>Fecha</label><input id="ac-fecha" type="date"/></div>
-        <div class="form-group"><label>¿Qué pasó? (seguimiento)</label><div class="voz-wrap"><textarea id="ac-descripcion" rows="5" oninput="bitAutoVence()"placeholder="Pulsa 🎤 y dicta el seguimiento del caso..."></textarea><button type="button" class="voz-btn" onclick="dictar('ac-descripcion',this)">🎤</button></div></div>
-        <div class="form-group"><label>¿Qué sigue? (próxima acción)</label><div class="voz-wrap"><textarea id="ac-proxima" rows="2" oninput="bitAutoVence()"placeholder="Ej: Radicar memorial de impulso"></textarea><button type="button" class="voz-btn" onclick="dictar('ac-proxima',this)">🎤</button></div></div>
+        <div class="form-group"><label>¿Qué pasó? (seguimiento)</label><div class="voz-wrap"><textarea id="ac-descripcion" spellcheck="true" lang="es" rows="5" oninput="bitAutoVence()"placeholder="Pulsa 🎤 y dicta el seguimiento del caso..."></textarea><button type="button" class="voz-btn" onclick="dictar('ac-descripcion',this)">🎤</button></div></div>
+        <div class="form-group"><label>¿Qué sigue? (próxima acción)</label><div class="voz-wrap"><textarea id="ac-proxima" spellcheck="true" lang="es" rows="2" oninput="bitAutoVence()"placeholder="Ej: Radicar memorial de impulso"></textarea><button type="button" class="voz-btn" onclick="dictar('ac-proxima',this)">🎤</button></div></div>
         <div style="border:1.5px solid #BFDBFE;background:#F8FBFF;border-radius:14px;padding:12px 14px;margin-bottom:14px;">
           <div style="font-size:13px;font-weight:800;color:#1E40AF;margin-bottom:10px;">⚖️ Contador de términos</div>
           <div class="form-group" style="margin-bottom:8px;"><label>¿Qué tienes que hacer? <span style="font-weight:500;color:#94A3B8;">(la app conoce el término legal)</span></label><select id="ac-t-tipo" onchange="_tipoAuto=false;tjTipoAplicar()"></select></div>
@@ -1058,6 +1089,7 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
           <div style="font-size:11px;color:#64748B;margin-top:8px;">🛡️ Si hay duda, la app usa siempre la fecha más temprana. Verifica con el auto o el estado antes de confiarte.</div>
         </div>
         <div class="form-group"><label>Fecha de vencimiento / recordatorio (opcional)</label><input id="ac-vence" type="date" onchange="bitVenceManual()"/><div id="ac-vence-hint" style="font-size:12px;color:#16A34A;margin-top:4px;font-weight:600;"></div></div>
+        <div id="ac-aviso" style="display:none;background:#FFFBEB;border:1px solid #FDE68A;border-radius:12px;padding:10px 12px;font-size:12.5px;color:#92400E;margin-bottom:12px;line-height:1.5;"></div>
         <div id="ac-error" class="error-msg" style="display:none;"></div>
         <div class="modal-actions">
           <button class="btn btn-ghost" id="ac-del-btn" style="margin-right:auto;color:#DC2626;display:none;" onclick="deleteActuacion()">Eliminar</button>
@@ -1232,6 +1264,7 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
   <div class="sheet-divider"></div>
   <div class="sheet-section">Cuenta</div>
   <button class="sheet-item" onclick="closeMoreSheet();openCambiarPass()"><span class="si-icon">🔑</span>Cambiar contraseña</button>
+  <button class="sheet-item" onclick="closeMoreSheet();tjVerAviso()"><span class="si-icon">⚖️</span>Aviso legal y términos</button>
   <button class="btn-install-all sheet-item" onclick="closeMoreSheet();installApp()" style="display:none;color:#16A34A;"><span class="si-icon">📲</span>Instalar aplicación</button>
 <button class="sheet-item danger" onclick="closeMoreSheet();doSignOut()"><span class="si-icon">🚪</span>Cerrar sesión</button>
   <div style="height:8px;"></div>
@@ -3279,6 +3312,104 @@ function bitCopiar(t){if(navigator.clipboard)navigator.clipboard.writeText(t);bi
 function bitConsultarRama(rad){if(navigator.clipboard)navigator.clipboard.writeText(rad);bitToast('Radicación copiada. Escoge ciudad y entidad, y pégala con Ctrl+V');window.open('https://procesos.ramajudicial.gov.co/procesoscs/ConsultaJusticias21.aspx?EntryId=nsNO2lFgDyrUETr5ZWjs8r19tX0%3d','_blank');}
 function bitToast(msg){var t=document.createElement('div');t.textContent=msg;t.style.cssText='position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#0F172A;color:#fff;padding:10px 18px;border-radius:12px;font-size:13px;z-index:10000;';document.body.appendChild(t);setTimeout(function(){t.remove();},2500);}
 
+// AVISO LEGAL
+var TJ_TERMINOS_VER='2026-10-04';
+var TJ_AVISO_HTML=
+'<p><b>Comunidad TuJurídico</b> (en adelante, "la aplicación") es una herramienta digital de apoyo para que abogados y profesionales del derecho organicen la información de sus casos. Al usarla, el usuario acepta las siguientes condiciones:</p>'+
+'<p><b>1. Herramienta de apoyo, no de asesoría.</b> La aplicación no presta servicios jurídicos, no reemplaza el criterio profesional del abogado ni la consulta directa del expediente, los estados, autos, providencias y notificaciones del despacho judicial o de la autoridad respectiva.</p>'+
+'<p><b>2. Responsabilidad exclusiva del usuario.</b> El usuario es el único y exclusivo responsable de: (a) vigilar sus procesos y trámites; (b) verificar, contar y cumplir los términos judiciales, administrativos y de caducidad o prescripción; (c) radicar oportunamente sus actuaciones; y (d) la veracidad, exactitud y actualización de toda la información que registra (fechas, radicados, notificaciones, juzgados, correos y demás datos).</p>'+
+'<p><b>3. Cálculos y alertas son orientativos.</b> Los cálculos de términos, vencimientos, días hábiles, festivos, vacancia judicial, fechas sugeridas para radicar y la detección automática de actuaciones se basan en reglas generales y en los datos que ingresa el usuario. Pueden no considerar normas especiales, cambios normativos, suspensiones de términos, cierres extraordinarios de despachos, interpretaciones jurisprudenciales ni errores de digitación o de dictado por voz. <b>Siempre deben ser verificados por el usuario.</b></p>'+
+'<p><b>4. Las alertas pueden no llegar.</b> Los avisos, notificaciones y recordatorios dependen del navegador, los permisos del dispositivo, la conexión a internet y de que la aplicación esté abierta. La ausencia, retraso o error de una alerta <b>no exime</b> al usuario de su deber de vigilancia ni puede invocarse como causa del vencimiento de un término.</p>'+
+'<p><b>5. Disponibilidad y respaldo.</b> La aplicación se ofrece "tal como está" y puede presentar interrupciones, fallas o pérdida de información. El usuario debe conservar sus propios respaldos (por ejemplo, con la exportación a Excel) y sus propios sistemas de control de términos.</p>'+
+'<p><b>6. Exoneración de responsabilidad.</b> En la máxima medida permitida por la ley, los propietarios, administradores, desarrolladores y colaboradores de Comunidad TuJurídico no serán responsables por vencimiento de términos, pérdida de oportunidades procesales, rechazos por extemporaneidad, sanciones disciplinarias, perjuicios a clientes o terceros, ni por ningún daño directo o indirecto derivado del uso, mal uso o imposibilidad de uso de la aplicación, o de la información ingresada por los usuarios.</p>'+
+'<p><b>7. Datos personales.</b> El usuario declara que cuenta con la autorización de sus clientes y de los titulares para registrar sus datos personales en la aplicación, conforme a la Ley 1581 de 2012, y que es responsable de su tratamiento. La información de la Bitácora y el Calendario es privada de cada usuario; la Biblioteca jurídica y el Chat interactivo son compartidos con los demás usuarios de la comunidad.</p>'+
+'<p><b>8. Uso adecuado.</b> El usuario se compromete a usar la aplicación de forma lícita, a no compartir su contraseña y a no publicar en los espacios compartidos información reservada, ofensiva o que vulnere derechos de terceros.</p>'+
+'<p><b>9. Aceptación.</b> La aceptación de estas condiciones se registra electrónicamente con el usuario, la fecha, la hora y la versión del texto, y se solicita también al crear cada caso nuevo. Estas condiciones pueden actualizarse; en ese caso se pedirá una nueva aceptación.</p>'+
+'<p style="color:#64748B;font-size:12px;">Versión '+TJ_TERMINOS_VER+'.</p>';
+var _avisoModo='ver';
+function tjMostrarAviso(modo){
+  _avisoModo=modo;
+  document.getElementById('aviso-texto').innerHTML=TJ_AVISO_HTML;
+  document.getElementById('aviso-texto').scrollTop=0;
+  var obligatorio=modo==='registro';
+  document.getElementById('aviso-aceptar-wrap').style.display=obligatorio?'block':'none';
+  document.getElementById('aviso-cerrar').style.display=obligatorio?'none':'flex';
+  var ck=document.getElementById('aviso-check');ck.checked=false;
+  var b=document.getElementById('aviso-btn');b.disabled=true;b.style.opacity=.5;
+  document.getElementById('aviso-error').style.display='none';
+  document.getElementById('modal-aviso').style.display='flex';
+}
+function tjVerAviso(){tjMostrarAviso('ver');}
+function tjCerrarAviso(){if(_avisoModo!=='registro')document.getElementById('modal-aviso').style.display='none';}
+function tjRegistrarAceptacion(tipo,casoId,detalle){
+  return _sb.from('aceptaciones').insert({user_id:ST.userId,email:ST.userEmail||null,tipo:tipo,caso_id:casoId||null,detalle:detalle||null,version:TJ_TERMINOS_VER,navegador:(navigator.userAgent||'').slice(0,250)});
+}
+async function tjAceptarAviso(){
+  if(!document.getElementById('aviso-check').checked)return;
+  var r=await tjRegistrarAceptacion('registro');
+  if(r.error){var e=document.getElementById('aviso-error');e.textContent='No se pudo registrar la aceptación: '+r.error.message;e.style.display='block';return;}
+  _avisoModo='ver';document.getElementById('modal-aviso').style.display='none';
+}
+async function tjVerificarAceptacion(){
+  var r=await _sb.from('aceptaciones').select('id').eq('user_id',ST.userId).eq('tipo','registro').eq('version',TJ_TERMINOS_VER).limit(1);
+  if(r.error){console.error('aceptaciones:',r.error);return;}
+  if(!r.data||!r.data.length)tjMostrarAviso('registro');
+}
+
+// REVISIÓN DE DATOS ANTES DE GUARDAR
+function bitValidarCaso(rec){
+  var w=[],proc=rec.categoria==='proceso',hoy=bitHoy();
+  if(rec.cliente&&rec.cliente.length<4)w.push('El nombre del cliente es muy corto.');
+  if(proc){
+    if(!rec.juzgado)w.push('Falta el juzgado o entidad.');
+    else if(!/juzgado|tribunal|corte|consejo|sala|superintendencia|comisar|fiscal|notar|inspecci|despacho|centro de servicios|oficina|alcald|jurisdicci/i.test(rec.juzgado))w.push('Revisa el juzgado: "'+rec.juzgado+'" no parece el nombre de un despacho (ej: Juzgado 1 Civil Municipal de Cali).');
+    var dg=bitRadDigits(rec.radicacion);
+    if(!dg)w.push('Falta la radicación del proceso.');
+    else if(dg.length!==23)w.push('La radicación tiene '+dg.length+' dígitos y deben ser 23.');
+    else{
+      var anio=+dg.slice(12,16);
+      if(anio<1990||anio>hoy.getFullYear())w.push('En la radicación el año aparece como '+anio+'. Revisa los dígitos 13 a 16.');
+      var dup=ST.casos.find(function(x){return x.id!==_casoEditId&&bitRadDigits(x.radicacion)===dg;});
+      if(dup)w.push('Ya tienes otro caso con esta misma radicación: '+(dup.cliente||'')+'.');
+    }
+  }
+  if(rec.correo){
+    if(!/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(rec.correo))w.push('El correo "'+rec.correo+'" no parece válido.');
+    else if(proc&&!/ramajudicial\.gov\.co$/i.test(rec.correo))w.push('Los correos de los juzgados suelen terminar en @cendoj.ramajudicial.gov.co. Verifica que "'+rec.correo+'" sea el del despacho.');
+  }
+  if(rec.telefono){
+    var t=String(rec.telefono).replace(/\D/g,'');
+    if(t.length!==7&&t.length!==10)w.push('El teléfono tiene '+t.length+' dígitos; en Colombia suelen ser 10 (celular o fijo 60X).');
+    else if(t.length===10&&!/^(3|60)/.test(t))w.push('El teléfono no empieza por 3 (celular) ni por 60 (fijo). Revísalo.');
+  }
+  if(rec.extension&&/\D/.test(String(rec.extension)))w.push('La extensión solo debe tener números.');
+  if(rec.cumpleanos){var cu=bitParse(rec.cumpleanos);if(cu>hoy)w.push('La fecha de cumpleaños está en el futuro.');else if(cu.getFullYear()<1900)w.push('Revisa el año de la fecha de cumpleaños.');}
+  if(rec.ultima_copia_expediente&&bitParse(rec.ultima_copia_expediente)>hoy)w.push('La fecha de última copia del expediente está en el futuro.');
+  return w;
+}
+function bitValidarActuacion(rec){
+  var w=[],hoy=bitHoy(),f=bitParse(rec.fecha),v=bitParse(rec.fecha_vencimiento);
+  if(rec.descripcion&&rec.descripcion.length<10)w.push('El seguimiento es muy corto. Describe qué pasó en el caso.');
+  if(f&&f>hoy)w.push('La fecha de la actuación ('+bitFechaTxt(rec.fecha)+') es futura.');
+  if(v){
+    if(f&&v<f)w.push('El vencimiento ('+bitFechaTxt(rec.fecha_vencimiento)+') es ANTERIOR a la fecha de la actuación.');
+    else if(!_actEditId&&v<hoy)w.push('Ese vencimiento ('+bitFechaTxt(rec.fecha_vencimiento)+') ya pasó.');
+    if(!esHabil(v))w.push('El vencimiento cae en un día no hábil ('+(festivoNombre(v)||'fin de semana')+'). Los términos se corren al siguiente día hábil.');
+    if(f&&(v-f)>366*86400000&&['meses','anios'].indexOf(document.getElementById('ac-t-unidad').value)<0)w.push('El vencimiento es en más de un año. Revisa que la fecha sea correcta.');
+  }
+  return w;
+}
+function bitAvisoDoble(boxId,w,firmaVar){
+  var box=document.getElementById(boxId),firma=w.join('|');
+  if(!w.length){box.style.display='none';return true;}
+  if(window[firmaVar]===firma)return true;
+  window[firmaVar]=firma;
+  box.innerHTML='<b>⚠️ Revisa antes de guardar:</b><ul style="margin:6px 0 6px 18px;padding:0;">'+w.map(function(x){return '<li>'+esc(x)+'</li>';}).join('')+'</ul>Si todo está bien, pulsa <b>Guardar</b> otra vez.';
+  box.style.display='block';box.scrollIntoView({block:'nearest',behavior:'smooth'});
+  return false;
+}
+var _casoAvisoFirma=null,_actAvisoFirma=null;
+
 function openCasoModal(id){
   _casoEditId=id||null;var c=id?ST.casos.find(function(x){return x.id===id;}):{};
   document.getElementById('caso-modal-titulo').textContent=id?'Editar caso':'Nuevo caso';
@@ -3290,6 +3421,9 @@ function openCasoModal(id){
   document.getElementById('cs-terminado-wrap').style.display=id?'flex':'none';
   document.getElementById('cs-del-btn').style.display=id?'inline-flex':'none';
   document.getElementById('cs-error').style.display='none';
+  document.getElementById('cs-aviso').style.display='none';_casoAvisoFirma=null;
+  document.getElementById('cs-acepto').checked=false;
+  document.getElementById('cs-acepto-wrap').style.display=id?'none':'flex';
   bitCheckRad();
   document.getElementById('modal-caso').style.display='flex';
 }
@@ -3302,11 +3436,15 @@ async function submitCaso(){
   if(cu||(prev&&prev.cumpleanos))rec.cumpleanos=cu||null;
   var err=document.getElementById('cs-error');
   if(!rec.cliente){err.textContent='Escribe el nombre del cliente o caso.';err.style.display='block';return;}
+  err.style.display='none';
+  if(!_casoEditId&&!document.getElementById('cs-acepto').checked){err.textContent='Para crear el caso debes marcar la declaración de responsabilidad.';err.style.display='block';return;}
+  if(!bitAvisoDoble('cs-aviso',bitValidarCaso(rec),'_casoAvisoFirma'))return;
   if(bitRadDigits(rec.radicacion).length===23)rec.radicacion=bitRadFmt(rec.radicacion);
   var res;
   if(_casoEditId)res=await _sb.from('casos').update(rec).eq('id',_casoEditId).select().single();
   else{rec.user_id=ST.userId;res=await _sb.from('casos').insert(rec).select().single();}
   if(res.error){err.textContent='Error: '+res.error.message;err.style.display='block';return;}
+  if(!_casoEditId)tjRegistrarAceptacion('caso',res.data.id,(res.data.cliente||'')+(res.data.radicacion?' · Rad. '+res.data.radicacion:'')).then(function(r){if(r.error)console.error('aceptación caso:',r.error);});
   if(_casoEditId)ST.casos=ST.casos.map(function(x){return x.id===_casoEditId?res.data:x;});else ST.casos.push(res.data);
   closeCasoModal();renderBitacora();bitActualizarBadge();
   if(!_casoEditId)openActuacionModal(res.data.id);
@@ -3338,6 +3476,7 @@ function openActuacionModal(casoId,actId){
   _tipoAuto=false;_notifManual=false;_medioManual=false;_proxAutoTxt='';
   document.getElementById('ac-del-btn').style.display=actId?'inline-flex':'none';
   document.getElementById('ac-error').style.display='none';
+  document.getElementById('ac-aviso').style.display='none';_actAvisoFirma=null;
   document.getElementById('modal-actuacion').style.display='flex';
 }
 function closeActuacionModal(){if(_rec)_rec.stop();document.getElementById('modal-actuacion').style.display='none';}
@@ -3346,6 +3485,8 @@ async function submitActuacion(){
     proxima_accion:document.getElementById('ac-proxima').value.trim(),fecha_vencimiento:document.getElementById('ac-vence').value||null};
   var err=document.getElementById('ac-error');
   if(!rec.descripcion){err.textContent='Escribe o dicta qué pasó en el caso.';err.style.display='block';return;}
+  err.style.display='none';
+  if(!bitAvisoDoble('ac-aviso',bitValidarActuacion(rec),'_actAvisoFirma'))return;
   var res;
   if(_actEditId)res=await _sb.from('actuaciones').update(rec).eq('id',_actEditId).select().single();
   else{
@@ -3882,7 +4023,7 @@ _sb.auth.onAuthStateChange(async function(event,session){
     }
     var isAdmin=profileCheck.data&&profileCheck.data.role==='admin';
     ST.isAdmin=isAdmin;ST.userId=user.id;
-    ST.userName=(user.user_metadata&&user.user_metadata.nombre)||user.email;
+    ST.userName=(user.user_metadata&&user.user_metadata.nombre)||user.email;ST.userEmail=user.email;
     document.getElementById('sb-username').textContent=ST.userName;
     document.getElementById('sb-role').textContent=isAdmin?'Administrador':'Usuario';
     document.getElementById('admin-nav-section').style.display=isAdmin?'block':'none';
@@ -3899,6 +4040,7 @@ _sb.auth.onAuthStateChange(async function(event,session){
     renderScreen(ST.screen);
     populateCurrencySels();
     localStorage.setItem('mf_tour_done','1');
+    tjVerificarAceptacion();
     tjRefrescarAlertas();if(!window._tjAlInt)window._tjAlInt=setInterval(tjRefrescarAlertas,30*60*1000);
   } else {
     document.getElementById('auth-overlay').style.display='flex';
