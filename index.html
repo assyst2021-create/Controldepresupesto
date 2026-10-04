@@ -1317,7 +1317,7 @@ function renderScreen(screen){
   if(screen==='movimientos')renderMovimientos();
   else if(screen==='presupuesto'){loadDocumentosData().then(renderDocumentosScreen);}
   else if(screen==='compras'){renderBitacora();loadBitacora().then(renderBitacora);}
-  else if(screen==='orientaciones'){renderTjCal();loadBitacora().then(renderTjCal);}
+  else if(screen==='orientaciones'){renderTjCal();Promise.all([loadBitacora(),loadTjCalEventos()]).then(renderTjCal);}
   else if(screen==='archivos'){}
   else if(screen==='calendario'){}
   else if(screen==='normatividad'){initChat();}
@@ -3395,16 +3395,27 @@ function tjCalSetView(v){
   renderTjCal();
 }
 
-function openTjCalEvento(){
+async function loadTjCalEventos(){
+  var r=await _sb.from('eventos_calendario').select('*').eq('user_id',ST.userId);
+  if(!r.error)_tjCalEventos=r.data||[];
+}
+async function openTjCalEvento(){
   var fecha=_tjCalSelDay||new Date().toISOString().slice(0,10);
-  var titulo=prompt('Título del evento:');
+  var titulo=prompt('Título del evento para el '+fecha+':');
   if(!titulo)return;
-  var desc=prompt('Descripción (opcional):','');
-  var id='ev_'+Date.now();
-  _tjCalEventos.push({id:id,fecha:fecha,titulo:titulo,descripcion:desc||''});
+  var desc=prompt('Descripción (opcional):','')||'';
+  var r=await _sb.from('eventos_calendario').insert({user_id:ST.userId,fecha:fecha,titulo:titulo,descripcion:desc}).select().single();
+  if(r.error){alert('No se pudo guardar el evento: '+r.error.message);return;}
+  _tjCalEventos.push(r.data);
   renderTjCal();
 }
-function tjCalDelEvento(id){_tjCalEventos=_tjCalEventos.filter(function(e){return e.id!==id;});renderTjCal();}
+async function tjCalDelEvento(id){
+  if(!confirm('¿Eliminar este evento?'))return;
+  var r=await _sb.from('eventos_calendario').delete().eq('id',id);
+  if(r.error){alert('No se pudo eliminar: '+r.error.message);return;}
+  _tjCalEventos=_tjCalEventos.filter(function(e){return e.id!==id;});
+  renderTjCal();
+}
 
 // RENDER USUARIOS
 function renderUsuarios(){
@@ -3447,7 +3458,7 @@ async function doAuth(){
   if(res.error){errEl.textContent='Correo o contraseña incorrectos.';errEl.style.display='block';}
 }
 
-async function doSignOut(){await _sb.auth.signOut();}
+async function doSignOut(){await _sb.auth.signOut();location.reload();}
 
 _sb.auth.onAuthStateChange(async function(event,session){
   document.getElementById('loading-screen').style.display='none';
