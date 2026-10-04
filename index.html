@@ -2761,7 +2761,14 @@ function festivosCO(y){
   f[iso(pascua(43))]='Ascensión del Señor';f[iso(pascua(64))]='Corpus Christi';f[iso(pascua(71))]='Sagrado Corazón';
   return _festCache[y]=f;
 }
-function festivoNombre(d){var k=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');return festivosCO(d.getFullYear())[k]||null;}
+function festivoNombre(d){
+  var k=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  var f=festivosCO(d.getFullYear())[k];if(f)return f;
+  var m=d.getMonth()+1,dd=d.getDate();
+  if((m===12&&dd>=20)||(m===1&&dd<=10))return 'Vacancia judicial';
+  return null;
+}
+function diaPrecaucion(d){var m=d.getMonth()+1,dd=d.getDate();return (m===12&&dd>=17&&dd<=19)||(m===1&&dd>=11&&dd<=15);}
 function esHabil(d){var w=d.getDay();return w!==0&&w!==6&&!festivoNombre(d);}
 function bitSumarHabiles(base,n){var d=new Date(base);while(n>0){d.setDate(d.getDate()+1);if(esHabil(d))n--;}return d;}
 function bitDetectarFecha(texto,base){
@@ -2795,7 +2802,8 @@ function bitVenceManual(){
   _venceAuto=false;
   var v=document.getElementById('ac-vence').value,hint=document.getElementById('ac-vence-hint');
   hint.textContent='';if(!v)return;
-  var f=bitParse(v);if(esHabil(f))return;
+  var f=bitParse(v);
+  if(esHabil(f)){if(diaPrecaucion(f)){hint.style.color='#D97706';hint.textContent='⚠️ Fecha cercana a la vacancia judicial: aquí los términos SÍ corren. No dejes la radicación para el último día.';}return;}
   var g=new Date(f);while(!esHabil(g))g.setDate(g.getDate()+1);
   hint.style.color='#D97706';
   hint.innerHTML='⚠️ Ese día no es hábil ('+esc(festivoNombre(f)||'fin de semana')+'). <a href="#" style="color:#D97706;font-weight:800;" onclick="document.getElementById(\'ac-vence\').value=\''+bitISO(g)+'\';bitVenceManual();return false;">Pasar al '+bitFechaTxt(bitISO(g))+'</a>';
@@ -3420,6 +3428,7 @@ function renderTjCal(){
     html+='<div class="gcal-day'+(isToday?' today':'')+(nohab?' nohabil':'')+sel+'" onclick="tjCalSelDay(\''+key+'\')">';
     html+='<div class="gcal-dn-wrap"><span class="gcal-dn">'+d+'</span></div>';
     if(fest)html+='<div class="gcal-fest">🎌 '+fest+'</div>';
+    else if(diaPrecaucion(dt))html+='<div class="gcal-fest" style="background:#FEF3C7;color:#92400E;">⚠️ Términos corren</div>';
     evs.slice(0,3).forEach(function(ev){
       var cls=ev.tipo==='vencido'?'exp':(ev.tipo==='proximo'||ev.tipo==='pendiente')?'sav':ev.tipo==='creado'?'cre':'inc';
       html+='<div class="gcal-chip '+cls+'" title="'+esc(ev.label)+'">'+esc(ev.label)+'</div>';
