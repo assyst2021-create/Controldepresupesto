@@ -452,6 +452,23 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
 .tja-s{font-size:12px;color:var(--gray);margin-top:2px;}
 .tja-when{font-size:11px;font-weight:800;margin-top:3px;}
 .tja-perm{margin:12px 18px;padding:10px 12px;background:#FEF9C3;border-radius:12px;font-size:12px;color:#92400E;}
+/* NORMATIVIDAD Y DIRECTORIO */
+.nd-sec{margin-bottom:26px;}
+.nd-sec h3{font-size:16px;font-weight:800;color:var(--gray-dark);margin-bottom:4px;}
+.nd-sec .nd-sub{font-size:12.5px;color:var(--gray-light);margin-bottom:12px;}
+.nd-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;}
+.nd-card{background:#fff;border:1px solid var(--border);border-radius:16px;padding:14px 16px;display:flex;flex-direction:column;gap:6px;text-decoration:none;color:inherit;transition:all .15s;}
+.nd-card:hover{border-color:var(--blue-light);box-shadow:0 6px 18px rgba(37,99,235,.12);transform:translateY(-2px);}
+.nd-card .nd-t{font-size:14px;font-weight:800;color:var(--gray-dark);display:flex;gap:8px;align-items:center;}
+.nd-card .nd-d{font-size:12.5px;color:var(--gray);line-height:1.5;flex:1;}
+.nd-card .nd-go{font-size:12px;font-weight:700;color:var(--blue-mid);}
+.nd-card .nd-warn{font-size:11px;color:#B45309;}
+.nd-ciudades{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;}
+.nd-ciudad{display:flex;flex-direction:column;gap:2px;padding:11px 14px;border-radius:14px;border:1.5px solid #BFDBFE;background:#EFF6FF;text-decoration:none;transition:all .15s;}
+.nd-ciudad:hover{background:var(--blue-mid);border-color:var(--blue-mid);}
+.nd-ciudad b{font-size:14px;color:#1E40AF;}
+.nd-ciudad span{font-size:11px;color:#64748B;}
+.nd-ciudad:hover b,.nd-ciudad:hover span{color:#fff;}
 /* CHAT */
 .chat-msg{display:flex;flex-direction:column;max-width:70%;}
 .chat-msg.mine{align-self:flex-end;align-items:flex-end;}
@@ -923,7 +940,7 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
       <button class="nav-btn active" data-screen="presupuesto" onclick="navigate('presupuesto')"><span class="n-icon">📚</span> Biblioteca jurídica</button>
       <button class="nav-btn" data-screen="compras" onclick="navigate('compras')"><span class="n-icon">📋</span> Bitácora automatizada</button>
       <button class="nav-btn" data-screen="orientaciones" onclick="navigate('orientaciones')"><span class="n-icon">📅</span> Calendario</button>
-      <button class="nav-btn" data-screen="archivos" onclick="navigate('archivos')"><span class="n-icon">📜</span> Normatividad vigente</button>
+      <button class="nav-btn" data-screen="archivos" onclick="navigate('archivos')"><span class="n-icon">📜</span> Normatividad y directorio</button>
       <button class="nav-btn" data-screen="calendario" onclick="navigate('calendario')"><span class="n-icon">💰</span> Honorarios abogado</button>
       <button class="nav-btn" data-screen="normatividad" onclick="navigate('normatividad')"><span class="n-icon">💬</span> Chat interactivo</button>
       <button class="nav-btn" data-screen="ia" onclick="navigate('ia')"><span class="n-icon">🤖</span> IA integrada a abogados</button>
@@ -1133,13 +1150,11 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
 
     <!-- NORMATIVIDAD VIGENTE -->
     <div id="screen-archivos" class="screen" style="display:none;">
-      <div class="main-header"><h2>Normatividad vigente</h2></div>
+      <div class="main-header"><h2>Normatividad y directorio</h2></div>
       <div class="main-body">
-        <div class="empty-state" style="margin-top:60px;">
-          <div class="e-icon">📜</div>
-          <p style="font-size:15px;font-weight:600;color:#475569;">Normatividad vigente</p>
-          <p style="font-size:13px;color:#94A3B8;margin-top:6px;">Aquí encontrarás leyes, decretos y normas relevantes para tu práctica jurídica.</p>
-        </div>
+        <p style="font-size:14px;color:var(--gray);margin-bottom:14px;">Accesos directos a las páginas oficiales donde se consultan las normas, la jurisprudencia y los datos de contacto de los juzgados. Todo se abre en una pestaña nueva.</p>
+        <input id="nd-buscar" type="search" placeholder="🔎 Buscar ciudad, entidad o tema (ej: Medellín, tutela, códigos)…" oninput="renderNormatividad()" style="margin-bottom:18px;"/>
+        <div id="nd-contenido"></div>
       </div>
     </div>
 
@@ -1250,7 +1265,7 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
   <button class="sheet-item" onclick="sheetNav('presupuesto')"><span class="si-icon">📚</span>Biblioteca jurídica</button>
   <button class="sheet-item" onclick="sheetNav('compras')"><span class="si-icon">📋</span>Bitácora automatizada</button>
   <button class="sheet-item" onclick="sheetNav('orientaciones')"><span class="si-icon">📅</span>Calendario</button>
-  <button class="sheet-item" onclick="sheetNav('archivos')"><span class="si-icon">📜</span>Normatividad vigente</button>
+  <button class="sheet-item" onclick="sheetNav('archivos')"><span class="si-icon">📜</span>Normatividad y directorio</button>
   <button class="sheet-item" onclick="sheetNav('calendario')"><span class="si-icon">💰</span>Honorarios abogado</button>
   <button class="sheet-item" onclick="sheetNav('normatividad')"><span class="si-icon">💬</span>Chat interactivo</button>
   <button class="sheet-item" onclick="sheetNav('ia')"><span class="si-icon">🤖</span>IA integrada a abogados</button>
@@ -1391,7 +1406,7 @@ function renderScreen(screen){
   else if(screen==='presupuesto'){loadDocumentosData().then(renderDocumentosScreen);}
   else if(screen==='compras'){renderBitacora();loadBitacora().then(renderBitacora);}
   else if(screen==='orientaciones'){renderTjCal();Promise.all([loadBitacora(),loadTjCalEventos(),loadInhabiles()]).then(renderTjCal);}
-  else if(screen==='archivos'){}
+  else if(screen==='archivos'){renderNormatividad();}
   else if(screen==='calendario'){}
   else if(screen==='normatividad'){initChat();}
   else if(screen==='ia'){}
@@ -3311,6 +3326,81 @@ function bitExpHTML(c){
 function bitCopiar(t){if(navigator.clipboard)navigator.clipboard.writeText(t);bitToast('Radicación copiada: '+t);}
 function bitConsultarRama(rad){if(navigator.clipboard)navigator.clipboard.writeText(rad);bitToast('Radicación copiada. Escoge ciudad y entidad, y pégala con Ctrl+V');window.open('https://procesos.ramajudicial.gov.co/procesoscs/ConsultaJusticias21.aspx?EntryId=nsNO2lFgDyrUETr5ZWjs8r19tX0%3d','_blank');}
 function bitToast(msg){var t=document.createElement('div');t.textContent=msg;t.style.cssText='position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#0F172A;color:#fff;padding:10px 18px;border-radius:12px;font-size:13px;z-index:10000;';document.body.appendChild(t);setTimeout(function(){t.remove();},2500);}
+
+// NORMATIVIDAD Y DIRECTORIO (solo enlaces oficiales)
+var ND_RJ='https://www.ramajudicial.gov.co/web/direccion-seccional-de-administracion-judicial-de-';
+var ND_DIRECTORIOS=[
+  {t:'📧 Directorio de correos de la Rama Judicial',d:'Correos electrónicos institucionales de despachos y dependencias de todo el país.',u:'https://www.ramajudicial.gov.co/directorio-cuentas-de-correo-electronico'},
+  {t:'📨 Cuentas de correo para notificaciones judiciales',d:'Correos oficiales para recibir notificaciones judiciales de las entidades.',u:'https://www.ramajudicial.gov.co/web/informacion/cuentas-de-correo-para-notificaciones'}
+];
+var ND_CIUDADES=[
+  ['Armenia','Quindío',ND_RJ+'armenia/directorio-telef%C3%B3nico'],
+  ['Barranquilla','Atlántico',ND_RJ+'barranquilla/directorio-seccional-barranquilla%F0%9F%93%9E%F0%9F%93%A7'],
+  ['Bogotá','Distrito Capital',ND_RJ+'bogota/directorio-telef%C3%B3nico-dsaj-de-bogot%C3%A1'],
+  ['Bucaramanga','Santander',ND_RJ+'bucaramanga/directorio-institucional'],
+  ['Cali','Valle del Cauca','https://www.disajcali.gov.co/directorio'],
+  ['Cartagena','Bolívar',ND_RJ+'cartagena'],
+  ['Cúcuta y Arauca','Norte de Santander y Arauca',ND_RJ+'cucuta-arauca/prueba'],
+  ['Cundinamarca y Amazonas','Cundinamarca y Amazonas',ND_RJ+'cundinamarca-y-amazonas/directorio-despachos'],
+  ['Ibagué','Tolima',ND_RJ+'ibague/directorio'],
+  ['Manizales','Caldas',ND_RJ+'manizales'],
+  ['Medellín','Antioquia','https://www.ramajudicial.gov.co/web/direccion-seccional-de-la-judicatura-de-antioquia/directorio-seccional'],
+  ['Montería','Córdoba',ND_RJ+'monteria/directorio'],
+  ['Neiva y Florencia','Huila y Caquetá',ND_RJ+'neiva-florencia'],
+  ['Pasto','Nariño',ND_RJ+'pasto/correos'],
+  ['Pereira','Risaralda',ND_RJ+'pereira/directorio-seccional'],
+  ['Popayán','Cauca',ND_RJ+'popayan'],
+  ['Santa Marta','Magdalena',ND_RJ+'santa-marta/lista-de-contacto-despachos-judiciales.'],
+  ['Sincelejo','Sucre',ND_RJ+'sincelejo/directorio'],
+  ['Tunja','Boyacá',ND_RJ+'tunja/directorio-despachos-judiciales'],
+  ['Valledupar','Cesar',ND_RJ+'valledupar/directorio'],
+  ['Villavicencio','Meta',ND_RJ+'villavicencio/directorio-telef%C3%B3nico-seccional']
+];
+var ND_SECCIONES=[
+  {t:'📜 Normas, leyes y códigos',s:'Textos oficiales y actualizados de la normatividad colombiana.',items:[
+    {t:'SUIN-Juriscol',d:'Sistema Único de Información Normativa del Ministerio de Justicia: leyes, decretos y códigos con su vigencia y las sentencias que los afectan.',u:'https://www.suin-juriscol.gov.co/'},
+    {t:'Secretaría del Senado – Leyes y códigos',d:'Leyes y códigos (CGP, Código Civil, CPACA, Código Sustantivo del Trabajo…) con notas de vigencia y modificaciones.',u:'http://www.secretariasenado.gov.co/senado/basedoc/arbol/1000.html',w:'Si no abre, intenta más tarde: a veces el sitio no responde.'},
+    {t:'Gestor Normativo – Función Pública',d:'Leyes, decretos, conceptos y normas sobre empleo público y administración.',u:'https://www.funcionpublica.gov.co/eva/gestornormativo/'},
+    {t:'Diario Oficial – Imprenta Nacional',d:'Publicación oficial de leyes y decretos: confirma la fecha de entrada en vigencia.',u:'https://svrpubindc.imprenta.gov.co/diario/'},
+    {t:'Normograma DIAN',d:'Normatividad tributaria, aduanera y cambiaria, con doctrina y conceptos de la DIAN.',u:'https://normograma.dian.gov.co/dian/'},
+    {t:'Régimen Legal de Bogotá',d:'Compilación de normas nacionales y distritales de la Secretaría Jurídica Distrital.',u:'https://www.alcaldiabogota.gov.co/sisjur/'},
+    {t:'Acuerdos del Consejo Superior de la Judicatura',d:'Acuerdos y circulares de la Rama Judicial: suspensión de términos, horarios y cierres de despachos.',u:'https://actosadministrativos.ramajudicial.gov.co/'}
+  ]},
+  {t:'⚖️ Jurisprudencia',s:'Sentencias y providencias de las altas cortes.',items:[
+    {t:'Corte Constitucional – Relatoría',d:'Buscador de sentencias de constitucionalidad (C), tutela (T) y unificación (SU).',u:'https://www.corteconstitucional.gov.co/relatoria/'},
+    {t:'Corte Suprema de Justicia',d:'Portal oficial con la relatoría de las salas Civil, Laboral y Penal.',u:'https://cortesuprema.gov.co/'},
+    {t:'Consejo de Estado',d:'Jurisprudencia de lo contencioso administrativo y conceptos de la Sala de Consulta.',u:'https://www.consejodeestado.gov.co/'}
+  ]},
+  {t:'🔎 Consulta de procesos',s:'Para revisar el estado y las actuaciones de un proceso.',items:[
+    {t:'Consulta Nacional Unificada (CPNU)',d:'Consulta de procesos por número de radicación o por nombre de las partes.',u:'https://consultaprocesos.ramajudicial.gov.co/'},
+    {t:'Consulta Justicia XXI',d:'Consulta por ciudad y entidad, para los despachos que usan Justicia XXI.',u:'https://procesos.ramajudicial.gov.co/procesoscs/ConsultaJusticias21.aspx?EntryId=nsNO2lFgDyrUETr5ZWjs8r19tX0%3d'},
+    {t:'SAMAI – Consejo de Estado',d:'Consulta de procesos de la jurisdicción contencioso administrativa.',u:'https://samai.consejodeestado.gov.co/'}
+  ]}
+];
+function ndNorm(s){return (s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');}
+function ndCard(x){
+  return '<a class="nd-card" href="'+esc(x.u)+'" target="_blank" rel="noopener noreferrer"><div class="nd-t">'+esc(x.t)+'</div><div class="nd-d">'+esc(x.d)+'</div>'+(x.w?'<div class="nd-warn">⚠️ '+esc(x.w)+'</div>':'')+'<div class="nd-go">Abrir página oficial ↗</div></a>';
+}
+function renderNormatividad(){
+  var q=ndNorm((document.getElementById('nd-buscar')||{}).value),html='';
+  function ok(){var t=ndNorm(Array.prototype.join.call(arguments,' '));return !q||t.indexOf(q)>-1;}
+  var dirs=ND_DIRECTORIOS.filter(function(x){return ok(x.t,x.d,'directorio correo juzgado');});
+  var cds=ND_CIUDADES.filter(function(c){return ok(c[0],c[1],'directorio juzgado seccional');});
+  if(dirs.length||cds.length){
+    html+='<div class="nd-sec"><h3>📇 Directorio de juzgados</h3><div class="nd-sub">Correos, teléfonos y direcciones de los despachos judiciales.</div>';
+    if(dirs.length)html+='<div class="nd-grid" style="margin-bottom:14px;">'+dirs.map(ndCard).join('')+'</div>';
+    if(cds.length)html+='<div style="font-size:13px;font-weight:700;color:var(--gray-dark);margin:4px 0 10px;">Directorios por ciudad (Direcciones Seccionales)</div><div class="nd-ciudades">'+
+      cds.map(function(c){return '<a class="nd-ciudad" href="'+esc(c[2])+'" target="_blank" rel="noopener noreferrer"><b>'+esc(c[0])+' ↗</b><span>'+esc(c[1])+'</span></a>';}).join('')+'</div>';
+    html+='</div>';
+  }
+  ND_SECCIONES.forEach(function(s){
+    var it=s.items.filter(function(x){return ok(x.t,x.d,s.t);});
+    if(it.length)html+='<div class="nd-sec"><h3>'+s.t+'</h3><div class="nd-sub">'+esc(s.s)+'</div><div class="nd-grid">'+it.map(ndCard).join('')+'</div></div>';
+  });
+  if(!html){document.getElementById('nd-contenido').innerHTML='<div class="empty-state"><p>No hay resultados para tu búsqueda.</p></div>';return;}
+  html+='<div style="font-size:11.5px;color:var(--gray-light);margin-top:6px;">Los enlaces llevan a páginas oficiales del Estado colombiano. Si una entidad cambia su página, avísale al administrador para actualizarla.</div>';
+  document.getElementById('nd-contenido').innerHTML=html;
+}
 
 // AVISO LEGAL
 var TJ_TERMINOS_VER='2026-10-04';
