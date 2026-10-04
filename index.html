@@ -308,6 +308,7 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
 .gcal-chip.inc{background:#DCFCE7;color:#15803D;}
 .gcal-chip.exp{background:#FEE2E2;color:#B91C1C;}
 .gcal-chip.sav{background:#FEF9C3;color:#92400E;}
+.gcal-chip.cre{background:#E0E7FF;color:#3730A3;}
 .gcal-more{font-size:11px;color:var(--blue-mid);font-weight:700;cursor:pointer;}
 /* Side panel */
 .gcal-side{width:260px;flex-shrink:0;border-left:1px solid var(--border);display:none;flex-direction:column;}
@@ -1316,7 +1317,7 @@ function renderScreen(screen){
   if(screen==='movimientos')renderMovimientos();
   else if(screen==='presupuesto'){loadDocumentosData().then(renderDocumentosScreen);}
   else if(screen==='compras'){renderBitacora();loadBitacora().then(renderBitacora);}
-  else if(screen==='orientaciones'){renderTjCal();}
+  else if(screen==='orientaciones'){renderTjCal();loadBitacora().then(renderTjCal);}
   else if(screen==='archivos'){}
   else if(screen==='calendario'){}
   else if(screen==='normatividad'){initChat();}
@@ -3133,24 +3134,13 @@ function verDocumento(id){
   if(!doc||!doc.url)return;
   document.getElementById('visor-titulo').textContent=doc.nombre;
   document.getElementById('visor-link-ext').href=doc.url;
-  var viewUrl=doc.url;
+  var u=doc.url,viewUrl=u,m;
   var ext=(doc.nombre||'').split('.').pop().toLowerCase();
-  if(['doc','docx','xls','xlsx','ppt','pptx'].indexOf(ext)>-1){
-    viewUrl='https://view.officeapps.live.com/op/view.aspx?src='+encodeURIComponent(doc.url);
-  } else if(doc.tipo==='link'){
-    // Google Drive: convert share URL to embeddable preview
-    var gdFile=viewUrl.match(/drive\.google\.com\/file\/d\/([^/?#]+)/);
-    var gdDoc=viewUrl.match(/docs\.google\.com\/(document|spreadsheets|presentation)\/d\/([^/?#]+)/);
-    if(gdFile){
-      viewUrl='https://drive.google.com/file/d/'+gdFile[1]+'/preview';
-    } else if(gdDoc){
-      var type=gdDoc[1];
-      var fileId=gdDoc[2];
-      if(type==='document')viewUrl='https://docs.google.com/document/d/'+fileId+'/preview';
-      else if(type==='spreadsheets')viewUrl='https://docs.google.com/spreadsheets/d/'+fileId+'/preview';
-      else if(type==='presentation')viewUrl='https://docs.google.com/presentation/d/'+fileId+'/preview';
-    }
-  }
+  if((m=u.match(/drive\.google\.com\/drive\/(?:u\/\d+\/)?folders\/([^\/?#]+)/)))viewUrl='https://drive.google.com/embeddedfolderview?id='+m[1]+'#list';
+  else if((m=u.match(/drive\.google\.com\/file\/d\/([^\/?#]+)/)))viewUrl='https://drive.google.com/file/d/'+m[1]+'/preview';
+  else if((m=u.match(/drive\.google\.com\/(?:open|uc)\?.*id=([^&#]+)/)))viewUrl='https://drive.google.com/file/d/'+m[1]+'/preview';
+  else if((m=u.match(/docs\.google\.com\/(document|spreadsheets|presentation)\/d\/([^\/?#]+)/)))viewUrl='https://docs.google.com/'+m[1]+'/d/'+m[2]+'/preview';
+  else if(['doc','docx','xls','xlsx','ppt','pptx'].indexOf(ext)>-1)viewUrl='https://view.officeapps.live.com/op/view.aspx?src='+encodeURIComponent(u);
   document.getElementById('visor-frame').src=viewUrl;
   document.getElementById('modal-visor-doc').style.display='flex';
 }
@@ -3270,23 +3260,24 @@ var _TJ_DIAS=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
 function tjCalEvMap(){
   var today=new Date();today.setHours(0,0,0,0);
   var map={};
-  function addEv(key,ev){if(!map[key])map[key]=[];map[key].push(ev);}
-  // Actuaciones de bitácora
+  function addEv(key,ev){if(!key)return;key=key.slice(0,10);if(!map[key])map[key]=[];map[key].push(ev);}
+  function nom(c){return c.cliente||c.radicacion||'Caso';}
+  ST.casos.forEach(function(c){
+    if(c.created_at)addEv(c.created_at,{tipo:'creado',label:'📁 Creado: '+nom(c),a:{descripcion:'Caso creado'+(c.juzgado?' · '+c.juzgado:'')},c:c});
+  });
   ST.actuaciones.forEach(function(a){
     var c=ST.casos.find(function(x){return x.id===a.caso_id;})||{};
-    var nombre=c.cliente||c.radicacion||'Caso';
     if(a.fecha_vencimiento){
-      var d=new Date(a.fecha_vencimiento+'T00:00:00');
-      var diff=Math.round((d-today)/(86400000));
+      var diff=Math.round((new Date(a.fecha_vencimiento+'T00:00:00')-today)/86400000);
       var tipo=a.cumplida?'cumplida':(diff<0?'vencido':(diff<=7?'proximo':'normal'));
-      addEv(a.fecha_vencimiento,{tipo:tipo,label:nombre+': '+(a.proxima_accion||a.descripcion||'Actuación').substring(0,50),a:a,c:c,key:a.fecha_vencimiento});
+      var ico=a.cumplida?'✅ Cumplido: ':(diff<0?'🔴 Vencido: ':'⚠️ Vence: ');
+      addEv(a.fecha_vencimiento,{tipo:tipo,label:ico+nom(c),a:a,c:c});
     }
-    if(a.fecha&&a.fecha!==a.fecha_vencimiento){
-      addEv(a.fecha,{tipo:'actuacion',label:nombre+': '+(a.descripcion||'Actuación').substring(0,50),a:a,c:c,key:a.fecha});
+    if(a.proxima_accion&&!a.cumplida&&a.fecha&&a.fecha!==a.fecha_vencimiento){
+      addEv(a.fecha,{tipo:'pendiente',label:'⏳ Pendiente: '+nom(c),a:a,c:c});
     }
   });
-  // Eventos manuales
-  _tjCalEventos.forEach(function(ev){addEv(ev.fecha,{tipo:'manual',label:ev.titulo,a:{descripcion:ev.descripcion},c:{},key:ev.fecha,ev:ev});});
+  _tjCalEventos.forEach(function(ev){addEv(ev.fecha,{tipo:'manual',label:'📌 '+ev.titulo,a:{descripcion:ev.descripcion},c:{},ev:ev});});
   return map;
 }
 
@@ -3317,7 +3308,7 @@ function renderTjCal(){
     html+='<div class="gcal-day'+(isToday?' today':'')+sel+'" onclick="tjCalSelDay(\''+key+'\')">';
     html+='<div class="gcal-dn-wrap"><span class="gcal-dn">'+d+'</span></div>';
     evs.slice(0,3).forEach(function(ev){
-      var cls=ev.tipo==='vencido'?'exp':ev.tipo==='proximo'?'sav':ev.tipo==='cumplida'?'inc':'inc';
+      var cls=ev.tipo==='vencido'?'exp':(ev.tipo==='proximo'||ev.tipo==='pendiente')?'sav':ev.tipo==='creado'?'cre':'inc';
       html+='<div class="gcal-chip '+cls+'" title="'+esc(ev.label)+'">'+esc(ev.label)+'</div>';
     });
     if(evs.length>3)html+='<div class="gcal-more">+' +(evs.length-3)+' más</div>';
@@ -3360,7 +3351,7 @@ function tjCalRenderSemana(map){
     var sel=_tjCalSelDay===key?' selected':'';
     html+='<div class="gcal-day'+(isT?' today':'')+sel+'" style="min-height:200px;" onclick="tjCalSelDay(\''+key+'\')">';
     evs.forEach(function(ev){
-      var cls=ev.tipo==='vencido'?'exp':ev.tipo==='proximo'?'sav':ev.tipo==='cumplida'?'inc':'inc';
+      var cls=ev.tipo==='vencido'?'exp':(ev.tipo==='proximo'||ev.tipo==='pendiente')?'sav':ev.tipo==='creado'?'cre':'inc';
       html+='<div class="gcal-chip '+cls+'">'+esc(ev.label)+'</div>';
     });
     html+='</div>';
