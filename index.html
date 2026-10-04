@@ -996,11 +996,11 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
           <select id="cs-categoria"><option value="proceso">Proceso judicial</option><option value="tramite">Trámite (no proceso)</option><option value="curaduria">Curaduría</option></select></div>
         <div class="form-group"><label>Cliente / nombre del caso</label><div class="voz-wrap"><input id="cs-cliente" type="text" placeholder="Ej: Magaly Insuasty"/><button type="button" class="voz-btn" onclick="dictar('cs-cliente',this)">🎤</button></div></div>
         <div class="form-group"><label>Juzgado / entidad</label><div class="voz-wrap"><input id="cs-juzgado" type="text" placeholder="Ej: Juzgado 4 de Pequeñas Causas de Popayán"/><button type="button" class="voz-btn" onclick="dictar('cs-juzgado',this)">🎤</button></div></div>
-        <div class="form-group"><label>Radicación (23 dígitos)</label><input id="cs-radicacion" type="text" placeholder="76001-31-10-011-2016-00149-00" oninput="bitCheckRad()"/><div id="cs-rad-info" style="font-size:12px;margin-top:4px;"></div></div>
-        <div class="form-group"><label>Correo del juzgado</label><input id="cs-correo" type="email" placeholder="j04prpcppn@cendoj.ramajudicial.gov.co"/></div>
+        <div class="form-group"><label>Radicación (23 dígitos)</label><div class="voz-wrap"><input id="cs-radicacion" type="text" placeholder="76001-31-10-011-2016-00149-00" oninput="bitCheckRad()"/><button type="button" class="voz-btn" onclick="dictar('cs-radicacion',this)">🎤</button></div><div id="cs-rad-info" style="font-size:12px;margin-top:4px;"></div></div>
+        <div class="form-group"><label>Correo del juzgado</label><div class="voz-wrap"><input id="cs-correo" type="email" placeholder="j04prpcppn@cendoj.ramajudicial.gov.co"/><button type="button" class="voz-btn" onclick="dictar('cs-correo',this)">🎤</button></div></div>
         <div style="display:flex;gap:10px;">
-          <div class="form-group" style="flex:2;"><label>Teléfono</label><input id="cs-telefono" type="text" placeholder="602 8986868"/></div>
-          <div class="form-group" style="flex:1;"><label>Extensión</label><input id="cs-extension" type="text" placeholder="5301"/></div>
+          <div class="form-group" style="flex:2;"><label>Teléfono</label><div class="voz-wrap"><input id="cs-telefono" type="text" placeholder="602 8986868"/><button type="button" class="voz-btn" onclick="dictar('cs-telefono',this)">🎤</button></div></div>
+          <div class="form-group" style="flex:1;"><label>Extensión</label><div class="voz-wrap"><input id="cs-extension" type="text" placeholder="5301"/><button type="button" class="voz-btn" onclick="dictar('cs-extension',this)">🎤</button></div></div>
         </div>
         <div class="form-group" id="cs-copia-wrap"><label>Última copia del expediente digital</label><input id="cs-copia" type="date"/><div style="font-size:12px;color:var(--gray-light);margin-top:4px;">La app te recordará pedir el link al juzgado 30 días después de esta fecha.</div></div>
         <div class="form-group"><label>Notas / otros datos</label><div class="voz-wrap"><textarea id="cs-notas" rows="2" placeholder="Contactos, funcionarios, datos adicionales..."></textarea><button type="button" class="voz-btn" onclick="dictar('cs-notas',this)">🎤</button></div></div>
@@ -2747,6 +2747,17 @@ function bitAutoVence(){
 
 // Dictado por voz
 var _rec=null,_recBtn=null;
+function vozNormalizar(id,el){
+  var v=el.value||'';
+  if(id==='cs-radicacion'||id==='cs-telefono'||id==='cs-extension'){
+    var d=v.replace(/\D/g,'');
+    if(id==='cs-radicacion'&&d.length===23)d=d.slice(0,5)+'-'+d.slice(5,7)+'-'+d.slice(7,9)+'-'+d.slice(9,12)+'-'+d.slice(12,16)+'-'+d.slice(16,21)+'-'+d.slice(21);
+    el.value=d;
+    if(id==='cs-radicacion'&&typeof bitCheckRad==='function')bitCheckRad();
+  } else if(id==='cs-correo'){
+    el.value=v.toLowerCase().replace(/\s*arroba\s*/g,'@').replace(/\s*(punto|\.)\s*/g,'.').replace(/\s*(guion bajo|guión bajo)\s*/g,'_').replace(/\s*(guion|guión)\s*/g,'-').replace(/\s+/g,'').replace(/[áä]/g,'a').replace(/[éë]/g,'e').replace(/[íï]/g,'i').replace(/[óö]/g,'o').replace(/[úü]/g,'u');
+  }
+}
 function dictar(fieldId,btn){
   var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   if(!SR){alert('Tu navegador no soporta dictado por voz. Usa Google Chrome o Microsoft Edge.');return;}
@@ -2762,7 +2773,7 @@ function dictar(fieldId,btn){
   };
   rec.onerror=function(e){if(e.error==='not-allowed')alert('Debes permitir el acceso al micrófono.');};
   rec.onend=function(){btn.classList.remove('rec');btn.textContent='🎤';if(_rec===rec){_rec=null;_recBtn=null;}
-    if(fieldId==='ac-descripcion'||fieldId==='ac-proxima')bitAutoVence();};
+    vozNormalizar(fieldId,el);if(fieldId==='ac-descripcion'||fieldId==='ac-proxima')bitAutoVence();};
   rec.start();
 }
 
