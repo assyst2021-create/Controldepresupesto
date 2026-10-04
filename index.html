@@ -2744,13 +2744,12 @@ function bitExpPendientes(){return ST.casos.filter(bitExpPendiente);}
 function bitPedirLink(id){
   var c=ST.casos.find(function(x){return x.id===id;});if(!c)return;
   var rad=bitRadFmt(c.radicacion);
-  var firma=(ST.userName&&ST.userName.indexOf('@')<0)?ST.userName:'';
   var cuerpo='Señores\n'+(c.juzgado?c.juzgado.toUpperCase()+'\n':'')+'E. S. D.\n\n'+
     'REFERENCIA: Solicitud de link del expediente digital\n'+
     (rad?'RADICADO: '+rad+'\n':'')+'\n'+
     'Comedidamente y con el acostumbrado respeto, me permito solicitar el link del expediente digital del proceso de la referencia. Lo anterior, a fin de consultar algunas piezas procesales.\n\n'+
     'Agradezco de antemano la atención prestada.\n\n'+
-    'Atentamente,\n\n\n'+(firma?firma+'\n':'')+'C.C. No. \nT.P. No. ';
+    'Atentamente,\n';
   window.location.href='mailto:'+(c.correo||'')+'?subject='+encodeURIComponent('Solicitud link expediente digital'+(rad?' - Rad. '+rad:''))+'&body='+encodeURIComponent(cuerpo);
 }
 async function bitCopiaHoy(id){
@@ -3263,12 +3262,18 @@ function bitFilaHTML(c){
 }
 function bitExpHTML(c){
   if((c.categoria||'proceso')!=='proceso'||c.terminado)return '';
-  var d=bitExpDias(c),pend=bitExpPendiente(c);
-  var txt=d===null?'Sin registro de copia':'Última copia hace '+d+' día'+(d===1?'':'s')+(pend?'':' · faltan '+(BIT_DIAS_EXPEDIENTE-d));
-  return '<div style="margin-top:8px;padding:8px 10px;border-radius:10px;background:'+(pend?'#ECFEFF':'#F8FAFC')+';border:1px solid '+(pend?'#67E8F9':'#E2E8F0')+';">'+
-    '<div style="font-size:11.5px;font-weight:700;color:'+(pend?'#0E7490':'var(--gray-light)')+';">📂 Expediente: '+txt+'</div>'+
+  var d=bitExpDias(c),pend=bitExpPendiente(c),hoy=d===0,falta=d===null?0:Math.max(0,BIT_DIAS_EXPEDIENTE-d);
+  var titulo=pend?'📂 Toca pedir el link del expediente':'📂 Faltan '+falta+' día'+(falta===1?'':'s')+' para pedir el link';
+  var sub=d===null?'Sin registro de copia':'Última copia: '+bitFechaTxt(c.ultima_copia_expediente)+(hoy?' (hoy)':' · hace '+d+' día'+(d===1?'':'s'));
+  var pct=d===null?100:Math.min(100,Math.round(d*100/BIT_DIAS_EXPEDIENTE));
+  var col=pend?'#0E7490':'#15803D';
+  return '<div style="margin-top:8px;padding:9px 10px;border-radius:10px;background:'+(pend?'#ECFEFF':'#F0FDF4')+';border:1px solid '+(pend?'#67E8F9':'#BBF7D0')+';">'+
+    '<div style="font-size:12.5px;font-weight:800;color:'+col+';">'+titulo+'</div>'+
+    '<div style="font-size:11px;color:#64748B;margin-top:2px;">'+sub+'</div>'+
+    '<div style="height:5px;background:#E2E8F0;border-radius:4px;margin:6px 0 4px;overflow:hidden;"><div style="height:100%;width:'+pct+'%;background:'+col+';"></div></div>'+
     '<button class="bit-mini" onclick="bitPedirLink(\''+c.id+'\')">✉️ Pedir link</button>'+
-    '<button class="bit-mini" onclick="bitCopiaHoy(\''+c.id+'\')">✓ Copié hoy</button></div>';
+    (hoy?'<button class="bit-mini" disabled style="background:#16A34A;color:#fff;border-color:#16A34A;cursor:default;">✅ Copiado hoy</button>'
+        :'<button class="bit-mini" onclick="bitCopiaHoy(\''+c.id+'\')">✓ Copié hoy</button>')+'</div>';
 }
 function bitCopiar(t){if(navigator.clipboard)navigator.clipboard.writeText(t);bitToast('Radicación copiada: '+t);}
 function bitConsultarRama(rad){if(navigator.clipboard)navigator.clipboard.writeText(rad);bitToast('Radicación copiada. Escoge ciudad y entidad, y pégala con Ctrl+V');window.open('https://procesos.ramajudicial.gov.co/procesoscs/ConsultaJusticias21.aspx?EntryId=nsNO2lFgDyrUETr5ZWjs8r19tX0%3d','_blank');}
