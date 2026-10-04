@@ -3472,6 +3472,11 @@ async function tjVerificarAceptacion(){
 function bitValidarCaso(rec){
   var w=[],proc=rec.categoria==='proceso',hoy=bitHoy();
   if(rec.cliente&&rec.cliente.length<4)w.push('El nombre del cliente es muy corto.');
+  [['cliente','nombre del cliente'],['juzgado','juzgado']].forEach(function(p){
+    var v=rec[p[0]]||'',m=v.match(/(^|\s)([A-Za-zÁÉÍÓÚÑáéíóúñ]{3,})\s+\2(?=\s|$)/i);
+    if(m)w.push('El '+p[1]+' tiene una palabra repetida: "'+m[2]+' '+m[2]+'". ¿Quedó duplicada al dictar?');
+  });
+  if(rec.cliente&&/^[a-záéíóúñ]/.test(rec.cliente))w.push('El nombre del cliente empieza en minúscula: "'+rec.cliente.split(' ')[0]+'".');
   if(proc){
     if(!rec.juzgado)w.push('Falta el juzgado o entidad.');
     else if(!/juzgado|tribunal|corte|consejo|sala|superintendencia|comisar|fiscal|notar|inspecci|despacho|centro de servicios|oficina|alcald|jurisdicci/i.test(rec.juzgado))w.push('Revisa el juzgado: "'+rec.juzgado+'" no parece el nombre de un despacho (ej: Juzgado 1 Civil Municipal de Cali).');
