@@ -469,6 +469,23 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
 .nd-ciudad b{font-size:14px;color:#1E40AF;}
 .nd-ciudad span{font-size:11px;color:#64748B;}
 .nd-ciudad:hover b,.nd-ciudad:hover span{color:#fff;}
+/* HONORARIOS */
+.hon-smlmv{display:flex;align-items:center;justify-content:space-between;gap:12px;background:#fff;border:1px solid var(--border);border-radius:16px;padding:12px 16px;margin-bottom:14px;}
+.hon-filtros{display:grid;grid-template-columns:2fr 1.2fr 1fr 1fr 1.3fr;gap:10px;margin-bottom:18px;}
+@media(max-width:900px){.hon-filtros{grid-template-columns:1fr 1fr;}.hon-filtros input[type=search]{grid-column:1/-1;}}
+.hon-area-t{font-size:15px;font-weight:800;color:var(--gray-dark);margin:18px 0 10px;display:flex;align-items:center;gap:8px;}
+.hon-area-t span{font-size:11px;font-weight:700;color:#64748B;background:#F1F5F9;border-radius:10px;padding:2px 8px;}
+.hon-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;}
+.hon-card{background:#fff;border:1px solid var(--border);border-radius:16px;padding:14px 16px;cursor:pointer;display:flex;flex-direction:column;gap:6px;transition:all .15s;position:relative;}
+.hon-card:hover{border-color:var(--blue-light);box-shadow:0 6px 18px rgba(37,99,235,.12);transform:translateY(-2px);}
+.hon-card .hs{font-size:14px;font-weight:700;color:var(--gray-dark);padding-right:44px;}
+.hon-card .hd{font-size:12px;color:var(--gray);}
+.hon-card .hp{font-size:20px;font-weight:800;color:#15803D;margin-top:auto;}
+.hon-card .hp.na{font-size:13px;font-weight:600;color:#94A3B8;}
+.hon-card .hu{font-size:11.5px;color:#64748B;font-weight:600;}
+.hon-card .hn{font-size:11px;color:#B45309;}
+.hon-card .hadm{position:absolute;top:10px;right:10px;display:flex;gap:4px;}
+.hon-res{background:#F0FDF4;border:1px solid #BBF7D0;border-radius:12px;padding:12px 14px;font-size:13px;color:#166534;line-height:1.7;margin-bottom:12px;}
 /* CHAT */
 .chat-msg{display:flex;flex-direction:column;max-width:70%;}
 .chat-msg.mine{align-self:flex-end;align-items:flex-end;}
@@ -1160,12 +1177,85 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
 
     <!-- HONORARIOS ABOGADO -->
     <div id="screen-calendario" class="screen" style="display:none;">
-      <div class="main-header"><h2>Honorarios abogado</h2></div>
+      <div class="main-header">
+        <h2>Honorarios abogado</h2>
+        <div id="hon-admin-btns" style="display:none;gap:8px;flex-wrap:wrap;">
+          <button class="btn btn-ghost" onclick="honDescargarPlantilla()">📤 Descargar Excel</button>
+          <button class="btn btn-ghost" onclick="honAbrirPegar()">📥 Pegar desde Excel</button>
+          <button class="btn btn-primary" onclick="honAbrirEditar()">+ Servicio</button>
+        </div>
+      </div>
       <div class="main-body">
-        <div class="empty-state" style="margin-top:60px;">
-          <div class="e-icon">💰</div>
-          <p style="font-size:15px;font-weight:600;color:#475569;">Honorarios abogado</p>
-          <p style="font-size:13px;color:#94A3B8;margin-top:6px;">Aquí podrás gestionar los honorarios de tus casos.</p>
+        <div class="hon-smlmv">
+          <div><div style="font-size:12px;color:#64748B;font-weight:600;">Salario mínimo (SMLMV) usado para calcular</div>
+          <div id="hon-smlmv-val" style="font-size:20px;font-weight:800;color:#1E293B;">—</div></div>
+          <button id="hon-smlmv-edit" class="btn btn-ghost" style="display:none;padding:8px 14px;" onclick="honEditarSmlmv()">✏️ Cambiar</button>
+        </div>
+        <div id="hon-pendientes" style="display:none;background:#FFFBEB;border:1px solid #FDE68A;border-radius:12px;padding:10px 14px;font-size:13px;color:#92400E;margin-bottom:14px;"></div>
+        <div class="hon-filtros">
+          <input id="hon-buscar" type="search" placeholder="🔎 Buscar servicio (ej: divorcio, sucesión, tutela)…" oninput="renderHonorarios()"/>
+          <select id="hon-area" onchange="renderHonorarios()"><option value="">Todas las áreas</option></select>
+          <input id="hon-desde" type="number" min="0" placeholder="Desde $" oninput="renderHonorarios()"/>
+          <input id="hon-hasta" type="number" min="0" placeholder="Hasta $" oninput="renderHonorarios()"/>
+          <select id="hon-orden" onchange="renderHonorarios()"><option value="area">Ordenar por área</option><option value="asc">Precio: menor a mayor</option><option value="desc">Precio: mayor a menor</option><option value="nombre">Nombre A-Z</option></select>
+        </div>
+        <div id="hon-lista"></div>
+        <p style="font-size:11.5px;color:var(--gray-light);margin-top:14px;">Tarifario de referencia de Comunidad TuJurídico: valores mínimos sugeridos. Cada abogado acuerda el valor final con su cliente según la complejidad, la duración y la cuantía del asunto. No incluye gastos del proceso.</p>
+      </div>
+
+      <!-- COTIZADOR -->
+      <div id="modal-hon-cot" class="modal-overlay" onclick="if(event.target===this)this.style.display='none'">
+        <div class="modal-box" style="max-width:520px;">
+          <div class="modal-header"><h3 id="hc-titulo">Cotización</h3><button class="modal-close" onclick="document.getElementById('modal-hon-cot').style.display='none'">&#x2715;</button></div>
+          <div id="hc-ref" style="font-size:13px;color:#64748B;margin-bottom:12px;"></div>
+          <div class="form-group"><label>Cliente (opcional)</label><input id="hc-cliente" type="text" placeholder="Ej: Juan Pérez" oninput="honCalcCot()"/></div>
+          <div class="form-group" id="hc-base-wrap" style="display:none;"><label>Valor estimado del resultado del proceso ($)</label><input id="hc-base" type="number" min="0" placeholder="Ej: 50000000" oninput="honCalcCot()"/></div>
+          <div class="form-group"><label>Honorarios a cobrar ($)</label><input id="hc-valor" type="number" min="0" oninput="_hcManual=true;honCalcCot()"/><div id="hc-min" style="font-size:12px;margin-top:4px;font-weight:600;"></div></div>
+          <div class="modal-row">
+            <div class="form-group"><label>Anticipo (%)</label><input id="hc-anticipo" type="number" min="0" max="100" value="30" oninput="honCalcCot()"/></div>
+            <div class="form-group"><label>Cuotas del saldo</label><input id="hc-cuotas" type="number" min="1" max="60" value="3" oninput="honCalcCot()"/></div>
+          </div>
+          <div id="hc-res" class="hon-res"></div>
+          <div class="modal-actions">
+            <button class="btn btn-ghost" onclick="honCopiarCot()">📋 Copiar</button>
+            <button class="btn btn-primary" onclick="honWhatsappCot()">💬 WhatsApp</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- EDITAR SERVICIO (admin) -->
+      <div id="modal-hon-edit" class="modal-overlay" onclick="if(event.target===this)this.style.display='none'">
+        <div class="modal-box" style="max-width:520px;">
+          <div class="modal-header"><h3 id="he-titulo">Servicio</h3><button class="modal-close" onclick="document.getElementById('modal-hon-edit').style.display='none'">&#x2715;</button></div>
+          <div class="form-group"><label>Área</label><input id="he-area" list="he-areas" type="text" placeholder="Ej: Familia"/><datalist id="he-areas"></datalist></div>
+          <div class="form-group"><label>Servicio</label><input id="he-servicio" type="text" placeholder="Ej: Divorcio de mutuo acuerdo"/></div>
+          <div class="form-group"><label>Descripción (opcional)</label><input id="he-desc" type="text" placeholder="Qué incluye"/></div>
+          <div class="modal-row">
+            <div class="form-group"><label>Unidad</label><select id="he-unidad"><option value="smlmv">Salarios mínimos (SMLMV)</option><option value="porcentaje">% del resultado</option><option value="pesos">Pesos ($)</option></select></div>
+            <div class="form-group"><label>Valor mínimo</label><input id="he-min" type="number" min="0" step="0.1" placeholder="Ej: 5"/></div>
+          </div>
+          <div class="form-group"><label>Valor máximo (opcional, si es un rango)</label><input id="he-max" type="number" min="0" step="0.1"/></div>
+          <div class="form-group"><label>Nota (opcional)</label><input id="he-nota" type="text" placeholder="Ej: +50% si el bien supera $500 millones"/></div>
+          <div id="he-error" class="error-msg" style="display:none;"></div>
+          <div class="modal-actions">
+            <button class="btn btn-ghost" id="he-del" style="margin-right:auto;color:#DC2626;display:none;" onclick="honBorrar()">Eliminar</button>
+            <button class="btn btn-ghost" onclick="document.getElementById('modal-hon-edit').style.display='none'">Cancelar</button>
+            <button class="btn btn-primary" onclick="honGuardar()">Guardar</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- PEGAR DESDE EXCEL (admin) -->
+      <div id="modal-hon-pegar" class="modal-overlay" onclick="if(event.target===this)this.style.display='none'">
+        <div class="modal-box" style="max-width:640px;">
+          <div class="modal-header"><h3>📥 Pegar desde Excel</h3><button class="modal-close" onclick="document.getElementById('modal-hon-pegar').style.display='none'">&#x2715;</button></div>
+          <p style="font-size:13px;color:#475569;margin-bottom:10px;line-height:1.5;">Copia las filas en Excel y pégalas aquí. Columnas en este orden: <b>Área · Servicio · Unidad (SMLMV, % o $) · Valor mínimo · Valor máximo · Nota</b>. Si el servicio ya existe en esa área, se actualiza su precio; si no, se crea. Tip: usa <b>📤 Descargar Excel</b> para obtener la lista actual, llénala y pégala de vuelta.</p>
+          <textarea id="hp-texto" rows="10" style="font-family:monospace;font-size:12px;" placeholder="Familia	Divorcio de mutuo acuerdo	SMLMV	3		"></textarea>
+          <div id="hp-res" style="font-size:13px;margin-top:8px;"></div>
+          <div class="modal-actions" style="margin-top:12px;">
+            <button class="btn btn-ghost" onclick="document.getElementById('modal-hon-pegar').style.display='none'">Cerrar</button>
+            <button class="btn btn-primary" onclick="honImportar()">Cargar</button>
+          </div>
         </div>
       </div>
     </div>
@@ -1407,7 +1497,7 @@ function renderScreen(screen){
   else if(screen==='compras'){renderBitacora();loadBitacora().then(renderBitacora);}
   else if(screen==='orientaciones'){renderTjCal();Promise.all([loadBitacora(),loadTjCalEventos(),loadInhabiles()]).then(renderTjCal);}
   else if(screen==='archivos'){renderNormatividad();}
-  else if(screen==='calendario'){}
+  else if(screen==='calendario'){renderHonorarios();loadHonorarios().then(renderHonorarios);}
   else if(screen==='normatividad'){initChat();}
   else if(screen==='ia'){}
   else if(screen==='metas')renderMetas();
@@ -3400,6 +3490,189 @@ function renderNormatividad(){
   if(!html){document.getElementById('nd-contenido').innerHTML='<div class="empty-state"><p>No hay resultados para tu búsqueda.</p></div>';return;}
   html+='<div style="font-size:11.5px;color:var(--gray-light);margin-top:6px;">Los enlaces llevan a páginas oficiales del Estado colombiano. Si una entidad cambia su página, avísale al administrador para actualizarla.</div>';
   document.getElementById('nd-contenido').innerHTML=html;
+}
+
+// HONORARIOS (tarifario propio de la comunidad; precios los define el administrador)
+ST.tarifario=[];ST.smlmv=null;
+var _hcItem=null,_hcManual=false,_heId=null;
+function fmtCOP(n){return '$ '+Math.round(n).toLocaleString('es-CO');}
+function honNorm(s){return (s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim();}
+async function loadHonorarios(){
+  var r=await _sb.from('tarifario').select('*').order('area').order('orden').order('servicio');
+  if(!r.error)ST.tarifario=r.data||[];else console.error('tarifario:',r.error);
+  var c=await _sb.from('app_config').select('valor').eq('clave','smlmv').maybeSingle();
+  if(!c.error&&c.data)ST.smlmv=parseFloat(c.data.valor)||null;
+}
+function honPesos(t){
+  if(t.valor_min==null||t.unidad==='porcentaje')return null;
+  if(t.unidad==='pesos')return [Number(t.valor_min),t.valor_max!=null?Number(t.valor_max):null];
+  if(!ST.smlmv)return null;
+  return [t.valor_min*ST.smlmv,t.valor_max!=null?t.valor_max*ST.smlmv:null];
+}
+function honNum(v){return (Math.round(Number(v)*100)/100).toLocaleString('es-CO');}
+function honPrecioHTML(t){
+  if(t.valor_min==null)return '<div class="hp na">Precio por definir</div>';
+  var rango=honNum(t.valor_min)+(t.valor_max!=null?' – '+honNum(t.valor_max):'');
+  if(t.unidad==='porcentaje')return '<div class="hp">'+rango+' %</div><div class="hu">Mínimo · sobre el resultado del proceso</div>';
+  var p=honPesos(t);
+  if(t.unidad==='smlmv'&&!p)return '<div class="hp">'+rango+' SMLMV</div><div class="hu">Configura el salario mínimo para ver el valor en pesos</div>';
+  return '<div class="hp">'+fmtCOP(p[0])+(p[1]!=null?' – '+fmtCOP(p[1]):'')+'</div><div class="hu">Mínimo'+(t.unidad==='smlmv'?' · '+rango+' SMLMV':'')+'</div>';
+}
+function renderHonorarios(){
+  var adm=!!ST.isAdmin;
+  document.getElementById('hon-admin-btns').style.display=adm?'flex':'none';
+  document.getElementById('hon-smlmv-edit').style.display=adm?'inline-flex':'none';
+  document.getElementById('hon-smlmv-val').textContent=ST.smlmv?fmtCOP(ST.smlmv):(adm?'Sin configurar: pulsa ✏️ Cambiar':'Sin configurar');
+  var areas=[];ST.tarifario.forEach(function(t){if(areas.indexOf(t.area)<0)areas.push(t.area);});
+  var sel=document.getElementById('hon-area'),cur=sel.value;
+  sel.innerHTML='<option value="">Todas las áreas</option>'+areas.map(function(a){return '<option'+(a===cur?' selected':'')+'>'+esc(a)+'</option>';}).join('');
+  var pend=ST.tarifario.filter(function(t){return t.valor_min==null;}).length,pb=document.getElementById('hon-pendientes');
+  pb.style.display=adm&&pend?'block':'none';
+  if(adm&&pend)pb.innerHTML='✏️ Faltan <b>'+pend+'</b> precios por definir. Edítalos uno a uno con el lápiz o cárgalos todos con <b>📥 Pegar desde Excel</b>.';
+  var q=honNorm(document.getElementById('hon-buscar').value),area=sel.value;
+  var desde=parseFloat(document.getElementById('hon-desde').value),hasta=parseFloat(document.getElementById('hon-hasta').value),orden=document.getElementById('hon-orden').value;
+  var lista=ST.tarifario.filter(function(t){
+    if(area&&t.area!==area)return false;
+    if(q&&honNorm(t.area+' '+t.servicio+' '+(t.descripcion||'')+' '+(t.nota||'')).indexOf(q)<0)return false;
+    if(!isNaN(desde)||!isNaN(hasta)){var p=honPesos(t);if(!p)return false;if(!isNaN(desde)&&p[0]<desde)return false;if(!isNaN(hasta)&&p[0]>hasta)return false;}
+    return true;
+  });
+  function pv(t){var p=honPesos(t);return p?p[0]:null;}
+  if(orden==='asc'||orden==='desc')lista.sort(function(a,b){var x=pv(a),y=pv(b);if(x==null)return 1;if(y==null)return -1;return orden==='asc'?x-y:y-x;});
+  else if(orden==='nombre')lista.sort(function(a,b){return a.servicio.localeCompare(b.servicio,'es');});
+  function card(t){
+    return '<div class="hon-card" onclick="honAbrirCot(\''+t.id+'\')">'+
+      (adm?'<div class="hadm"><button class="bit-mini" style="margin:0;" title="Editar" onclick="event.stopPropagation();honAbrirEditar(\''+t.id+'\')">✏️</button></div>':'')+
+      '<div class="hs">'+esc(t.servicio)+'</div>'+(t.descripcion?'<div class="hd">'+esc(t.descripcion)+'</div>':'')+
+      honPrecioHTML(t)+(t.nota?'<div class="hn">ℹ️ '+esc(t.nota)+'</div>':'')+'</div>';
+  }
+  var html='';
+  if(!lista.length)html='<div class="empty-state"><div class="e-icon">💰</div><p>'+(ST.tarifario.length?'No hay servicios con esos filtros.':'Todavía no hay servicios en el tarifario.')+'</p></div>';
+  else if(orden==='area'){
+    var grupos={};lista.forEach(function(t){(grupos[t.area]=grupos[t.area]||[]).push(t);});
+    Object.keys(grupos).forEach(function(a){html+='<div class="hon-area-t">'+esc(a)+' <span>'+grupos[a].length+'</span></div><div class="hon-grid">'+grupos[a].map(card).join('')+'</div>';});
+  } else html='<div class="hon-grid">'+lista.map(card).join('')+'</div>';
+  document.getElementById('hon-lista').innerHTML=html;
+}
+// Cotizador
+function honAbrirCot(id){
+  var t=ST.tarifario.find(function(x){return x.id===id;});if(!t)return;
+  _hcItem=t;_hcManual=false;
+  document.getElementById('hc-titulo').textContent=t.servicio;
+  document.getElementById('hc-ref').innerHTML=esc(t.area)+(t.valor_min!=null?' · Referencia: '+honPrecioHTML(t).replace(/<[^>]+>/g,' ').replace(/\s+/g,' '):' · Sin precio de referencia');
+  var pct=t.unidad==='porcentaje';
+  document.getElementById('hc-base-wrap').style.display=pct?'block':'none';
+  document.getElementById('hc-base').value='';
+  var p=honPesos(t);
+  document.getElementById('hc-valor').value=p?Math.round(p[0]):'';
+  document.getElementById('modal-hon-cot').style.display='flex';
+  honCalcCot();
+}
+function honCotTexto(){
+  var t=_hcItem,v=parseFloat(document.getElementById('hc-valor').value)||0,an=Math.min(100,Math.max(0,parseFloat(document.getElementById('hc-anticipo').value)||0)),n=Math.max(1,parseInt(document.getElementById('hc-cuotas').value)||1);
+  var cli=document.getElementById('hc-cliente').value.trim(),antV=v*an/100,saldo=v-antV,cuota=saldo/n;
+  var firma=(ST.userName&&ST.userName.indexOf('@')<0)?ST.userName:'';
+  return {v:v,antV:antV,saldo:saldo,cuota:cuota,n:n,an:an,txt:
+    'COTIZACIÓN DE HONORARIOS PROFESIONALES\n\n'+(cli?'Cliente: '+cli+'\n':'')+'Servicio: '+t.servicio+' ('+t.area+')\n'+
+    'Valor de los honorarios: '+fmtCOP(v)+'\n\nForma de pago:\n'+
+    (an>0?'• Anticipo ('+an+'%) al otorgar el poder: '+fmtCOP(antV)+'\n':'')+
+    (saldo>0?'• Saldo: '+fmtCOP(saldo)+(n>1?' en '+n+' cuotas de '+fmtCOP(cuota):'')+'\n':'')+
+    '\nNo incluye gastos del proceso (copias, notificaciones, publicaciones, peritos, pólizas ni viáticos), que corren por cuenta del cliente.'+
+    (firma?'\n\n'+firma:'')};
+}
+function honCalcCot(){
+  var t=_hcItem;if(!t)return;
+  var vEl=document.getElementById('hc-valor');
+  if(t.unidad==='porcentaje'&&!_hcManual){var b=parseFloat(document.getElementById('hc-base').value);vEl.value=(b&&t.valor_min!=null)?Math.round(b*t.valor_min/100):'';}
+  var c=honCotTexto(),p=honPesos(t),minEl=document.getElementById('hc-min');
+  var minRef=p?p[0]:(t.unidad==='porcentaje'&&t.valor_min!=null?(parseFloat(document.getElementById('hc-base').value)||0)*t.valor_min/100:null);
+  if(minRef&&c.v>0&&c.v<minRef-1){minEl.style.color='#DC2626';minEl.textContent='⚠️ Está por debajo del mínimo de referencia ('+fmtCOP(minRef)+').';}
+  else if(minRef&&c.v>0){minEl.style.color='#15803D';minEl.textContent='✓ Dentro del tarifario de referencia.';}
+  else minEl.textContent='';
+  document.getElementById('hc-res').innerHTML=c.v>0?
+    '<b>Total honorarios: '+fmtCOP(c.v)+'</b><br>'+(c.an>0?'Anticipo ('+c.an+'%): '+fmtCOP(c.antV)+'<br>':'')+(c.saldo>0?'Saldo: '+fmtCOP(c.saldo)+(c.n>1?' en '+c.n+' cuotas de '+fmtCOP(c.cuota):''):'')
+    :'Escribe el valor de los honorarios'+(t.unidad==='porcentaje'?' o el valor estimado del resultado':'')+'.';
+}
+function honCopiarCot(){var c=honCotTexto();if(!c.v)return;if(navigator.clipboard)navigator.clipboard.writeText(c.txt);bitToast('Cotización copiada');}
+function honWhatsappCot(){var c=honCotTexto();if(!c.v)return;window.open('https://wa.me/?text='+encodeURIComponent(c.txt),'_blank','noopener');}
+// Administración del tarifario
+function honAbrirEditar(id){
+  if(!ST.isAdmin)return;
+  _heId=id||null;var t=id?ST.tarifario.find(function(x){return x.id===id;}):{};
+  document.getElementById('he-titulo').textContent=id?'Editar servicio':'Nuevo servicio';
+  document.getElementById('he-area').value=t.area||document.getElementById('hon-area').value||'';
+  document.getElementById('he-servicio').value=t.servicio||'';
+  document.getElementById('he-desc').value=t.descripcion||'';
+  document.getElementById('he-unidad').value=t.unidad||'smlmv';
+  document.getElementById('he-min').value=t.valor_min!=null?t.valor_min:'';
+  document.getElementById('he-max').value=t.valor_max!=null?t.valor_max:'';
+  document.getElementById('he-nota').value=t.nota||'';
+  var areas=[];ST.tarifario.forEach(function(x){if(areas.indexOf(x.area)<0)areas.push(x.area);});
+  document.getElementById('he-areas').innerHTML=areas.map(function(a){return '<option value="'+esc(a)+'">';}).join('');
+  document.getElementById('he-del').style.display=id?'inline-flex':'none';
+  document.getElementById('he-error').style.display='none';
+  document.getElementById('modal-hon-edit').style.display='flex';
+}
+async function honGuardar(){
+  var err=document.getElementById('he-error');err.style.display='none';
+  var mn=document.getElementById('he-min').value,mx=document.getElementById('he-max').value;
+  var rec={area:document.getElementById('he-area').value.trim(),servicio:document.getElementById('he-servicio').value.trim(),
+    descripcion:document.getElementById('he-desc').value.trim()||null,unidad:document.getElementById('he-unidad').value,
+    valor_min:mn===''?null:parseFloat(mn),valor_max:mx===''?null:parseFloat(mx),nota:document.getElementById('he-nota').value.trim()||null};
+  if(!rec.area||!rec.servicio){err.textContent='Escribe el área y el nombre del servicio.';err.style.display='block';return;}
+  if(rec.valor_min!=null&&rec.valor_max!=null&&rec.valor_max<rec.valor_min){err.textContent='El valor máximo no puede ser menor que el mínimo.';err.style.display='block';return;}
+  var r=_heId?await _sb.from('tarifario').update(rec).eq('id',_heId).select().single():await _sb.from('tarifario').insert(rec).select().single();
+  if(r.error){err.textContent='Error: '+r.error.message;err.style.display='block';return;}
+  if(_heId)ST.tarifario=ST.tarifario.map(function(x){return x.id===_heId?r.data:x;});else ST.tarifario.push(r.data);
+  document.getElementById('modal-hon-edit').style.display='none';renderHonorarios();
+}
+async function honBorrar(){
+  if(!_heId||!confirm('¿Eliminar este servicio del tarifario?'))return;
+  var r=await _sb.from('tarifario').delete().eq('id',_heId);
+  if(r.error){alert('Error: '+r.error.message);return;}
+  ST.tarifario=ST.tarifario.filter(function(x){return x.id!==_heId;});
+  document.getElementById('modal-hon-edit').style.display='none';renderHonorarios();
+}
+async function honEditarSmlmv(){
+  var v=prompt('Valor del salario mínimo mensual legal vigente (solo números, sin puntos):',ST.smlmv||'');
+  if(v===null)return;var n=parseFloat(String(v).replace(/[^\d]/g,''));
+  if(!n||n<100000){alert('Escribe un valor válido, por ejemplo 1423500.');return;}
+  var r=await _sb.from('app_config').upsert({clave:'smlmv',valor:String(n)});
+  if(r.error){alert('Error: '+r.error.message);return;}
+  ST.smlmv=n;renderHonorarios();
+}
+function honDescargarPlantilla(){
+  var u={smlmv:'SMLMV',porcentaje:'%',pesos:'$'};
+  var filas=[['Área','Servicio','Unidad','Valor mínimo','Valor máximo','Nota']].concat(ST.tarifario.map(function(t){return [t.area,t.servicio,u[t.unidad]||'SMLMV',t.valor_min!=null?String(t.valor_min).replace('.',','):'',t.valor_max!=null?String(t.valor_max).replace('.',','):'',t.nota||''];}));
+  var csv='﻿'+filas.map(function(f){return f.map(function(c){c=String(c);return /[;"\n]/.test(c)?'"'+c.replace(/"/g,'""')+'"':c;}).join(';');}).join('\r\n');
+  var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download='tarifario_tujuridico.csv';document.body.appendChild(a);a.click();a.remove();
+}
+function honAbrirPegar(){document.getElementById('hp-texto').value='';document.getElementById('hp-res').textContent='';document.getElementById('modal-hon-pegar').style.display='flex';}
+function honParseNum(s){
+  s=String(s||'').replace(/[\s$%]/g,'');if(!s)return null;
+  if(s.indexOf(',')>-1&&s.indexOf('.')>-1)s=s.replace(/\./g,'').replace(',','.');
+  else if(s.indexOf(',')>-1)s=s.replace(',','.');
+  else if(/^\d{1,3}(\.\d{3})+$/.test(s))s=s.replace(/\./g,'');
+  var n=parseFloat(s);return isNaN(n)?null:n;
+}
+async function honImportar(){
+  var lineas=document.getElementById('hp-texto').value.split(/\r?\n/).filter(function(l){return l.trim();});
+  var res=document.getElementById('hp-res'),nuevos=0,act=0,errores=[];
+  res.style.color='#475569';res.textContent='Cargando…';
+  for(var i=0;i<lineas.length;i++){
+    var c=lineas[i].split(lineas[i].indexOf('\t')>-1?'\t':';').map(function(x){return x.replace(/^"|"$/g,'').trim();});
+    if(i===0&&/^[áa]rea$/i.test(c[0]))continue;
+    if(!c[0]||!c[1]){errores.push('Fila '+(i+1)+': falta área o servicio');continue;}
+    var un=/%|porc/i.test(c[2]||'')?'porcentaje':/\$|peso/i.test(c[2]||'')?'pesos':'smlmv';
+    var rec={area:c[0],servicio:c[1],unidad:un,valor_min:honParseNum(c[3]),valor_max:honParseNum(c[4]),nota:c[5]||null};
+    var ex=ST.tarifario.find(function(t){return honNorm(t.area)===honNorm(rec.area)&&honNorm(t.servicio)===honNorm(rec.servicio);});
+    var r=ex?await _sb.from('tarifario').update(rec).eq('id',ex.id).select().single():await _sb.from('tarifario').insert(rec).select().single();
+    if(r.error){errores.push('Fila '+(i+1)+': '+r.error.message);continue;}
+    if(ex){ST.tarifario=ST.tarifario.map(function(t){return t.id===ex.id?r.data:t;});act++;}else{ST.tarifario.push(r.data);nuevos++;}
+  }
+  res.style.color=errores.length?'#B45309':'#15803D';
+  res.innerHTML='✓ '+act+' actualizados, '+nuevos+' nuevos.'+(errores.length?'<br>'+errores.map(esc).join('<br>'):'');
+  renderHonorarios();
 }
 
 // AVISO LEGAL
