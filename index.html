@@ -3248,7 +3248,7 @@ function bitFilaHTML(c){
     tel+bitCumpleHTML(c)+(c.notas?'<div class="bit-dato" style="color:var(--gray-light);">'+esc(c.notas)+'</div>':'')+
     '<div class="bit-dato" style="color:'+sem.c+';font-weight:700;">'+sem.t+'</div>'+
     bitExpHTML(c)+
-    (bitRadDigits(c.radicacion).length===23?'<button class="bit-mini" onclick="bitConsultarRama(\''+bitRadDigits(c.radicacion)+'\')">🔎 Rama Judicial</button>':'')+
+    (bitRadDigits(c.radicacion).length===23?'<button class="bit-mini" onclick="bitConsultarRama(\''+bitRadDigits(c.radicacion)+'\')">🔎 Consulta de proceso</button>':'')+
   '</div>';
   var strip=acts.map(function(a,i){
     var ult=i===acts.length-1,v='';
