@@ -1043,15 +1043,17 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
         <div class="form-group"><label>¿Qué sigue? (próxima acción)</label><div class="voz-wrap"><textarea id="ac-proxima" rows="2" oninput="bitAutoVence()"placeholder="Ej: Radicar memorial de impulso"></textarea><button type="button" class="voz-btn" onclick="dictar('ac-proxima',this)">🎤</button></div></div>
         <div style="border:1.5px solid #BFDBFE;background:#F8FBFF;border-radius:14px;padding:12px 14px;margin-bottom:14px;">
           <div style="font-size:13px;font-weight:800;color:#1E40AF;margin-bottom:10px;">⚖️ Contador de términos</div>
+          <div class="form-group" style="margin-bottom:8px;"><label>¿Qué tienes que hacer? <span style="font-weight:500;color:#94A3B8;">(la app conoce el término legal)</span></label><select id="ac-t-tipo" onchange="_tipoAuto=false;tjTipoAplicar()"></select></div>
           <div class="modal-row">
-            <div class="form-group" style="margin-bottom:8px;"><label>Fecha de notificación / envío</label><input id="ac-t-notif" type="date" onchange="tjTerminoCalcular()"/></div>
-            <div class="form-group" style="margin-bottom:8px;"><label>¿Cómo te notificaron?</label><select id="ac-t-medio" onchange="tjTerminoCalcular()"><option value="estado">Por estado</option><option value="personal">Personal</option><option value="correo">Por correo electrónico (Ley 2213)</option></select></div>
+            <div class="form-group" style="margin-bottom:8px;"><label>Fecha de notificación / envío</label><input id="ac-t-notif" type="date" onchange="_notifManual=true;tjTerminoCalcular()"/></div>
+            <div class="form-group" style="margin-bottom:8px;"><label>¿Cómo te notificaron?</label><select id="ac-t-medio" onchange="_medioManual=true;tjTerminoCalcular()"><option value="estado">Por estado (incluye estado electrónico)</option><option value="personal">Personal en el juzgado</option><option value="correo">Personal por correo (Ley 2213, art. 8)</option><option value="radicacion">Radicación (derecho de petición)</option></select></div>
           </div>
           <div class="modal-row">
-            <div class="form-group" style="margin-bottom:8px;"><label>Término</label><input id="ac-t-n" type="number" min="1" placeholder="Ej: 10" oninput="tjTerminoCalcular()"/></div>
-            <div class="form-group" style="margin-bottom:8px;"><label>Unidad</label><select id="ac-t-unidad" onchange="tjTerminoCalcular()"><option value="habiles">Días hábiles</option><option value="meses">Meses</option><option value="anios">Años</option></select></div>
+            <div class="form-group" style="margin-bottom:8px;"><label>Término</label><input id="ac-t-n" type="number" min="1" placeholder="Ej: 10" oninput="tjTerminoManual()"/></div>
+            <div class="form-group" style="margin-bottom:8px;"><label>Unidad</label><select id="ac-t-unidad" onchange="tjTerminoManual()"><option value="habiles">Días hábiles</option><option value="meses">Meses</option><option value="anios">Años</option></select></div>
           </div>
           <div id="ac-t-res"></div>
+          <div style="font-size:11px;color:#64748B;margin-top:8px;">🛡️ Si hay duda, la app usa siempre la fecha más temprana. Verifica con el auto o el estado antes de confiarte.</div>
         </div>
         <div class="form-group"><label>Fecha de vencimiento / recordatorio (opcional)</label><input id="ac-vence" type="date" onchange="bitVenceManual()"/><div id="ac-vence-hint" style="font-size:12px;color:#16A34A;margin-top:4px;font-weight:600;"></div></div>
         <div id="ac-error" class="error-msg" style="display:none;"></div>
@@ -2740,8 +2742,14 @@ function bitExpPendientes(){return ST.casos.filter(bitExpPendiente);}
 function bitPedirLink(id){
   var c=ST.casos.find(function(x){return x.id===id;});if(!c)return;
   var rad=bitRadFmt(c.radicacion);
-  var cuerpo='Respetados señores\n\nReferencia: Proceso '+(c.juzgado?'que cursa en el '+c.juzgado+' ':'')+(rad?'con radicado '+rad:'')+' ('+c.cliente+')\n\n'+
-    'De manera respetuosa solicito se me comparta el link de acceso al expediente digital del proceso de la referencia, con el fin de realizar la revisión de las actuaciones surtidas.\n\nAgradezco la atención prestada.\n\nCordialmente,\n\n'+(ST.userName||'');
+  var firma=(ST.userName&&ST.userName.indexOf('@')<0)?ST.userName:'';
+  var cuerpo='Señores\n'+(c.juzgado?c.juzgado.toUpperCase()+'\n':'')+'E. S. D.\n\n'+
+    'REFERENCIA: Solicitud de link del expediente digital\n'+
+    (rad?'RADICADO: '+rad+'\n':'')+
+    (c.cliente?'PROCESO / CLIENTE: '+c.cliente+'\n':'')+'\n'+
+    'Comedidamente y con el acostumbrado respeto, me permito solicitar el link del expediente digital del proceso de la referencia. Lo anterior, a fin de consultar algunas piezas procesales.\n\n'+
+    'Agradezco de antemano la atención prestada.\n\n'+
+    'Atentamente,\n\n\n'+(firma?firma+'\n':'')+'C.C. No. \nT.P. No. ';
   window.location.href='mailto:'+(c.correo||'')+'?subject='+encodeURIComponent('Solicitud link expediente digital - Rad. '+(rad||c.cliente))+'&body='+encodeURIComponent(cuerpo);
 }
 async function bitCopiaHoy(id){
@@ -2755,7 +2763,7 @@ async function bitCopiaHoy(id){
 function bitGestionMes(c){var h=bitHoy();return ST.actuaciones.some(function(a){if(a.caso_id!==c.id)return false;var d=bitParse(a.fecha);return d&&d.getMonth()===h.getMonth()&&d.getFullYear()===h.getFullYear();});}
 
 // Detecta fechas y plazos en el texto dictado
-var NUM_ES={uno:1,un:1,una:1,dos:2,tres:3,cuatro:4,cinco:5,seis:6,siete:7,ocho:8,nueve:9,diez:10,once:11,doce:12,trece:13,catorce:14,quince:15,veinte:20,treinta:30};
+var NUM_ES={uno:1,un:1,una:1,dos:2,tres:3,cuatro:4,cinco:5,seis:6,siete:7,ocho:8,nueve:9,diez:10,once:11,doce:12,trece:13,catorce:14,quince:15,"dieciséis":16,dieciseis:16,diecisiete:17,dieciocho:18,diecinueve:19,veinte:20,veintiuno:21,"veintidós":22,veintidos:22,veintitres:23,"veintitrés":23,veinticuatro:24,veinticinco:25,treinta:30,cuarenta:40,sesenta:60,noventa:90};
 var _festCache={};
 function festivosCO(y){
   if(_festCache[y])return _festCache[y];
@@ -2790,6 +2798,7 @@ function tjContarTermino(notif,medio,n,unidad){
   var N=bitParse(notif);if(!N||!n||n<1)return null;
   var pasos=[],surtida=new Date(N);
   if(medio==='correo'){surtida=bitSumarHabiles(N,2);pasos.push('Notificación por correo enviada el '+bitFechaTxt(notif)+' → se entiende surtida el '+bitFechaTxt(bitISO(surtida))+' (2 días hábiles, Ley 2213 art. 8)');}
+  else if(medio==='radicacion')pasos.push('Petición radicada el '+bitFechaTxt(bitISO(surtida)));
   else pasos.push('Notificado ('+(medio==='estado'?'por estado':'personalmente')+') el '+bitFechaTxt(bitISO(surtida)));
   var inicio=bitSumarHabiles(surtida,1),vence;
   pasos.push('El término empieza a correr el '+bitFechaTxt(bitISO(inicio))+' (día hábil siguiente)');
@@ -2805,10 +2814,134 @@ function tjContarTermino(notif,medio,n,unidad){
   var rad=bitRestarHabiles(vence,TJ_MARGEN_HABILES);if(rad<inicio)rad=inicio;
   return {vence:bitISO(vence),radicar:bitISO(rad),pasos:pasos};
 }
+// Catálogo de términos legales (norma general). Ante duda, el detector escoge el término más corto.
+var TJ_TERMINOS=[
+  {id:'subsanar',g:'Civil y familia (CGP)',t:'Subsanar la demanda inadmitida',n:5,norma:'art. 90 CGP'},
+  {id:'cont_verbal',t:'Contestar la demanda – proceso verbal',n:20,norma:'art. 369 CGP'},
+  {id:'cont_sumario',t:'Contestar la demanda – verbal sumario',n:10,norma:'art. 391 CGP'},
+  {id:'ejec_excep',t:'Ejecutivo – proponer excepciones de mérito',n:10,norma:'art. 442 CGP',nota:'El plazo para PAGAR la obligación es de 5 días (art. 431 CGP).'},
+  {id:'ejec_pago',t:'Ejecutivo – pagar la obligación',n:5,norma:'art. 431 CGP'},
+  {id:'ejec_traslado',t:'Ejecutivo – descorrer traslado de excepciones',n:10,norma:'art. 443 CGP'},
+  {id:'traslado_excep',t:'Verbal – descorrer traslado de excepciones de mérito',n:5,norma:'art. 370 CGP'},
+  {id:'reposicion',t:'Recurso de reposición contra auto',n:3,norma:'art. 318 CGP'},
+  {id:'apel_auto',t:'Apelación de auto',n:3,norma:'art. 322 CGP'},
+  {id:'apel_sent',t:'Apelación de sentencia / reparos concretos',n:3,norma:'art. 322 CGP',nota:'Si la sentencia se dictó en audiencia, los 3 días corren desde que terminó la audiencia: pon esa fecha como notificación.'},
+  {id:'sustentar',t:'Sustentar la apelación en segunda instancia',n:5,norma:'art. 12 Ley 2213 de 2022',nota:'Corre desde la ejecutoria del auto que admite el recurso.'},
+  {id:'aclaracion',t:'Aclaración, adición o corrección (término de ejecutoria)',n:3,norma:'arts. 285, 287 y 302 CGP'},
+  {id:'suplica',t:'Recurso de súplica',n:3,norma:'art. 332 CGP'},
+  {id:'casacion',t:'Recurso de casación civil',n:30,norma:'art. 337 CGP'},
+  {id:'desist',t:'Cumplir requerimiento (desistimiento tácito)',n:30,norma:'art. 317 CGP'},
+  {id:'lab_cont',g:'Laboral (CPTSS)',t:'Contestar la demanda ordinaria laboral',n:10,norma:'art. 74 CPTSS'},
+  {id:'lab_repo',t:'Reposición contra auto notificado por estado',n:2,norma:'art. 63 CPTSS'},
+  {id:'lab_apel',t:'Apelación de auto notificado por estado',n:5,norma:'art. 65 CPTSS'},
+  {id:'lab_cas',t:'Recurso de casación laboral',n:15,norma:'art. 88 CPTSS'},
+  {id:'adm_recurso',g:'Administrativo (CPACA)',t:'Recurso contra acto administrativo (reposición / apelación)',n:10,norma:'art. 76 CPACA'},
+  {id:'adm_cont',t:'Contestar la demanda contencioso administrativa',n:30,norma:'arts. 172 y 199 CPACA',nota:'Si la notificación llegó por correo, escoge "Personal por correo" para sumar los 2 días hábiles.'},
+  {id:'adm_apel_auto',t:'Apelación de auto',n:3,norma:'art. 244 CPACA'},
+  {id:'adm_apel_sent',t:'Apelación de sentencia',n:10,norma:'art. 247 CPACA'},
+  {id:'adm_cad_nyr',t:'Caducidad – nulidad y restablecimiento del derecho',n:4,u:'meses',norma:'art. 164 CPACA',nota:'La conciliación extrajudicial suspende este término. La app toma la fecha más temprana posible.'},
+  {id:'adm_cad_rd',t:'Caducidad – reparación directa',n:2,u:'anios',norma:'art. 164 CPACA',nota:'Cuenta desde el hecho o desde que se conoció el daño. La conciliación extrajudicial lo suspende.'},
+  {id:'tut_impug',g:'Tutela y derecho de petición',t:'Impugnar fallo de tutela',n:3,norma:'art. 31 Decreto 2591 de 1991'},
+  {id:'pet_general',t:'Respuesta a derecho de petición (general)',n:15,norma:'art. 14 Ley 1755 de 2015',medio:'radicacion'},
+  {id:'pet_docs',t:'Respuesta a petición de documentos',n:10,norma:'art. 14 Ley 1755 de 2015',medio:'radicacion'},
+  {id:'pet_consulta',t:'Respuesta a consulta',n:30,norma:'art. 14 Ley 1755 de 2015',medio:'radicacion'}
+];
+(function(){var g='';TJ_TERMINOS.forEach(function(x){if(x.g)g=x.g;else x.g=g;x.u=x.u||'habiles';});})();
+var _tipoAuto=false,_notifManual=false,_medioManual=false,_proxAutoTxt='';
+function tjTipo(id){for(var i=0;i<TJ_TERMINOS.length;i++)if(TJ_TERMINOS[i].id===id)return TJ_TERMINOS[i];return null;}
+function tjUnidadTxt(n,u){return u==='meses'?(n===1?'mes':'meses'):u==='anios'?(n===1?'año':'años'):(n===1?'día hábil':'días hábiles');}
+function tjTipoOptions(){
+  var html='<option value="">— Escoge, o dicta y la app lo detecta —</option>',g='';
+  TJ_TERMINOS.forEach(function(x){if(x.g!==g){if(g)html+='</optgroup>';g=x.g;html+='<optgroup label="'+esc(g)+'">';}html+='<option value="'+x.id+'">'+esc(x.t)+' · '+x.n+' '+tjUnidadTxt(x.n,x.u)+'</option>';});
+  return html+'</optgroup>';
+}
+function tjTipoAplicar(){
+  var T=tjTipo(document.getElementById('ac-t-tipo').value);
+  if(T){
+    document.getElementById('ac-t-n').value=T.n;
+    document.getElementById('ac-t-unidad').value=T.u;
+    var md=document.getElementById('ac-t-medio');
+    if(T.medio)md.value=T.medio;else if(md.value==='radicacion')md.value='estado';
+    var px=document.getElementById('ac-proxima');
+    if(!px.value.trim()||px.value===_proxAutoTxt){px.value=T.t;_proxAutoTxt=T.t;}
+  }
+  tjTerminoCalcular();
+}
+function tjTerminoManual(){
+  var sel=document.getElementById('ac-t-tipo'),T=tjTipo(sel.value);
+  if(T&&(parseInt(document.getElementById('ac-t-n').value)!==T.n||document.getElementById('ac-t-unidad').value!==T.u))sel.value='';
+  _tipoAuto=false;tjTerminoCalcular();
+}
+function tjFechaNotifTexto(t,base){
+  t=(t||'').toLowerCase();
+  var ctx='(notific\\w*|estado|envi\\w*|recib\\w*|radic\\w*|profiri\\w*|dict[oóa]\\w*|lleg[oó]\\w*)[^.;]{0,40}?';
+  var m=t.match(new RegExp(ctx+'\\b(\\d{1,2})\\s+de\\s+(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|setiembre|octubre|noviembre|diciembre)(?:\\s+(?:de|del)\\s+(\\d{4}))?'));
+  if(m){
+    var mes=m[3]==='setiembre'?8:MESES_ES.indexOf(m[3]),y=m[4]?+m[4]:base.getFullYear(),d=new Date(y,mes,+m[2]);
+    if(!m[4]&&d>base)d.setFullYear(y-1);
+    var i=m[0].search(new RegExp('\\b'+m[2]+'\\s+de\\s+'+m[3]));
+    return {fecha:d,txt:m[0].slice(i)};
+  }
+  m=t.match(new RegExp(ctx+'\\b(\\d{1,2})/(\\d{1,2})/(\\d{4})'));
+  if(m)return {fecha:new Date(+m[4],+m[3]-1,+m[2]),txt:m[2]+'/'+m[3]+'/'+m[4]};
+  return null;
+}
+function tjMedioTexto(t){
+  t=(t||'').toLowerCase();
+  if(/por estado|estado electr|en estado|mediante estado|fijad\w* en (el )?estado/.test(t))return 'estado';
+  if(/notific\w*[^.;]{0,30}(correo|electr[oó]nic|mensaje de datos)|(correo|mensaje de datos)[^.;]{0,30}notific|ley 2213|art[ií]culo 8\b/.test(t))return 'correo';
+  if(/notific\w*[^.;]{0,20}personal|personalmente/.test(t))return 'personal';
+  return null;
+}
+var TJ_TXT_NOTIF=/notific|estado|auto\b|providencia|sentencia|fallo|admit|inadmit|requer|traslado|mandamiento|resoluci|tutela|petici|recib/;
+function tjDetectarTipo(txt,juz){
+  var t=(txt||'').toLowerCase();if(!t.trim())return null;
+  var ctx=t+' '+(juz||'').toLowerCase();
+  var lab=/laboral/.test(ctx),adm=/administrativ|contencioso|consejo de estado/.test(ctx);
+  var civil=/civil|familia|promiscuo|peque[ñn]as causas|competencia m[uú]ltiple/.test(ctx),circuito=/circuito/.test(ctx);
+  var sent=/sentencia|fallo/.test(t);
+  function r(id,nota){return {id:id,nota:nota||''};}
+  if(/inadmit/.test(t)||(/subsan/.test(t)&&/demanda/.test(t)))return r('subsanar');
+  if(/tutela/.test(t)&&/impugn|fallo|sentencia/.test(t))return r('tut_impug');
+  if(/derecho de petici/.test(t)){if(/documento|copia/.test(t))return r('pet_docs');if(/consulta/.test(t))return r('pet_consulta');return r('pet_general');}
+  if(/casaci/.test(t)){if(lab)return r('lab_cas');if(civil)return r('casacion');return r('lab_cas','No identifiqué si es civil (30 días) o laboral (15 días): tomé 15 por precaución.');}
+  if(/s[uú]plica/.test(t))return r('suplica');
+  if(/desistimiento t[aá]cito|art[ií]culo 317|art\.? ?317/.test(t))return r('desist');
+  if(/(admit|admisi)\w*[^.;]{0,25}(recurso|apelaci)/.test(t))return (lab||adm)?null:r('sustentar');
+  if(/sustent/.test(t)&&/apela|recurso|segunda instancia/.test(t))return (lab||adm)?null:r('sustentar');
+  if(/conced|concedi/.test(t)&&/apela/.test(t))return null;
+  if(/apela|reparos/.test(t)){
+    if(adm)return r(sent?'adm_apel_sent':'adm_apel_auto');
+    if(lab)return sent?null:r('lab_apel');
+    return r(sent?'apel_sent':'apel_auto');
+  }
+  if(/reposici/.test(t)){
+    if(/acto administrativo|resoluci[oó]n/.test(t)&&!/\bauto\b/.test(t))return r('adm_recurso');
+    return r(lab?'lab_repo':'reposicion');
+  }
+  if(/acto administrativo/.test(t)&&/recurso/.test(t))return r('adm_recurso');
+  if(/aclaraci|adici[oó]n|correcci[oó]n/.test(t)&&/sentencia|\bauto\b|providencia|fallo|ejecutoria/.test(t))return r('aclaracion');
+  if(/mandamiento|ejecutiv/.test(t)){
+    if(/excepci/.test(t)&&/traslado|descorr|pronunci/.test(t))return r('ejec_traslado');
+    return r('ejec_excep','Ojo: el plazo para PAGAR es de 5 días (art. 431 CGP).');
+  }
+  if(/excepci/.test(t)&&/traslado|descorr|pronunci/.test(t))return (lab||adm)?null:r('traslado_excep');
+  if(/demanda/.test(t)&&/contest|admit|admisorio|traslado/.test(t)){
+    if(lab)return r('lab_cont');
+    if(adm)return r('adm_cont');
+    if(/sumario|m[ií]nima cuant|peque[ñn]as causas/.test(ctx))return r('cont_sumario');
+    if(/proceso verbal|verbal de|mayor cuant|menor cuant/.test(t)||circuito)return r('cont_verbal');
+    return r('cont_sumario','No identifiqué si es verbal (20 días) o verbal sumario (10 días): tomé 10 por precaución.');
+  }
+  if(sent&&/notific|profiri|dict/.test(t)&&!lab)return r(adm?'adm_apel_sent':'apel_sent','Término para apelar si no estás de acuerdo con la sentencia.');
+  return null;
+}
 function tjTerminoCalcular(){
+  var T=tjTipo(document.getElementById('ac-t-tipo').value);
   var r=tjContarTermino(document.getElementById('ac-t-notif').value,document.getElementById('ac-t-medio').value,parseInt(document.getElementById('ac-t-n').value),document.getElementById('ac-t-unidad').value);
   var box=document.getElementById('ac-t-res');
   if(!r){box.innerHTML='';return;}
+  if(T){r.pasos.unshift('📖 '+T.t+': '+T.n+' '+tjUnidadTxt(T.n,T.u)+' ('+T.norma+')');if(T.nota)r.pasos.push('ℹ️ '+T.nota);}
   box.innerHTML='<ol style="margin:0 0 8px 18px;padding:0;font-size:12px;color:#475569;line-height:1.6;">'+r.pasos.map(function(p){return '<li>'+esc(p)+'</li>';}).join('')+'</ol>'
     +'<div style="display:flex;gap:8px;flex-wrap:wrap;">'
     +'<div style="flex:1;min-width:140px;background:#FEE2E2;border-radius:10px;padding:8px 10px;"><div style="font-size:11px;color:#B91C1C;font-weight:700;">VENCE</div><div style="font-size:15px;font-weight:800;color:#991B1B;">'+bitFechaTxt(r.vence)+'</div></div>'
@@ -2841,29 +2974,66 @@ function bitSumarHabiles(base,n){var d=new Date(base);while(n>0){d.setDate(d.get
 function bitDetectarFecha(texto,base){
   var t=(texto||'').toLowerCase();base=base||bitHoy();
   var m=t.match(/(\d{1,2})\s+de\s+(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|setiembre|octubre|noviembre|diciembre)(?:\s+(?:de|del)\s+(\d{4}))?/);
-  if(m){var mes=m[2]==='setiembre'?8:MESES_ES.indexOf(m[2]);var y=m[3]?parseInt(m[3]):base.getFullYear();var d=new Date(y,mes,parseInt(m[1]));if(!m[3]&&d<base)d.setFullYear(y+1);return{fecha:d,motivo:'fecha mencionada'};}
+  if(m){var mes=m[2]==='setiembre'?8:MESES_ES.indexOf(m[2]);var y=m[3]?parseInt(m[3]):base.getFullYear();var d=new Date(y,mes,parseInt(m[1]));if(!m[3]&&(base-d)>180*86400000)d.setFullYear(y+1);return{fecha:d,motivo:'fecha mencionada'};}
   m=t.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
   if(m)return{fecha:new Date(parseInt(m[3]),parseInt(m[2])-1,parseInt(m[1])),motivo:'fecha mencionada'};
-  m=t.match(/(\d+|[a-záéí]+)\s+d[ií]as\s+h[aá]biles/);
-  if(m){var n=parseInt(m[1])||NUM_ES[m[1]];if(n)return{fecha:bitSumarHabiles(base,n),motivo:n+' días hábiles (sin contar festivos)'};}
-  m=t.match(/(\d+|[a-záéí]+)\s+d[ií]as/);
-  if(m){var n2=parseInt(m[1])||NUM_ES[m[1]];if(n2){var d2=new Date(base);d2.setDate(d2.getDate()+n2);return{fecha:d2,motivo:n2+' días calendario'};}}
-  m=t.match(/(\d+|[a-záéí]+)\s+mes(?:es)?/);
-  if(m&&!/\d{1,2}\s+de\s+/.test(t)){var n3=parseInt(m[1])||NUM_ES[m[1]];if(n3){var d3=new Date(base);d3.setMonth(d3.getMonth()+n3);return{fecha:d3,motivo:n3+' mes(es)'};}}
+  var re=/(hace\s+)?(\d+|[a-záéíóúñ]+)\s+d[ií]as(\s+h[aá]biles)?(\s+(?:calendario|calendarios|corridos))?/g,x;
+  while((x=re.exec(t))){
+    if(x[1])continue;
+    var n=parseInt(x[2])||NUM_ES[x[2]];if(!n)continue;
+    if(x[4]){var d2=new Date(base);d2.setDate(d2.getDate()+n);return{fecha:d2,motivo:n+' días calendario'};}
+    return{fecha:bitSumarHabiles(base,n),motivo:n+' días hábiles'+(x[3]?'':' (en los términos judiciales los días se cuentan hábiles)'),n:n,u:'habiles'};
+  }
+  m=t.match(/(?:dentro de|plazo de|t[eé]rmino de|tiene[n]?|cuenta[n]? con|en)\s+(?:los\s+|un\s+plazo\s+de\s+)?(\d+|[a-záéíóúñ]+)\s+(mes|meses|año|años)\b/);
+  if(m){var n3=parseInt(m[1])||NUM_ES[m[1]];if(n3&&n3<=24){var u=m[2].charAt(0)==='a'?'anios':'meses';var d3=new Date(base);if(u==='meses')d3.setMonth(d3.getMonth()+n3);else d3.setFullYear(d3.getFullYear()+n3);return{fecha:d3,motivo:n3+' '+tjUnidadTxt(n3,u),n:n3,u:u};}}
   return null;
 }
 function bitAutoVence(){
-  var venceEl=document.getElementById('ac-vence');
-  if(venceEl.value&&!_venceAuto)return;
+  var venceEl=document.getElementById('ac-vence'),hint=document.getElementById('ac-vence-hint'),sel=document.getElementById('ac-t-tipo');
+  if(venceEl.value&&!_venceAuto&&!_tipoAuto)return;
+  if(sel.value&&!_tipoAuto)return;
+  var prox=document.getElementById('ac-proxima').value,desc=document.getElementById('ac-descripcion').value;
+  if(prox===_proxAutoTxt)prox='';
   var base=bitParse(document.getElementById('ac-fecha').value)||bitHoy();
-  var r=bitDetectarFecha(document.getElementById('ac-proxima').value,base)||bitDetectarFecha(document.getElementById('ac-descripcion').value,base);
-  var hint=document.getElementById('ac-vence-hint');
+  var todo=desc+' . '+prox;
+  // 1) Fecha de notificación dicha en el texto ("notificado el 2 de octubre")
+  var fn=tjFechaNotifTexto(todo,base);
+  if(!_notifManual)document.getElementById('ac-t-notif').value=fn?bitISO(fn.fecha):bitISO(base);
+  if(fn){prox=prox.toLowerCase().split(fn.txt).join(' ');desc=desc.toLowerCase().split(fn.txt).join(' ');}
+  // 2) Medio de notificación
+  if(!_medioManual){var md=tjMedioTexto(todo);if(md)document.getElementById('ac-t-medio').value=md;}
+  function limpiar(){
+    if(_venceAuto||_tipoAuto){venceEl.value='';sel.value='';document.getElementById('ac-t-res').innerHTML='';document.getElementById('ac-t-n').value='';
+      var px=document.getElementById('ac-proxima');if(_proxAutoTxt&&px.value===_proxAutoTxt){px.value='';_proxAutoTxt='';}
+      _venceAuto=false;_tipoAuto=false;hint.textContent='';}
+  }
+  // 3) Término dicho expresamente ("diez días hábiles", "dos meses") o fecha exacta
+  var r=bitDetectarFecha(prox,base)||bitDetectarFecha(desc,base);
+  if(r&&r.u){
+    sel.value='';document.getElementById('ac-t-n').value=r.n;document.getElementById('ac-t-unidad').value=r.u;
+    tjTerminoCalcular();_venceAuto=true;_tipoAuto=true;
+    hint.style.color='#16A34A';hint.textContent='📅 Detecté en lo que dictaste: '+r.motivo+'. Revisa el cálculo en el contador.';
+    return;
+  }
   if(r&&r.fecha>=base){
+    sel.value='';document.getElementById('ac-t-res').innerHTML='';_tipoAuto=false;
     var f=new Date(r.fecha),movido='';
     if(!esHabil(f)){var orig=bitFechaTxt(bitISO(f)),causa=festivoNombre(f)||'fin de semana';while(!esHabil(f))f.setDate(f.getDate()+1);movido=' · caía '+orig+' ('+causa+'), se corre al siguiente día hábil';}
     venceEl.value=bitISO(f);_venceAuto=true;hint.style.color='#16A34A';hint.textContent='📅 Detectado automáticamente: '+r.motivo+movido;
+    return;
   }
-  else if(_venceAuto){venceEl.value='';_venceAuto=false;hint.textContent='';}
+  // 4) La app reconoce la actuación y aplica el término legal
+  var c=ST.casos.find(function(x){return x.id===_actCasoId;})||{};
+  var d=tjDetectarTipo(prox,c.juzgado);
+  if(!d&&TJ_TXT_NOTIF.test(desc.toLowerCase()))d=tjDetectarTipo(desc,c.juzgado);
+  if(d){
+    if(sel.value!==d.id){sel.value=d.id;tjTipoAplicar();}else tjTerminoCalcular();
+    _tipoAuto=true;_venceAuto=true;
+    var T=tjTipo(d.id);
+    hint.style.color='#2563EB';hint.textContent='🤖 La app detectó: '+T.t+' → '+T.n+' '+tjUnidadTxt(T.n,T.u)+' ('+T.norma+').'+(d.nota?' '+d.nota:'')+' Revisa que sea correcto.';
+    return;
+  }
+  limpiar();
 }
 function bitVenceManual(){
   _venceAuto=false;
@@ -3137,6 +3307,8 @@ function openActuacionModal(casoId,actId){
   document.getElementById('ac-t-n').value='';
   document.getElementById('ac-t-unidad').value='habiles';
   document.getElementById('ac-t-res').innerHTML='';
+  var selT=document.getElementById('ac-t-tipo');if(selT.options.length<2)selT.innerHTML=tjTipoOptions();selT.value='';
+  _tipoAuto=false;_notifManual=false;_medioManual=false;_proxAutoTxt='';
   document.getElementById('ac-del-btn').style.display=actId?'inline-flex':'none';
   document.getElementById('ac-error').style.display='none';
   document.getElementById('modal-actuacion').style.display='flex';
