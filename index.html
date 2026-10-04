@@ -3268,7 +3268,7 @@ function bitExpHTML(c){
   var txt=d===null?'Sin registro de copia':'Última copia hace '+d+' día'+(d===1?'':'s')+(pend?'':' · faltan '+(BIT_DIAS_EXPEDIENTE-d));
   return '<div style="margin-top:8px;padding:8px 10px;border-radius:10px;background:'+(pend?'#ECFEFF':'#F8FAFC')+';border:1px solid '+(pend?'#67E8F9':'#E2E8F0')+';">'+
     '<div style="font-size:11.5px;font-weight:700;color:'+(pend?'#0E7490':'var(--gray-light)')+';">📂 Expediente: '+txt+'</div>'+
-    (pend?'<button class="bit-mini" onclick="bitPedirLink(\''+c.id+'\')">✉️ Pedir link</button>':'')+
+    '<button class="bit-mini" onclick="bitPedirLink(\''+c.id+'\')">✉️ Pedir link</button>'+
     '<button class="bit-mini" onclick="bitCopiaHoy(\''+c.id+'\')">✓ Copié hoy</button></div>';
 }
 function bitCopiar(t){if(navigator.clipboard)navigator.clipboard.writeText(t);bitToast('Radicación copiada: '+t);}
