@@ -439,7 +439,7 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
   <div class="auth-box">
     <div class="auth-logo">
       <div class="logo-icon">⚖️</div>
-      <h1>TuJurídico</h1>
+      <h1>Comunidad TuJurídico</h1>
       <p>Gestión legal para abogados</p>
     </div>
     <div id="auth-error" class="auth-error"></div>
@@ -851,7 +851,7 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
     <div class="sidebar-header">
       <div class="sidebar-logo">
         <div class="s-icon">⚖️</div>
-        <span>TuJurídico</span>
+        <span>Comunidad TuJurídico</span>
       </div>
     </div>
     <div class="sidebar-user">
@@ -862,12 +862,12 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
       </div>
     </div>
     <div id="sidebar-nav">
-      <button class="nav-btn active" data-screen="presupuesto" onclick="navigate('presupuesto')"><span class="n-icon">📄</span> Documentos</button>
+      <button class="nav-btn active" data-screen="presupuesto" onclick="navigate('presupuesto')"><span class="n-icon">📚</span> Biblioteca jurídica</button>
       <button class="nav-btn" data-screen="compras" onclick="navigate('compras')"><span class="n-icon">📋</span> Bitácora automatizada</button>
-      <button class="nav-btn" data-screen="orientaciones" onclick="navigate('orientaciones')"><span class="n-icon">⚖️</span> Orientaciones jurídicas</button>
-      <button class="nav-btn" data-screen="archivos" onclick="navigate('archivos')"><span class="n-icon">🗂️</span> Organizador de archivos</button>
-      <button class="nav-btn" data-screen="calendario" onclick="navigate('calendario')"><span class="n-icon">📅</span> Calendario y tareas</button>
-      <button class="nav-btn" data-screen="normatividad" onclick="navigate('normatividad')"><span class="n-icon">📜</span> Normatividad</button>
+      <button class="nav-btn" data-screen="orientaciones" onclick="navigate('orientaciones')"><span class="n-icon">📅</span> Calendario</button>
+      <button class="nav-btn" data-screen="archivos" onclick="navigate('archivos')"><span class="n-icon">📜</span> Normatividad vigente</button>
+      <button class="nav-btn" data-screen="calendario" onclick="navigate('calendario')"><span class="n-icon">💰</span> Honorarios abogado</button>
+      <button class="nav-btn" data-screen="normatividad" onclick="navigate('normatividad')"><span class="n-icon">💬</span> Chat interactivo</button>
       <button class="nav-btn" data-screen="ia" onclick="navigate('ia')"><span class="n-icon">🤖</span> IA integrada a abogados</button>
       <div id="admin-nav-section" style="display:none;">
         <div class="nav-section">Administración</div>
@@ -903,7 +903,7 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
     <!-- DOCUMENTOS -->
     <div id="screen-presupuesto" class="screen">
       <div class="main-header" id="docs-header-carpetas">
-        <h2>Documentos</h2>
+        <h2>Biblioteca jurídica</h2>
         <button class="btn btn-primary" onclick="openNuevaCarpetaModal()">+ Nueva carpeta</button>
       </div>
       <div class="main-header" id="docs-header-docs" style="display:none;">
@@ -1019,49 +1019,70 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
 
 
     <!-- ORIENTACIONES JURÍDICAS -->
+    <!-- CALENDARIO JURÍDICO -->
     <div id="screen-orientaciones" class="screen" style="display:none;">
-      <div class="main-header"><h2>Orientaciones jurídicas</h2></div>
-      <div class="main-body">
-        <div class="empty-state" style="margin-top:60px;">
-          <div class="e-icon">⚖️</div>
-          <p style="font-size:15px;font-weight:600;color:#475569;">Módulo de Orientaciones jurídicas</p>
-          <p style="font-size:13px;color:#94A3B8;margin-top:6px;">Aquí podrás brindar y consultar orientaciones legales a tus clientes.</p>
+      <div class="main-header">
+        <h2>Calendario</h2>
+        <button class="btn btn-primary" onclick="openTjCalEvento()">+ Agregar evento</button>
+      </div>
+      <div class="main-body" style="padding-top:12px;">
+        <div class="gcal-wrap">
+          <div class="gcal-main">
+            <div class="gcal-toolbar">
+              <button class="gcal-nav-btn" onclick="tjCalPrev()">‹</button>
+              <button class="gcal-nav-btn" onclick="tjCalNext()">›</button>
+              <span class="gcal-month-label" id="tj-cal-label">Cargando...</span>
+              <button class="gcal-today-btn" onclick="tjCalHoy()">Hoy</button>
+              <div class="gcal-view-toggle">
+                <button class="gcal-vbtn active" id="tj-vbtn-mes" onclick="tjCalSetView('mes')">Mes</button>
+                <button class="gcal-vbtn" id="tj-vbtn-semana" onclick="tjCalSetView('semana')">Semana</button>
+              </div>
+            </div>
+            <div id="tj-cal-body"></div>
+          </div>
+          <div class="gcal-side" id="tj-cal-side">
+            <div class="gcal-side-head">
+              <div class="gcal-side-date" id="tj-cal-side-date">-</div>
+              <div class="gcal-side-sub" id="tj-cal-side-sub">Eventos del día</div>
+            </div>
+            <div class="gcal-side-movs" id="tj-cal-side-list"></div>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- ORGANIZADOR DE ARCHIVOS -->
+    <!-- NORMATIVIDAD VIGENTE -->
     <div id="screen-archivos" class="screen" style="display:none;">
-      <div class="main-header"><h2>Organizador de archivos</h2></div>
-      <div class="main-body">
-        <div class="empty-state" style="margin-top:60px;">
-          <div class="e-icon">🗂️</div>
-          <p style="font-size:15px;font-weight:600;color:#475569;">Módulo de Organizador de archivos</p>
-          <p style="font-size:13px;color:#94A3B8;margin-top:6px;">Aquí podrás organizar todos los archivos de tus casos y clientes.</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- CALENDARIO Y TAREAS -->
-    <div id="screen-calendario" class="screen" style="display:none;">
-      <div class="main-header"><h2>Calendario y tareas</h2></div>
-      <div class="main-body">
-        <div class="empty-state" style="margin-top:60px;">
-          <div class="e-icon">📅</div>
-          <p style="font-size:15px;font-weight:600;color:#475569;">Módulo de Calendario y tareas</p>
-          <p style="font-size:13px;color:#94A3B8;margin-top:6px;">Aquí podrás gestionar tus audiencias, citas y tareas pendientes.</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- NORMATIVIDAD -->
-    <div id="screen-normatividad" class="screen" style="display:none;">
-      <div class="main-header"><h2>Normatividad</h2></div>
+      <div class="main-header"><h2>Normatividad vigente</h2></div>
       <div class="main-body">
         <div class="empty-state" style="margin-top:60px;">
           <div class="e-icon">📜</div>
-          <p style="font-size:15px;font-weight:600;color:#475569;">Módulo de Normatividad</p>
+          <p style="font-size:15px;font-weight:600;color:#475569;">Normatividad vigente</p>
           <p style="font-size:13px;color:#94A3B8;margin-top:6px;">Aquí encontrarás leyes, decretos y normas relevantes para tu práctica jurídica.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- HONORARIOS ABOGADO -->
+    <div id="screen-calendario" class="screen" style="display:none;">
+      <div class="main-header"><h2>Honorarios abogado</h2></div>
+      <div class="main-body">
+        <div class="empty-state" style="margin-top:60px;">
+          <div class="e-icon">💰</div>
+          <p style="font-size:15px;font-weight:600;color:#475569;">Honorarios abogado</p>
+          <p style="font-size:13px;color:#94A3B8;margin-top:6px;">Aquí podrás gestionar los honorarios de tus casos.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- CHAT INTERACTIVO -->
+    <div id="screen-normatividad" class="screen" style="display:none;">
+      <div class="main-header"><h2>Chat interactivo</h2></div>
+      <div class="main-body">
+        <div class="empty-state" style="margin-top:60px;">
+          <div class="e-icon">💬</div>
+          <p style="font-size:15px;font-weight:600;color:#475569;">Chat interactivo</p>
+          <p style="font-size:13px;color:#94A3B8;margin-top:6px;">Próximamente: chat con clientes y colaboradores.</p>
         </div>
       </div>
     </div>
@@ -1072,7 +1093,7 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
       <div class="main-body">
         <div class="empty-state" style="margin-top:60px;">
           <div class="e-icon">🤖</div>
-          <p style="font-size:15px;font-weight:600;color:#475569;">Módulo de IA para abogados</p>
+          <p style="font-size:15px;font-weight:600;color:#475569;">IA integrada a abogados</p>
           <p style="font-size:13px;color:#94A3B8;margin-top:6px;">Aquí tendrás inteligencia artificial especializada en derecho colombiano.</p>
         </div>
       </div>
@@ -1123,7 +1144,7 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
 <!-- BOTTOM NAV -->
 <div id="bottom-nav">
   <div class="bnav-inner">
-    <button class="bnav-btn active" data-screen="presupuesto" onclick="navigate('presupuesto')"><span class="bn-icon">📄</span>Documentos</button>
+    <button class="bnav-btn active" data-screen="presupuesto" onclick="navigate('presupuesto')"><span class="bn-icon">📚</span>Biblioteca</button>
     <button class="bnav-btn" data-screen="compras" onclick="navigate('compras')"><span class="bn-icon">📋</span>Bitácora</button>
     <button class="bnav-btn" onclick="openMoreSheet()"><span class="bn-icon">☰</span>Más</button>
   </div>
@@ -1136,12 +1157,12 @@ label{font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bott
 <div id="more-sheet">
   <div class="sheet-handle"></div>
   <div class="sheet-section">Navegación</div>
-  <button class="sheet-item" onclick="sheetNav('presupuesto')"><span class="si-icon">📄</span>Documentos</button>
+  <button class="sheet-item" onclick="sheetNav('presupuesto')"><span class="si-icon">📚</span>Biblioteca jurídica</button>
   <button class="sheet-item" onclick="sheetNav('compras')"><span class="si-icon">📋</span>Bitácora automatizada</button>
-  <button class="sheet-item" onclick="sheetNav('orientaciones')"><span class="si-icon">⚖️</span>Orientaciones jurídicas</button>
-  <button class="sheet-item" onclick="sheetNav('archivos')"><span class="si-icon">🗂️</span>Organizador de archivos</button>
-  <button class="sheet-item" onclick="sheetNav('calendario')"><span class="si-icon">📅</span>Calendario y tareas</button>
-  <button class="sheet-item" onclick="sheetNav('normatividad')"><span class="si-icon">📜</span>Normatividad</button>
+  <button class="sheet-item" onclick="sheetNav('orientaciones')"><span class="si-icon">📅</span>Calendario</button>
+  <button class="sheet-item" onclick="sheetNav('archivos')"><span class="si-icon">📜</span>Normatividad vigente</button>
+  <button class="sheet-item" onclick="sheetNav('calendario')"><span class="si-icon">💰</span>Honorarios abogado</button>
+  <button class="sheet-item" onclick="sheetNav('normatividad')"><span class="si-icon">💬</span>Chat interactivo</button>
   <button class="sheet-item" onclick="sheetNav('ia')"><span class="si-icon">🤖</span>IA integrada a abogados</button>
   <button class="sheet-item" onclick="sheetNav('metas')"><span class="si-icon">🎯</span>Ahorro Programado</button>
   <button class="sheet-item" onclick="sheetNav('tareas')"><span class="si-icon">✅</span>Gestión de Tareas</button>
@@ -1278,7 +1299,7 @@ function renderScreen(screen){
   if(screen==='movimientos')renderMovimientos();
   else if(screen==='presupuesto'){loadDocumentosData().then(renderDocumentosScreen);}
   else if(screen==='compras'){renderBitacora();loadBitacora().then(renderBitacora);}
-  else if(screen==='orientaciones'){}
+  else if(screen==='orientaciones'){renderTjCal();}
   else if(screen==='archivos'){}
   else if(screen==='calendario'){}
   else if(screen==='normatividad'){}
@@ -3100,7 +3121,18 @@ function verDocumento(id){
   if(['doc','docx','xls','xlsx','ppt','pptx'].indexOf(ext)>-1){
     viewUrl='https://view.officeapps.live.com/op/view.aspx?src='+encodeURIComponent(doc.url);
   } else if(doc.tipo==='link'){
-    viewUrl=doc.url;
+    // Google Drive: convert share URL to embeddable preview
+    var gdFile=viewUrl.match(/drive\.google\.com\/file\/d\/([^/?#]+)/);
+    var gdDoc=viewUrl.match(/docs\.google\.com\/(document|spreadsheets|presentation)\/d\/([^/?#]+)/);
+    if(gdFile){
+      viewUrl='https://drive.google.com/file/d/'+gdFile[1]+'/preview';
+    } else if(gdDoc){
+      var type=gdDoc[1];
+      var fileId=gdDoc[2];
+      if(type==='document')viewUrl='https://docs.google.com/document/d/'+fileId+'/preview';
+      else if(type==='spreadsheets')viewUrl='https://docs.google.com/spreadsheets/d/'+fileId+'/preview';
+      else if(type==='presentation')viewUrl='https://docs.google.com/presentation/d/'+fileId+'/preview';
+    }
   }
   document.getElementById('visor-frame').src=viewUrl;
   document.getElementById('modal-visor-doc').style.display='flex';
@@ -3112,6 +3144,164 @@ async function loadDocumentosData(){
   var dr=await _sb.from('documentos').select('*').order('created_at',{ascending:false});
   if(!dr.error)ST.documentos=dr.data||[];
 }
+
+// CALENDARIO JURÍDICO
+var _tjCalYear=(new Date()).getFullYear();
+var _tjCalMonth=(new Date()).getMonth();
+var _tjCalView='mes';
+var _tjCalSelDay=null;
+var _tjCalEventos=[]; // eventos manuales adicionales
+
+var _TJ_MESES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+var _TJ_DIAS=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+
+function tjCalEvMap(){
+  var today=new Date();today.setHours(0,0,0,0);
+  var map={};
+  function addEv(key,ev){if(!map[key])map[key]=[];map[key].push(ev);}
+  // Actuaciones de bitácora
+  ST.actuaciones.forEach(function(a){
+    var c=ST.casos.find(function(x){return x.id===a.caso_id;})||{};
+    var nombre=c.cliente||c.radicacion||'Caso';
+    if(a.fecha_vencimiento){
+      var d=new Date(a.fecha_vencimiento+'T00:00:00');
+      var diff=Math.round((d-today)/(86400000));
+      var tipo=a.cumplida?'cumplida':(diff<0?'vencido':(diff<=7?'proximo':'normal'));
+      addEv(a.fecha_vencimiento,{tipo:tipo,label:nombre+': '+(a.proxima_accion||a.descripcion||'Actuación').substring(0,50),a:a,c:c,key:a.fecha_vencimiento});
+    }
+    if(a.fecha&&a.fecha!==a.fecha_vencimiento){
+      addEv(a.fecha,{tipo:'actuacion',label:nombre+': '+(a.descripcion||'Actuación').substring(0,50),a:a,c:c,key:a.fecha});
+    }
+  });
+  // Eventos manuales
+  _tjCalEventos.forEach(function(ev){addEv(ev.fecha,{tipo:'manual',label:ev.titulo,a:{descripcion:ev.descripcion},c:{},key:ev.fecha,ev:ev});});
+  return map;
+}
+
+function renderTjCal(){
+  var cont=document.getElementById('tj-cal-body');
+  if(!cont)return;
+  var map=tjCalEvMap();
+  if(_tjCalView==='semana'){tjCalRenderSemana(map);return;}
+  var yr=_tjCalYear,mo=_tjCalMonth;
+  var firstDay=new Date(yr,mo,1);
+  var lastDay=new Date(yr,mo+1,0);
+  var startDow=firstDay.getDay();
+  var today=new Date();today.setHours(0,0,0,0);
+  document.getElementById('tj-cal-label').textContent=_TJ_MESES[mo]+' '+yr;
+  var html='<div class="gcal-weekdays">';
+  _TJ_DIAS.forEach(function(d){html+='<div class="gcal-wd">'+d+'</div>';});
+  html+='</div><div class="gcal-days">';
+  var prevLast=new Date(yr,mo,0).getDate();
+  for(var i=startDow-1;i>=0;i--){
+    html+='<div class="gcal-day other-month"><div class="gcal-dn-wrap"><span class="gcal-dn">'+(prevLast-i)+'</span></div></div>';
+  }
+  for(var d=1;d<=lastDay.getDate();d++){
+    var dt=new Date(yr,mo,d);dt.setHours(0,0,0,0);
+    var isToday=dt.getTime()===today.getTime();
+    var key=yr+'-'+String(mo+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    var evs=map[key]||[];
+    var sel=_tjCalSelDay===key?' selected':'';
+    html+='<div class="gcal-day'+(isToday?' today':'')+sel+'" onclick="tjCalSelDay(\''+key+'\')">';
+    html+='<div class="gcal-dn-wrap"><span class="gcal-dn">'+d+'</span></div>';
+    evs.slice(0,3).forEach(function(ev){
+      var cls=ev.tipo==='vencido'?'exp':ev.tipo==='proximo'?'sav':ev.tipo==='cumplida'?'inc':'inc';
+      html+='<div class="gcal-chip '+cls+'" title="'+esc(ev.label)+'">'+esc(ev.label)+'</div>';
+    });
+    if(evs.length>3)html+='<div class="gcal-more">+' +(evs.length-3)+' más</div>';
+    html+='</div>';
+  }
+  var total=startDow+lastDay.getDate();
+  var remain=(7-total%7)%7;
+  for(var i=1;i<=remain;i++){
+    html+='<div class="gcal-day other-month"><div class="gcal-dn-wrap"><span class="gcal-dn">'+i+'</span></div></div>';
+  }
+  html+='</div>';
+  cont.innerHTML=html;
+  tjCalRenderSide(map);
+}
+
+function tjCalRenderSemana(map){
+  var today=new Date();today.setHours(0,0,0,0);
+  // Find start of week (Sunday) for today
+  var dow=today.getDay();
+  var sunday=new Date(today);sunday.setDate(today.getDate()-dow);
+  // Apply any week offset (use _tjCalYear/_tjCalMonth to find offset)
+  // Simple: show week containing first day of selected month when not today's month
+  var refDate=new Date(_tjCalYear,_tjCalMonth,1);
+  if(refDate.getMonth()!==today.getMonth()||refDate.getFullYear()!==today.getFullYear()){
+    sunday=new Date(refDate);sunday.setDate(refDate.getDate()-refDate.getDay());
+  }
+  var days=[];
+  for(var i=0;i<7;i++){var d=new Date(sunday);d.setDate(sunday.getDate()+i);days.push(d);}
+  document.getElementById('tj-cal-label').textContent=_TJ_MESES[days[0].getMonth()]+' '+days[0].getFullYear();
+  var html='<div class="gcal-weekdays">';
+  days.forEach(function(d){
+    var isT=d.getTime()===today.getTime();
+    html+='<div class="gcal-wd" style="'+(isT?'color:var(--blue-mid);':'')+'">'+_TJ_DIAS[d.getDay()]+' '+d.getDate()+'</div>';
+  });
+  html+='</div><div style="display:grid;grid-template-columns:repeat(7,1fr);min-height:300px;">';
+  days.forEach(function(d){
+    var key=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    var evs=map[key]||[];
+    var isT=d.getTime()===today.getTime();
+    var sel=_tjCalSelDay===key?' selected':'';
+    html+='<div class="gcal-day'+(isT?' today':'')+sel+'" style="min-height:200px;" onclick="tjCalSelDay(\''+key+'\')">';
+    evs.forEach(function(ev){
+      var cls=ev.tipo==='vencido'?'exp':ev.tipo==='proximo'?'sav':ev.tipo==='cumplida'?'inc':'inc';
+      html+='<div class="gcal-chip '+cls+'">'+esc(ev.label)+'</div>';
+    });
+    html+='</div>';
+  });
+  html+='</div>';
+  document.getElementById('tj-cal-body').innerHTML=html;
+  tjCalRenderSide(map);
+}
+
+function tjCalRenderSide(map){
+  var side=document.getElementById('tj-cal-side');
+  if(!side)return;
+  if(!_tjCalSelDay){side.classList.remove('open');return;}
+  side.classList.add('open');
+  var evs=map[_tjCalSelDay]||[];
+  var parts=_tjCalSelDay.split('-');
+  var dateLabel=parseInt(parts[2])+' de '+_TJ_MESES[parseInt(parts[1])-1]+' '+parts[0];
+  document.getElementById('tj-cal-side-date').textContent=dateLabel;
+  document.getElementById('tj-cal-side-sub').textContent=evs.length+' evento'+(evs.length!==1?'s':'');
+  document.getElementById('tj-cal-side-list').innerHTML=evs.length?evs.map(function(ev){
+    var bg=ev.tipo==='vencido'?'#FEE2E2':ev.tipo==='proximo'?'#FEF9C3':ev.tipo==='cumplida'?'#DCFCE7':ev.tipo==='manual'?'#F3E8FF':'#EFF6FF';
+    var link=ev.tipo!=='manual'?'onclick="navigate(\'compras\')" style="cursor:pointer;"':'';
+    return '<div class="gcal-side-mov" style="background:'+bg+';" '+link+'>'
+      +'<div style="font-size:12px;font-weight:700;color:#1E293B;">'+esc(ev.c.cliente||ev.c.radicacion||ev.label)+'</div>'
+      +(ev.a.descripcion?'<div style="font-size:11px;color:#475569;margin-top:2px;">'+esc(ev.a.descripcion)+'</div>':'')
+      +(ev.a.proxima_accion?'<div style="font-size:11px;color:#2563EB;margin-top:2px;">Sigue: '+esc(ev.a.proxima_accion)+'</div>':'')
+      +(ev.tipo==='vencido'?'<div style="font-size:10px;color:#DC2626;font-weight:700;margin-top:4px;">VENCIDO</div>':ev.tipo==='proximo'?'<div style="font-size:10px;color:#D97706;font-weight:700;margin-top:4px;">PRÓXIMO A VENCER</div>':'')
+      +(ev.tipo==='manual'?'<button onclick="tjCalDelEvento(\''+((ev.ev&&ev.ev.id)||'')+'\');event.stopPropagation();" style="margin-top:6px;font-size:10px;color:#DC2626;border:none;background:transparent;cursor:pointer;padding:0;">✕ Eliminar</button>':'')
+      +'</div>';
+  }).join(''):'<div style="text-align:center;padding:20px;color:#94A3B8;font-size:13px;">Sin eventos</div>';
+}
+
+function tjCalSelDay(key){_tjCalSelDay=_tjCalSelDay===key?null:key;renderTjCal();}
+function tjCalPrev(){if(_tjCalMonth===0){_tjCalMonth=11;_tjCalYear--;}else{_tjCalMonth--;}renderTjCal();}
+function tjCalNext(){if(_tjCalMonth===11){_tjCalMonth=0;_tjCalYear++;}else{_tjCalMonth++;}renderTjCal();}
+function tjCalHoy(){var n=new Date();_tjCalYear=n.getFullYear();_tjCalMonth=n.getMonth();_tjCalSelDay=null;renderTjCal();}
+function tjCalSetView(v){
+  _tjCalView=v;
+  document.getElementById('tj-vbtn-mes').classList.toggle('active',v==='mes');
+  document.getElementById('tj-vbtn-semana').classList.toggle('active',v==='semana');
+  renderTjCal();
+}
+
+function openTjCalEvento(){
+  var fecha=_tjCalSelDay||new Date().toISOString().slice(0,10);
+  var titulo=prompt('Título del evento:');
+  if(!titulo)return;
+  var desc=prompt('Descripción (opcional):','');
+  var id='ev_'+Date.now();
+  _tjCalEventos.push({id:id,fecha:fecha,titulo:titulo,descripcion:desc||''});
+  renderTjCal();
+}
+function tjCalDelEvento(id){_tjCalEventos=_tjCalEventos.filter(function(e){return e.id!==id;});renderTjCal();}
 
 // RENDER USUARIOS
 function renderUsuarios(){
